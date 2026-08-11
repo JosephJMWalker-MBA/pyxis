@@ -1,0 +1,20 @@
+{
+  "artifacts": [
+    {
+      "artifact_sha256": "8c22d50a5598c725915c4c2d473cc9dc17dcf1f5c401ba250f2b37c489d278d1",
+      "node_sha256": "b47dca822adba5aae5b8e1da9f9a6a0f9de6b51391802ebe5fded1a2bf7c452b",
+      "path": "generated/capabilities/inspect_text.py"
+    },
+    {
+      "artifact_sha256": "b677a0305c0709b3072dd834cb3fc584c46ee72b4637d2ef6ebbb24902b3bccc",
+      "node_sha256": "b909c669780776398f259b31c7bb0489a8066186ff510b43cd4da7d84fc89f99",
+      "path": "generated/capabilities/normalize_text.py"
+    },
+    {
+      "artifact_sha256": "67d6fb3b4fe92c2e8b3adf1052d182278bea3ffc6a2e2fa16ef731314f390079",
+      "node_sha256": "d9af6ecd2ef6cd49e8211f5564ba1af3e06427653257f388552891cd7ea8d388",
+      "path": "generated/workspaces/text_lab/main.py"
+    }
+  ],
+  "rir_sha256": "081c932ba13aa0c71738bec1eecfc5e133b325d8650471b5d0889422e4fc7ab9"
+}
