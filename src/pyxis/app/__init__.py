@@ -9,6 +9,7 @@ from .preview import (
     ArchitectureDelta,
     ArchitecturePreview,
     preview_remove_normalize_text,
+    preview_restore_normalize_text,
 )
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "build_and_run_workspace",
     "build_workspace",
     "preview_remove_normalize_text",
+    "preview_restore_normalize_text",
 ]
