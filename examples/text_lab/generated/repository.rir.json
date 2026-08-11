@@ -1,0 +1,14 @@
+{
+  "repository_id": "text-lab",
+  "schema_version": "0.1",
+  "workspace": {
+    "capabilities": [
+      "inspect_text",
+      "normalize_text"
+    ],
+    "description": "Permanent executable architectural specification for Repository Zero.",
+    "entrypoint": "main.py",
+    "name": "Text Lab",
+    "workspace_id": "text_lab"
+  }
+}
