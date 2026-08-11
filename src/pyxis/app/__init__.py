@@ -1,4 +1,8 @@
-from .apply import ApplyResult, apply_remove_normalize_text
+from .apply import (
+    ApplyResult,
+    apply_remove_normalize_text,
+    apply_restore_normalize_text,
+)
 from .build import (
     BuildAndRunResult,
     BuildResult,
@@ -19,6 +23,7 @@ __all__ = [
     "BuildAndRunResult",
     "BuildResult",
     "apply_remove_normalize_text",
+    "apply_restore_normalize_text",
     "build_and_run_workspace",
     "build_workspace",
     "preview_remove_normalize_text",
