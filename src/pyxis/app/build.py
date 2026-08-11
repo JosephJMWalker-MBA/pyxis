@@ -6,6 +6,11 @@ from pathlib import Path
 from pyxis.authoring.persistence import persist_workspace_spec
 from pyxis.authoring.workspace import WorkspaceSpec
 from pyxis.compiler.artifacts import GeneratedArtifact
+from pyxis.compiler.manifest import (
+    GenerationManifest,
+    build_generation_manifest,
+    persist_generation_manifest,
+)
 from pyxis.compiler.materialize import materialize_artifacts
 from pyxis.compiler.repository import compile_repository
 from pyxis.rir.model import RepositoryIR, build_repository_ir
@@ -21,6 +26,8 @@ class BuildResult:
     repository: RepositoryIR
     rir_path: Path
     artifacts: tuple[GeneratedArtifact, ...]
+    manifest: GenerationManifest
+    manifest_path: Path
     written_paths: tuple[Path, ...]
 
 
@@ -36,18 +43,21 @@ def build_workspace(
     spec: WorkspaceSpec,
     destination_root: Path,
 ) -> BuildResult:
-    """Persist, lower, compile, and materialize one authored Workspace.
+    """Persist, lower, compile, record evidence, and materialize one Workspace.
 
     This is orchestration only. Each transformation remains owned by its
     existing layer: authoring persists canonical intent, RIR lowering supplies
     and persists the derived repository model, the compiler supplies immutable
-    artifacts, and the materializer owns generated implementation writes.
+    artifacts and their manifest evidence, and the materializer owns generated
+    implementation writes.
     """
 
     canonical_path = persist_workspace_spec(spec, destination_root)
     repository = build_repository_ir(spec)
     rir_path = persist_repository_ir(repository, destination_root)
     artifacts = compile_repository(repository)
+    manifest = build_generation_manifest(repository, artifacts)
+    manifest_path = persist_generation_manifest(manifest, destination_root)
     written_paths = materialize_artifacts(artifacts, destination_root)
 
     return BuildResult(
@@ -55,6 +65,8 @@ def build_workspace(
         repository=repository,
         rir_path=rir_path,
         artifacts=artifacts,
+        manifest=manifest,
+        manifest_path=manifest_path,
         written_paths=written_paths,
     )
 
