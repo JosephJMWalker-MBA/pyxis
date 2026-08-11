@@ -46,6 +46,14 @@ def _existing_revision_ids(log_path: Path) -> tuple[str, ...]:
     return tuple(revision_ids)
 
 
+def revision_head_id(workspace_root: Path) -> str | None:
+    """Return the current append-only revision chain head without mutation."""
+
+    log_path = workspace_root.resolve() / _REVISION_LOG_PATH
+    revision_ids = _existing_revision_ids(log_path)
+    return revision_ids[-1] if revision_ids else None
+
+
 def append_revision_event(
     event: RevisionEvent,
     workspace_root: Path,
