@@ -4,7 +4,7 @@ from .model import (
     canonical_sha256,
     create_revision_event,
 )
-from .persistence import append_revision_event
+from .persistence import append_revision_event, revision_head_id
 
 __all__ = [
     "REVISION_SCHEMA_VERSION",
@@ -12,4 +12,5 @@ __all__ = [
     "append_revision_event",
     "canonical_sha256",
     "create_revision_event",
+    "revision_head_id",
 ]
