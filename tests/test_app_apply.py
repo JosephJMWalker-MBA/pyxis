@@ -7,8 +7,10 @@ import pytest
 
 from pyxis.app import (
     apply_remove_normalize_text,
+    apply_restore_normalize_text,
     build_workspace,
     preview_remove_normalize_text,
+    preview_restore_normalize_text,
 )
 from pyxis.authoring import (
     create_workspace_spec,
@@ -16,6 +18,7 @@ from pyxis.authoring import (
     persist_workspace_spec,
 )
 from pyxis.compiler import generation_manifest_sha256
+from pyxis.runtime import run_materialized_workspace
 
 
 apply_module = importlib.import_module("pyxis.app.apply")
@@ -194,3 +197,71 @@ def test_apply_build_failure_records_intent_without_completion(
     assert len(revision_log_path.read_text(encoding="utf-8").splitlines()) == 1
     assert not (tmp_path / "revisions/completions.jsonl").exists()
     assert load_workspace_spec(tmp_path) == spec
+
+
+def test_restore_apply_completes_forward_revision_lifecycle(tmp_path: Path) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Forward remove and restore lifecycle proof.",
+    )
+    build_workspace(spec, tmp_path)
+
+    remove_preview = preview_remove_normalize_text(spec)
+    removed = apply_remove_normalize_text(
+        remove_preview,
+        tmp_path,
+        "Remove normalization to prove the governed forward lifecycle.",
+    )
+
+    restore_preview = preview_restore_normalize_text(load_workspace_spec(tmp_path))
+    restored = apply_restore_normalize_text(
+        restore_preview,
+        tmp_path,
+        "Restore normalization as a new forward revision.",
+    )
+
+    assert restored.revision.operation == "restore_capability:normalize_text"
+    assert restored.revision.parent_revision_id == removed.revision.revision_id
+    assert restored.revision.before_canonical_sha256 == (
+        removed.revision.after_canonical_sha256
+    )
+    assert restored.revision.after_canonical_sha256 == (
+        removed.revision.before_canonical_sha256
+    )
+
+    revision_entries = [
+        json.loads(line)
+        for line in restored.revision_log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert revision_entries == [
+        removed.revision.to_dict(),
+        restored.revision.to_dict(),
+    ]
+
+    completion_entries = [
+        json.loads(line)
+        for line in restored.completion_log_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert completion_entries == [
+        removed.completion.to_dict(),
+        restored.completion.to_dict(),
+    ]
+
+    assert load_workspace_spec(tmp_path) == spec
+    assert restored.build.removed_paths == ()
+    assert (tmp_path / "generated/capabilities/normalize_text.py").is_file()
+    assert tuple(entry.path for entry in restored.build.manifest.artifacts) == (
+        "generated/capabilities/inspect_text.py",
+        "generated/capabilities/normalize_text.py",
+        "generated/workspaces/text_lab/main.py",
+    )
+
+    runtime_result = run_materialized_workspace(
+        restored.build.repository,
+        tmp_path,
+        "  hello   world  ",
+    )
+    assert runtime_result["normalize_text"] == {
+        "normalized_text": "hello world",
+        "changed": True,
+    }
