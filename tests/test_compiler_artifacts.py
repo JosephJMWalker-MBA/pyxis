@@ -6,6 +6,7 @@ from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler.artifacts import (
     compile_inspect_text,
     compile_normalize_text,
+    compile_workspace_entrypoint,
 )
 from pyxis.rir.model import build_repository_ir
 
@@ -105,3 +106,68 @@ def test_compile_normalize_text_rejects_missing_capability() -> None:
 
     with pytest.raises(ValueError, match="normalize_text"):
         compile_normalize_text(repository_without_normalize)
+
+
+def test_compile_workspace_entrypoint_is_deterministic() -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Workspace composition proof.",
+    )
+    repository = build_repository_ir(spec)
+
+    first = compile_workspace_entrypoint(repository)
+    second = compile_workspace_entrypoint(repository)
+
+    assert first == second
+    assert first.path == "generated/workspaces/text_lab/main.py"
+    assert first.node_sha256 in first.source
+    assert (
+        "from capabilities.inspect_text import execute as execute_inspect_text"
+        in first.source
+    )
+    assert (
+        "from capabilities.normalize_text import execute as execute_normalize_text"
+        in first.source
+    )
+    assert '"inspect_text": execute_inspect_text(text)' in first.source
+    assert '"normalize_text": execute_normalize_text(text)' in first.source
+
+
+def test_workspace_composition_tracks_capability_structure() -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Composition identity proof.",
+    )
+    repository = build_repository_ir(spec)
+    inspect_only_repository = replace(
+        repository,
+        workspace=replace(
+            repository.workspace,
+            capabilities=("inspect_text",),
+        ),
+    )
+
+    full = compile_workspace_entrypoint(repository)
+    inspect_only = compile_workspace_entrypoint(inspect_only_repository)
+
+    assert full.node_sha256 != inspect_only.node_sha256
+    assert "normalize_text" in full.source
+    assert "normalize_text" not in inspect_only.source
+    assert (
+        inspect_only.path
+        == "generated/workspaces/text_lab/main.py"
+    )
+
+
+def test_workspace_composition_consumes_rir_without_mutating_it() -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Composition boundary proof.",
+    )
+    repository = build_repository_ir(spec)
+    before = repository.to_dict()
+
+    artifact = compile_workspace_entrypoint(repository)
+
+    assert repository.to_dict() == before
+    assert "def run_text" in artifact.source
