@@ -8,6 +8,7 @@ from .manifest import (
     GenerationManifest,
     ManifestArtifact,
     build_generation_manifest,
+    generation_manifest_sha256,
     load_generation_manifest,
     persist_generation_manifest,
 )
@@ -28,6 +29,7 @@ __all__ = [
     "compile_normalize_text",
     "compile_repository",
     "compile_workspace_entrypoint",
+    "generation_manifest_sha256",
     "load_generation_manifest",
     "materialize_artifacts",
     "persist_generation_manifest",
