@@ -6,8 +6,10 @@ import pytest
 from pyxis.app import preview_remove_normalize_text
 from pyxis.authoring import create_workspace_spec
 from pyxis.revisions import (
+    append_revision_completion,
     append_revision_event,
     canonical_sha256,
+    create_revision_completion,
     create_revision_event,
     revision_head_id,
 )
@@ -163,3 +165,76 @@ def test_revision_log_rejects_stale_parent_without_mutation(tmp_path: Path) -> N
         append_revision_event(stale, tmp_path)
 
     assert log_path.read_bytes() == before
+
+
+def test_revision_completion_is_separate_deterministic_evidence() -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Revision completion model proof.",
+    )
+    preview = preview_remove_normalize_text(spec)
+    revision = create_revision_event(
+        spec,
+        preview.proposed_spec,
+        "remove_capability:normalize_text",
+        "Record intent before compiler completion exists.",
+    )
+
+    completion = create_revision_completion(
+        revision,
+        after_canonical_sha256=revision.after_canonical_sha256,
+        rir_sha256="rir-hash",
+        generation_manifest_sha256="manifest-hash",
+    )
+
+    assert completion.revision_id == revision.revision_id
+    assert completion.after_canonical_sha256 == revision.after_canonical_sha256
+    assert completion.rir_sha256 == "rir-hash"
+    assert completion.generation_manifest_sha256 == "manifest-hash"
+    assert set(completion.to_dict()) == {
+        "schema_version",
+        "revision_id",
+        "after_canonical_sha256",
+        "rir_sha256",
+        "generation_manifest_sha256",
+    }
+
+
+def test_revision_completion_log_requires_event_and_rejects_duplicate(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Revision completion persistence proof.",
+    )
+    preview = preview_remove_normalize_text(spec)
+    revision = create_revision_event(
+        spec,
+        preview.proposed_spec,
+        "remove_capability:normalize_text",
+        "Create intent before completion evidence.",
+    )
+    completion = create_revision_completion(
+        revision,
+        after_canonical_sha256=revision.after_canonical_sha256,
+        rir_sha256="rir-hash",
+        generation_manifest_sha256="manifest-hash",
+    )
+
+    with pytest.raises(ValueError, match="unknown revision"):
+        append_revision_completion(completion, tmp_path)
+    assert not (tmp_path / "revisions/completions.jsonl").exists()
+
+    append_revision_event(revision, tmp_path)
+    completion_path = append_revision_completion(completion, tmp_path)
+    before = completion_path.read_bytes()
+
+    assert completion_path == tmp_path.resolve() / "revisions/completions.jsonl"
+    assert [
+        json.loads(line)
+        for line in completion_path.read_text(encoding="utf-8").splitlines()
+    ] == [completion.to_dict()]
+
+    with pytest.raises(ValueError, match="already has completion evidence"):
+        append_revision_completion(completion, tmp_path)
+    assert completion_path.read_bytes() == before
