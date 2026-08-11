@@ -9,6 +9,7 @@ from pyxis.revisions import (
     append_revision_event,
     canonical_sha256,
     create_revision_event,
+    revision_head_id,
 )
 
 
@@ -112,6 +113,28 @@ def test_revision_log_appends_chain_without_rewriting_existing_history(
     ]
     assert entries == [first.to_dict(), second.to_dict()]
     assert entries[1]["parent_revision_id"] == entries[0]["revision_id"]
+
+
+def test_revision_head_reader_is_non_mutating(tmp_path: Path) -> None:
+    assert revision_head_id(tmp_path) is None
+    assert not tuple(tmp_path.rglob("*"))
+
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Revision head read proof.",
+    )
+    preview = preview_remove_normalize_text(spec)
+    event = create_revision_event(
+        spec,
+        preview.proposed_spec,
+        "remove_capability:normalize_text",
+        "Create one revision so the head can be read.",
+    )
+    log_path = append_revision_event(event, tmp_path)
+    before = log_path.read_bytes()
+
+    assert revision_head_id(tmp_path) == event.revision_id
+    assert log_path.read_bytes() == before
 
 
 def test_revision_log_rejects_stale_parent_without_mutation(tmp_path: Path) -> None:
