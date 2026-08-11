@@ -9,6 +9,7 @@ from pyxis.compiler.artifacts import GeneratedArtifact
 from pyxis.compiler.materialize import materialize_artifacts
 from pyxis.compiler.repository import compile_repository
 from pyxis.rir.model import RepositoryIR, build_repository_ir
+from pyxis.rir.persistence import persist_repository_ir
 from pyxis.runtime.loader import run_materialized_workspace
 
 
@@ -18,6 +19,7 @@ class BuildResult:
 
     canonical_path: Path
     repository: RepositoryIR
+    rir_path: Path
     artifacts: tuple[GeneratedArtifact, ...]
     written_paths: tuple[Path, ...]
 
@@ -38,18 +40,20 @@ def build_workspace(
 
     This is orchestration only. Each transformation remains owned by its
     existing layer: authoring persists canonical intent, RIR lowering supplies
-    the repository model, the compiler supplies immutable artifacts, and the
-    materializer owns generated filesystem writes.
+    and persists the derived repository model, the compiler supplies immutable
+    artifacts, and the materializer owns generated implementation writes.
     """
 
     canonical_path = persist_workspace_spec(spec, destination_root)
     repository = build_repository_ir(spec)
+    rir_path = persist_repository_ir(repository, destination_root)
     artifacts = compile_repository(repository)
     written_paths = materialize_artifacts(artifacts, destination_root)
 
     return BuildResult(
         canonical_path=canonical_path,
         repository=repository,
+        rir_path=rir_path,
         artifacts=artifacts,
         written_paths=written_paths,
     )
