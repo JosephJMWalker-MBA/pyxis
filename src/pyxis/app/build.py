@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from pyxis.authoring.persistence import persist_workspace_spec
 from pyxis.authoring.workspace import WorkspaceSpec
 from pyxis.compiler.artifacts import GeneratedArtifact
 from pyxis.compiler.materialize import materialize_artifacts
@@ -15,6 +16,7 @@ from pyxis.runtime.loader import run_materialized_workspace
 class BuildResult:
     """Observable result of one first-run Workspace build."""
 
+    canonical_path: Path
     repository: RepositoryIR
     artifacts: tuple[GeneratedArtifact, ...]
     written_paths: tuple[Path, ...]
@@ -32,19 +34,21 @@ def build_workspace(
     spec: WorkspaceSpec,
     destination_root: Path,
 ) -> BuildResult:
-    """Lower, compile, and materialize one authored Workspace.
+    """Persist, lower, compile, and materialize one authored Workspace.
 
     This is orchestration only. Each transformation remains owned by its
-    existing layer: authoring supplies the spec, RIR lowering supplies the
-    repository model, the compiler supplies immutable artifacts, and the
-    materializer owns filesystem writes.
+    existing layer: authoring persists canonical intent, RIR lowering supplies
+    the repository model, the compiler supplies immutable artifacts, and the
+    materializer owns generated filesystem writes.
     """
 
+    canonical_path = persist_workspace_spec(spec, destination_root)
     repository = build_repository_ir(spec)
     artifacts = compile_repository(repository)
     written_paths = materialize_artifacts(artifacts, destination_root)
 
     return BuildResult(
+        canonical_path=canonical_path,
         repository=repository,
         artifacts=artifacts,
         written_paths=written_paths,
