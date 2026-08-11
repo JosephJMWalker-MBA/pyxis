@@ -57,6 +57,14 @@ src/pyxis/
 
 The permanent reference example will be `examples/text_lab/`.
 
+## Project continuity
+
+The repository keeps three complementary records so future development does not depend on chat history:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — current architectural boundaries
+- [`docs/DECISIONS.md`](docs/DECISIONS.md) — compact normative decision record
+- [`docs/DEVELOPMENT_ARCHIVE.md`](docs/DEVELOPMENT_ARCHIVE.md) — development history, learned logic, prototype lessons, current gaps, and foreseeable implementation path
+
 ## Status
 
-Architecture proof complete for the minimum slice. Repository construction is beginning now.
+Architecture proof complete for the minimum slice. Repository construction is now underway through the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime` path.
