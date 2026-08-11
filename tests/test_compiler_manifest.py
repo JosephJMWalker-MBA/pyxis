@@ -6,6 +6,7 @@ from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler import (
     build_generation_manifest,
     compile_repository,
+    load_generation_manifest,
     persist_generation_manifest,
 )
 from pyxis.rir.model import build_repository_ir
@@ -91,3 +92,23 @@ def test_persist_generation_manifest_writes_only_manifest_evidence(
         first_path,
     )
     assert not tuple(first_root.rglob("*.py"))
+
+
+def test_load_generation_manifest_reads_only_persisted_evidence(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Prior manifest evidence proof.",
+    )
+    repository = build_repository_ir(spec)
+    artifacts = compile_repository(repository)
+    manifest = build_generation_manifest(repository, artifacts)
+
+    assert load_generation_manifest(tmp_path) is None
+
+    persist_generation_manifest(manifest, tmp_path)
+    untracked = tmp_path / "generated/untracked.py"
+    untracked.write_text("# not compiler-owned\n", encoding="utf-8")
+
+    assert load_generation_manifest(tmp_path) == manifest
