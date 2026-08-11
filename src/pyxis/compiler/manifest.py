@@ -46,6 +46,22 @@ def _normalized_rir_bytes(repository: RepositoryIR) -> bytes:
     return payload.encode("utf-8")
 
 
+def _normalized_manifest_bytes(manifest: GenerationManifest) -> bytes:
+    payload = json.dumps(
+        manifest.to_dict(),
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return payload.encode("utf-8")
+
+
+def generation_manifest_sha256(manifest: GenerationManifest) -> str:
+    """Return the deterministic identity of one generation evidence object."""
+
+    return hashlib.sha256(_normalized_manifest_bytes(manifest)).hexdigest()
+
+
 def build_generation_manifest(
     repository: RepositoryIR,
     artifacts: tuple[GeneratedArtifact, ...],
