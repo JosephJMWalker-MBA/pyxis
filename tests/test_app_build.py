@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
 
 from pyxis.app import build_workspace
+from pyxis.authoring import persist_workspace_spec
 from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler.materialize import materialize_artifacts
 from pyxis.compiler.repository import compile_repository
@@ -13,14 +15,18 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
         "First-run orchestration proof.",
     )
 
+    manual_root = tmp_path / "manual"
+    manual_canonical_path = persist_workspace_spec(spec, manual_root)
     manual_repository = build_repository_ir(spec)
     manual_artifacts = compile_repository(manual_repository)
-    manual_root = tmp_path / "manual"
     manual_paths = materialize_artifacts(manual_artifacts, manual_root)
 
     built_root = tmp_path / "built"
     result = build_workspace(spec, built_root)
 
+    assert result.canonical_path.relative_to(built_root) == (
+        manual_canonical_path.relative_to(manual_root)
+    )
     assert result.repository == manual_repository
     assert result.artifacts == manual_artifacts
     assert tuple(path.relative_to(built_root) for path in result.written_paths) == tuple(
@@ -44,6 +50,32 @@ def test_build_workspace_materializes_complete_repository(tmp_path: Path) -> Non
     assert all(path.exists() for path in result.written_paths)
     assert tuple(path.read_text(encoding="utf-8") for path in result.written_paths) == tuple(
         artifact.source for artifact in result.artifacts
+    )
+
+
+def test_build_workspace_persists_canonical_state_separately_from_generated(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Canonical and generated filesystem boundary proof.",
+    )
+
+    result = build_workspace(spec, tmp_path)
+
+    assert result.canonical_path == (
+        tmp_path.resolve() / "authoring/canonical/workspace.json"
+    )
+    assert result.canonical_path not in result.written_paths
+    assert json.loads(result.canonical_path.read_text(encoding="utf-8")) == {
+        "workspace_id": "text_lab",
+        "name": "Text Lab",
+        "description": "Canonical and generated filesystem boundary proof.",
+        "capabilities": ["inspect_text", "normalize_text"],
+    }
+    assert all(
+        path.relative_to(tmp_path).parts[0] == "generated"
+        for path in result.written_paths
     )
 
 
