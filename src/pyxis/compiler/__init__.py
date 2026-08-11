@@ -4,6 +4,7 @@ from .artifacts import (
     compile_normalize_text,
     compile_workspace_entrypoint,
 )
+from .materialize import materialize_artifacts
 from .repository import compile_repository
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "compile_normalize_text",
     "compile_repository",
     "compile_workspace_entrypoint",
+    "materialize_artifacts",
 ]
