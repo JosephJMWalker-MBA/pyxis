@@ -1,0 +1,11 @@
+{
+  "inspect_text": {
+    "characters": 17,
+    "sha256": "7b8b7fac172df4ea2f623a7884da142968f584efc0059654a3c0f8ef60147760",
+    "words": 2
+  },
+  "normalize_text": {
+    "changed": true,
+    "normalized_text": "hello world"
+  }
+}
