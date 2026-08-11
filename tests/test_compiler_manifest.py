@@ -6,6 +6,7 @@ from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler import (
     build_generation_manifest,
     compile_repository,
+    generation_manifest_sha256,
     load_generation_manifest,
     persist_generation_manifest,
 )
@@ -46,6 +47,25 @@ def test_generation_manifest_records_only_current_integrity_evidence() -> None:
         set(entry) == {"path", "node_sha256", "artifact_sha256"}
         for entry in payload["artifacts"]
     )
+
+
+def test_generation_manifest_identity_is_deterministic() -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Manifest identity proof.",
+    )
+    repository = build_repository_ir(spec)
+    manifest = build_generation_manifest(repository, compile_repository(repository))
+    normalized_manifest = json.dumps(
+        manifest.to_dict(),
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+
+    assert generation_manifest_sha256(manifest) == hashlib.sha256(
+        normalized_manifest
+    ).hexdigest()
 
 
 def test_generation_manifest_is_deterministic_and_non_mutating() -> None:
