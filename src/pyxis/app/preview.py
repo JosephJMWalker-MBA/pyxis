@@ -33,6 +33,14 @@ class ArchitecturePreview:
     delta: ArchitectureDelta
 
 
+def _workspace_entrypoint_path(repository: RepositoryIR) -> str:
+    return (
+        "generated/workspaces/"
+        f"{repository.workspace.workspace_id}/"
+        f"{repository.workspace.entrypoint}"
+    )
+
+
 def preview_remove_normalize_text(spec: WorkspaceSpec) -> ArchitecturePreview:
     """Preview removing normalize_text without persisting or compiling anything.
 
@@ -43,11 +51,6 @@ def preview_remove_normalize_text(spec: WorkspaceSpec) -> ArchitecturePreview:
 
     proposed_spec = spec.without_capability(_NORMALIZE_TEXT_CAPABILITY)
     proposed_repository = build_repository_ir(proposed_spec)
-    workspace_entrypoint_path = (
-        "generated/workspaces/"
-        f"{proposed_repository.workspace.workspace_id}/"
-        f"{proposed_repository.workspace.entrypoint}"
-    )
 
     return ArchitecturePreview(
         current_spec=spec,
@@ -57,9 +60,36 @@ def preview_remove_normalize_text(spec: WorkspaceSpec) -> ArchitecturePreview:
             added_capabilities=(),
             removed_capabilities=(_NORMALIZE_TEXT_CAPABILITY,),
             added_artifact_paths=(),
-            changed_artifact_paths=(workspace_entrypoint_path,),
+            changed_artifact_paths=(_workspace_entrypoint_path(proposed_repository),),
             removed_artifact_paths=(_NORMALIZE_TEXT_ARTIFACT_PATH,),
             added_runtime_keys=(),
             removed_runtime_keys=(_NORMALIZE_TEXT_CAPABILITY,),
+        ),
+    )
+
+
+def preview_restore_normalize_text(spec: WorkspaceSpec) -> ArchitecturePreview:
+    """Preview restoring normalize_text without persisting or compiling anything.
+
+    Restoration is represented as new proposed canonical intent. The preview
+    predicts only structural artifact consequences and the runtime capability
+    key directly implied by that canonical state.
+    """
+
+    proposed_spec = spec.with_capability(_NORMALIZE_TEXT_CAPABILITY)
+    proposed_repository = build_repository_ir(proposed_spec)
+
+    return ArchitecturePreview(
+        current_spec=spec,
+        proposed_spec=proposed_spec,
+        proposed_repository=proposed_repository,
+        delta=ArchitectureDelta(
+            added_capabilities=(_NORMALIZE_TEXT_CAPABILITY,),
+            removed_capabilities=(),
+            added_artifact_paths=(_NORMALIZE_TEXT_ARTIFACT_PATH,),
+            changed_artifact_paths=(_workspace_entrypoint_path(proposed_repository),),
+            removed_artifact_paths=(),
+            added_runtime_keys=(_NORMALIZE_TEXT_CAPABILITY,),
+            removed_runtime_keys=(),
         ),
     )
