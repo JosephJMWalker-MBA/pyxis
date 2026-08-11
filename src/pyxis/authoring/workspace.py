@@ -44,6 +44,23 @@ class WorkspaceSpec:
             ),
         )
 
+    def with_capability(self, capability_id: str) -> WorkspaceSpec:
+        """Return a proposed canonical state with one capability appended.
+
+        The current canonical object is immutable and remains unchanged. This
+        method performs no persistence, lowering, compilation, or runtime work.
+        """
+
+        if capability_id in self.capabilities:
+            raise ValueError(
+                f"Workspace already contains capability {capability_id!r}."
+            )
+
+        return replace(
+            self,
+            capabilities=(*self.capabilities, capability_id),
+        )
+
 
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
