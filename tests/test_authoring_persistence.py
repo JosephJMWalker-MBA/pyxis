@@ -1,7 +1,13 @@
 import json
 from pathlib import Path
 
-from pyxis.authoring import create_workspace_spec, persist_workspace_spec
+import pytest
+
+from pyxis.authoring import (
+    create_workspace_spec,
+    load_workspace_spec,
+    persist_workspace_spec,
+)
 
 
 def test_persist_workspace_spec_writes_only_canonical_authoring_state(
@@ -40,3 +46,24 @@ def test_persist_workspace_spec_is_deterministic_and_non_mutating(
 
     assert first.read_bytes() == second.read_bytes()
     assert spec.to_canonical_dict() == before
+
+
+def test_load_workspace_spec_round_trips_canonical_state_without_mutation(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Canonical read boundary proof.",
+    ).without_capability("normalize_text")
+    canonical_path = persist_workspace_spec(spec, tmp_path)
+    before = canonical_path.read_bytes()
+
+    loaded = load_workspace_spec(tmp_path)
+
+    assert loaded == spec
+    assert canonical_path.read_bytes() == before
+
+
+def test_load_workspace_spec_requires_existing_canonical_state(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="Canonical Workspace state"):
+        load_workspace_spec(tmp_path)
