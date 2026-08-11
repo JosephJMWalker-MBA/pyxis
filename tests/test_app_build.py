@@ -6,6 +6,7 @@ from pyxis.authoring import persist_workspace_spec
 from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler.materialize import materialize_artifacts
 from pyxis.compiler.repository import compile_repository
+from pyxis.rir import persist_repository_ir
 from pyxis.rir.model import build_repository_ir
 
 
@@ -18,6 +19,7 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
     manual_root = tmp_path / "manual"
     manual_canonical_path = persist_workspace_spec(spec, manual_root)
     manual_repository = build_repository_ir(spec)
+    manual_rir_path = persist_repository_ir(manual_repository, manual_root)
     manual_artifacts = compile_repository(manual_repository)
     manual_paths = materialize_artifacts(manual_artifacts, manual_root)
 
@@ -28,6 +30,9 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
         manual_canonical_path.relative_to(manual_root)
     )
     assert result.repository == manual_repository
+    assert result.rir_path.relative_to(built_root) == manual_rir_path.relative_to(
+        manual_root
+    )
     assert result.artifacts == manual_artifacts
     assert tuple(path.relative_to(built_root) for path in result.written_paths) == tuple(
         path.relative_to(manual_root) for path in manual_paths
@@ -76,6 +81,36 @@ def test_build_workspace_persists_canonical_state_separately_from_generated(
     assert all(
         path.relative_to(tmp_path).parts[0] == "generated"
         for path in result.written_paths
+    )
+
+
+def test_build_workspace_persists_rir_separately_from_compiler_artifacts(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "RIR and compiler artifact boundary proof.",
+    )
+
+    result = build_workspace(spec, tmp_path)
+
+    assert result.rir_path == tmp_path.resolve() / "generated/repository.rir.json"
+    assert result.rir_path not in result.written_paths
+    assert json.loads(result.rir_path.read_text(encoding="utf-8")) == {
+        "schema_version": result.repository.schema_version,
+        "repository_id": result.repository.repository_id,
+        "workspace": {
+            "workspace_id": result.repository.workspace.workspace_id,
+            "name": result.repository.workspace.name,
+            "description": result.repository.workspace.description,
+            "entrypoint": result.repository.workspace.entrypoint,
+            "capabilities": list(result.repository.workspace.capabilities),
+        },
+    }
+    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == (
+        "generated/capabilities/inspect_text.py",
+        "generated/capabilities/normalize_text.py",
+        "generated/workspaces/text_lab/main.py",
     )
 
 
