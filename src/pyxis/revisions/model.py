@@ -31,6 +31,25 @@ class RevisionEvent:
         return asdict(self)
 
 
+@dataclass(frozen=True, slots=True)
+class RevisionCompletion:
+    """Immutable evidence that one revision produced compiler evidence.
+
+    Completion is a separate append-only fact rather than mutable status on the
+    original intent event. The generation-manifest hash identifies the exact
+    compiler evidence object produced by the successful build.
+    """
+
+    schema_version: str
+    revision_id: str
+    after_canonical_sha256: str
+    rir_sha256: str
+    generation_manifest_sha256: str
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
 def _normalized_json_bytes(payload: dict[str, object]) -> bytes:
     serialized = json.dumps(
         payload,
@@ -94,4 +113,29 @@ def create_revision_event(
         rationale=clean_rationale,
         before_canonical_sha256=before_sha256,
         after_canonical_sha256=after_sha256,
+    )
+
+
+def create_revision_completion(
+    revision: RevisionEvent,
+    *,
+    after_canonical_sha256: str,
+    rir_sha256: str,
+    generation_manifest_sha256: str,
+) -> RevisionCompletion:
+    """Create immutable completion evidence for one successfully built revision."""
+
+    if after_canonical_sha256 != revision.after_canonical_sha256:
+        raise ValueError("Completion canonical hash does not match the revision.")
+    if not rir_sha256:
+        raise ValueError("Completion RIR hash is required.")
+    if not generation_manifest_sha256:
+        raise ValueError("Completion generation manifest hash is required.")
+
+    return RevisionCompletion(
+        schema_version=REVISION_SCHEMA_VERSION,
+        revision_id=revision.revision_id,
+        after_canonical_sha256=after_canonical_sha256,
+        rir_sha256=rir_sha256,
+        generation_manifest_sha256=generation_manifest_sha256,
     )
