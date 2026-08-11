@@ -4,6 +4,7 @@ from pathlib import Path
 from pyxis.app import build_workspace
 from pyxis.authoring import persist_workspace_spec
 from pyxis.authoring.workspace import create_workspace_spec
+from pyxis.compiler import build_generation_manifest, persist_generation_manifest
 from pyxis.compiler.materialize import materialize_artifacts
 from pyxis.compiler.repository import compile_repository
 from pyxis.rir import persist_repository_ir
@@ -21,6 +22,8 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
     manual_repository = build_repository_ir(spec)
     manual_rir_path = persist_repository_ir(manual_repository, manual_root)
     manual_artifacts = compile_repository(manual_repository)
+    manual_manifest = build_generation_manifest(manual_repository, manual_artifacts)
+    manual_manifest_path = persist_generation_manifest(manual_manifest, manual_root)
     manual_paths = materialize_artifacts(manual_artifacts, manual_root)
 
     built_root = tmp_path / "built"
@@ -34,6 +37,10 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
         manual_root
     )
     assert result.artifacts == manual_artifacts
+    assert result.manifest == manual_manifest
+    assert result.manifest_path.relative_to(built_root) == (
+        manual_manifest_path.relative_to(manual_root)
+    )
     assert tuple(path.relative_to(built_root) for path in result.written_paths) == tuple(
         path.relative_to(manual_root) for path in manual_paths
     )
@@ -107,6 +114,38 @@ def test_build_workspace_persists_rir_separately_from_compiler_artifacts(
             "capabilities": list(result.repository.workspace.capabilities),
         },
     }
+    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == (
+        "generated/capabilities/inspect_text.py",
+        "generated/capabilities/normalize_text.py",
+        "generated/workspaces/text_lab/main.py",
+    )
+
+
+def test_build_workspace_persists_manifest_separately_from_compiler_artifacts(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Generation evidence boundary proof.",
+    )
+
+    result = build_workspace(spec, tmp_path)
+
+    assert result.manifest_path == (
+        tmp_path.resolve() / "generated/generation.manifest.json"
+    )
+    assert result.manifest_path not in result.written_paths
+    assert json.loads(result.manifest_path.read_text(encoding="utf-8")) == (
+        result.manifest.to_dict()
+    )
+    assert set(result.manifest.to_dict()) == {"rir_sha256", "artifacts"}
+    assert all(
+        set(entry) == {"path", "node_sha256", "artifact_sha256"}
+        for entry in result.manifest.to_dict()["artifacts"]
+    )
+    assert tuple(entry.path for entry in result.manifest.artifacts) == tuple(
+        artifact.path for artifact in result.artifacts
+    )
     assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == (
         "generated/capabilities/inspect_text.py",
         "generated/capabilities/normalize_text.py",
