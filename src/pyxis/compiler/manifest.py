@@ -72,6 +72,71 @@ def build_generation_manifest(
     )
 
 
+def load_generation_manifest(
+    workspace_root: Path,
+) -> GenerationManifest | None:
+    """Load prior compiler evidence without inferring ownership from files.
+
+    A missing manifest means there is no prior artifact ownership evidence.
+    Malformed evidence fails explicitly rather than being silently repaired or
+    reconstructed from filesystem shape.
+    """
+
+    manifest_path = workspace_root.resolve() / _GENERATION_MANIFEST_PATH
+    if not manifest_path.exists():
+        return None
+
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or set(payload) != {"rir_sha256", "artifacts"}:
+        raise ValueError("Generation manifest has an invalid top-level shape.")
+
+    rir_sha256 = payload["rir_sha256"]
+    raw_artifacts = payload["artifacts"]
+    if not isinstance(rir_sha256, str) or not rir_sha256:
+        raise ValueError("Generation manifest has no valid rir_sha256.")
+    if not isinstance(raw_artifacts, list):
+        raise ValueError("Generation manifest artifacts must be a list.")
+
+    artifacts: list[ManifestArtifact] = []
+    seen_paths: set[str] = set()
+    for index, raw_artifact in enumerate(raw_artifacts, start=1):
+        if not isinstance(raw_artifact, dict) or set(raw_artifact) != {
+            "path",
+            "node_sha256",
+            "artifact_sha256",
+        }:
+            raise ValueError(
+                f"Generation manifest artifact {index} has an invalid shape."
+            )
+
+        path = raw_artifact["path"]
+        node_sha256 = raw_artifact["node_sha256"]
+        artifact_sha256 = raw_artifact["artifact_sha256"]
+        if not all(
+            isinstance(value, str) and value
+            for value in (path, node_sha256, artifact_sha256)
+        ):
+            raise ValueError(
+                f"Generation manifest artifact {index} contains invalid values."
+            )
+        if path in seen_paths:
+            raise ValueError(f"Generation manifest repeats artifact path {path!r}.")
+
+        seen_paths.add(path)
+        artifacts.append(
+            ManifestArtifact(
+                path=path,
+                node_sha256=node_sha256,
+                artifact_sha256=artifact_sha256,
+            )
+        )
+
+    return GenerationManifest(
+        rir_sha256=rir_sha256,
+        artifacts=tuple(artifacts),
+    )
+
+
 def persist_generation_manifest(
     manifest: GenerationManifest,
     workspace_root: Path,
