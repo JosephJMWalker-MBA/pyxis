@@ -7,13 +7,31 @@ import time
 from typing import Literal
 
 from pyxis.authoring.workspace import WorkspaceSpec
+from pyxis.compiler.manifest import repository_ir_sha256
 from pyxis.compiler.status import ArtifactGenerationStatus, GenerationStatus
 
-from .build import BuildAndRunResult, build_and_run_workspace
+from .build import BuildAndRunResult, BuildResult, build_and_run_workspace
 
 
 MeasurementStage = Literal["build", "runtime"]
 MeasurementClock = Callable[[], float]
+
+
+@dataclass(frozen=True, slots=True)
+class MeasurementSubjectEvidence:
+    """Logical Workspace identity plus exact measured architectural-state identity."""
+
+    repository_id: str
+    workspace_id: str
+    rir_sha256: str
+
+    def __post_init__(self) -> None:
+        if not self.repository_id:
+            raise ValueError("Measurement subject repository_id is required.")
+        if not self.workspace_id:
+            raise ValueError("Measurement subject workspace_id is required.")
+        if not self.rir_sha256:
+            raise ValueError("Measurement subject rir_sha256 is required.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +60,7 @@ class BuildWorkEvidence:
 class BuildAndRunMeasurementEvidence:
     """Immutable measurement evidence for one build-and-run cycle."""
 
+    subject: MeasurementSubjectEvidence
     stages: tuple[StageDurationEvidence, ...]
     build_work: BuildWorkEvidence
 
@@ -52,6 +71,14 @@ class MeasuredBuildAndRunResult:
 
     result: BuildAndRunResult
     measurement: BuildAndRunMeasurementEvidence
+
+
+@dataclass(frozen=True, slots=True)
+class MeasurementSubjectComparisonEvidence:
+    """Before/after subject identity for two coherent logical Workspace cycles."""
+
+    before: MeasurementSubjectEvidence
+    after: MeasurementSubjectEvidence
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,8 +119,36 @@ class BuildWorkComparisonEvidence:
 class BuildAndRunMeasurementComparisonEvidence:
     """Pure factual comparison of two already-measured build-and-run cycles."""
 
+    subject: MeasurementSubjectComparisonEvidence
     stages: tuple[StageDurationComparisonEvidence, ...]
     build_work: BuildWorkComparisonEvidence
+
+
+def _measurement_subject_from_build(build: BuildResult) -> MeasurementSubjectEvidence:
+    repository = build.repository
+    rir_sha256 = repository_ir_sha256(repository)
+    if build.manifest.rir_sha256 != rir_sha256:
+        raise ValueError(
+            "Build measurement subject is incoherent: manifest RIR identity does not "
+            "match RepositoryIR."
+        )
+
+    return MeasurementSubjectEvidence(
+        repository_id=repository.repository_id,
+        workspace_id=repository.workspace.workspace_id,
+        rir_sha256=rir_sha256,
+    )
+
+
+def _validated_measurement_subject(
+    measured: MeasuredBuildAndRunResult,
+) -> MeasurementSubjectEvidence:
+    expected = _measurement_subject_from_build(measured.result.build)
+    if measured.measurement.subject != expected:
+        raise ValueError(
+            "Measurement subject evidence does not match its BuildResult identity."
+        )
+    return expected
 
 
 def measure_build_and_run_workspace(
@@ -106,9 +161,10 @@ def measure_build_and_run_workspace(
     """Measure the existing build-and-run operation without replacing it.
 
     Timing observes only the established build and runtime boundaries exposed by
-    ``build_and_run_workspace``. Compiler/materialization work evidence is copied
-    directly from the returned ``BuildResult``; this layer performs no filesystem
-    discovery and makes no independent work or waste classification.
+    ``build_and_run_workspace``. Subject identity comes from the returned
+    RepositoryIR plus generation manifest. Compiler/materialization work evidence
+    is copied directly from the returned ``BuildResult``; this layer performs no
+    filesystem discovery and makes no independent work or waste classification.
     """
 
     started_at: dict[MeasurementStage, float] = {}
@@ -145,6 +201,7 @@ def measure_build_and_run_workspace(
 
     build = result.build
     measurement = BuildAndRunMeasurementEvidence(
+        subject=_measurement_subject_from_build(build),
         stages=tuple(stages),
         build_work=BuildWorkEvidence(
             generation_statuses=build.generation_statuses,
@@ -163,13 +220,31 @@ def compare_build_and_run_measurements(
     before: MeasuredBuildAndRunResult,
     after: MeasuredBuildAndRunResult,
 ) -> BuildAndRunMeasurementComparisonEvidence:
-    """Compare two measured cycles without inferring cause, quality, or waste.
+    """Compare two coherent Workspace measurements without causal interpretation.
+
+    Each measurement subject is first revalidated against its own BuildResult.
+    Logical Repository/Workspace identity must match before any timing or work
+    comparison is constructed. RIR identity may differ, making architectural-state
+    changes explicit while still permitting comparison within one Workspace.
 
     This function performs no execution, filesystem access, reclassification, or
     scoring. Duration deltas mean only ``after - before``. Work comparison carries
     the exact immutable evidence already observed for each cycle and reports only
     literal compiler-status transitions by artifact path.
     """
+
+    before_subject = _validated_measurement_subject(before)
+    after_subject = _validated_measurement_subject(after)
+    if (
+        before_subject.repository_id != after_subject.repository_id
+        or before_subject.workspace_id != after_subject.workspace_id
+    ):
+        raise ValueError("Measured cycles must describe the same Workspace subject.")
+
+    subject = MeasurementSubjectComparisonEvidence(
+        before=before_subject,
+        after=after_subject,
+    )
 
     before_stages = before.measurement.stages
     after_stages = after.measurement.stages
@@ -210,6 +285,7 @@ def compare_build_and_run_measurements(
     )
 
     return BuildAndRunMeasurementComparisonEvidence(
+        subject=subject,
         stages=stages,
         build_work=BuildWorkComparisonEvidence(
             before=before_work,
