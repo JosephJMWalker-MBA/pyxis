@@ -1,4 +1,9 @@
 from .materialize import ExportMaterializationResult, materialize_export_plan
+from .package_install import (
+    PackageInstallationMode,
+    PackageInstallationVerificationResult,
+    verify_package_installation,
+)
 from .package_materialize import (
     PackageMaterializationResult,
     materialize_package_layout,
@@ -41,6 +46,8 @@ __all__ = [
     "ExportRuntimeVerificationResult",
     "ExportVerificationResult",
     "PackageCompilerProjection",
+    "PackageInstallationMode",
+    "PackageInstallationVerificationResult",
     "PackageLayoutPlan",
     "PackageMaterializationResult",
     "PackageRuntimeVerificationResult",
@@ -57,5 +64,6 @@ __all__ = [
     "verify_export",
     "verify_export_identity",
     "verify_export_runtime",
+    "verify_package_installation",
     "verify_package_runtime",
 ]
