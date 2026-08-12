@@ -144,11 +144,12 @@ def _validated_measurement_subject(
     measured: MeasuredBuildAndRunResult,
 ) -> MeasurementSubjectEvidence:
     expected = _measurement_subject_from_build(measured.result.build)
-    if measured.measurement.subject != expected:
+    subject = measured.measurement.subject
+    if subject != expected:
         raise ValueError(
             "Measurement subject evidence does not match its BuildResult identity."
         )
-    return expected
+    return subject
 
 
 def measure_build_and_run_workspace(
