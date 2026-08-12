@@ -1,4 +1,11 @@
 from .materialize import ExportMaterializationResult, materialize_export_plan
+from .package_plan import (
+    PackageCompilerProjection,
+    PackageLayoutPlan,
+    PackageSupportFile,
+    PackageSupportRole,
+    build_package_layout_plan,
+)
 from .plan import ExportCompilerProduct, ExportPlan, build_export_plan
 from .readiness import (
     ExportReadiness,
@@ -20,8 +27,13 @@ __all__ = [
     "ExportReadiness",
     "ExportRuntimeVerificationResult",
     "ExportVerificationResult",
+    "PackageCompilerProjection",
+    "PackageLayoutPlan",
+    "PackageSupportFile",
+    "PackageSupportRole",
     "VerifiedExportCompilerProduct",
     "build_export_plan",
+    "build_package_layout_plan",
     "materialize_export_plan",
     "verify_export",
     "verify_export_identity",
