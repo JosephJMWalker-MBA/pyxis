@@ -5,21 +5,31 @@ import json
 
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
-from textual.widgets import Input, Static
+from textual.widgets import Button, Input, Static
 
-from pyxis.app.controller import WorkspaceRuntimeController
+from pyxis.app.controller import (
+    WorkspaceArchitecturePreviewController,
+    WorkspaceRuntimeController,
+)
 from pyxis.app.presentation import (
     CompilerArtifactPresentation,
     ExportPresentation,
     RevisionPresentation,
     WorkspacePresentation,
 )
+from pyxis.app.preview_presentation import ArchitecturePreviewPresentation
 
 
 def _format_capabilities(capabilities: tuple[str, ...]) -> str:
     if not capabilities:
         return "—"
     return "\n".join(f"- {capability}" for capability in capabilities)
+
+
+def _format_paths(paths: tuple[str, ...]) -> str:
+    if not paths:
+        return "—"
+    return "\n".join(f"- {path}" for path in paths)
 
 
 def _format_optional(value: str | None) -> str:
@@ -141,6 +151,74 @@ def _format_rir(presentation: WorkspacePresentation) -> str:
 
 def _export_summary(presentation: WorkspacePresentation) -> str:
     return "READY" if presentation.export is not None else "No READY evidence"
+
+
+def _format_architecture_preview(
+    presentation: ArchitecturePreviewPresentation,
+) -> str:
+    return "\n".join(
+        (
+            "PROPOSED — NOT APPLIED",
+            "",
+            f"Current canonical SHA-256: {presentation.current.canonical_sha256}",
+            f"Proposed canonical SHA-256: {presentation.proposed.canonical_sha256}",
+            "",
+            "Current capabilities:",
+            _format_capabilities(presentation.current.capabilities),
+            "Proposed capabilities:",
+            _format_capabilities(presentation.proposed.capabilities),
+            "Added capabilities:",
+            _format_capabilities(presentation.added_capabilities),
+            "Removed capabilities:",
+            _format_capabilities(presentation.removed_capabilities),
+            "",
+            "Added compiler-product paths:",
+            _format_paths(presentation.added_artifact_paths),
+            "Changed compiler-product paths:",
+            _format_paths(presentation.changed_artifact_paths),
+            "Removed compiler-product paths:",
+            _format_paths(presentation.removed_artifact_paths),
+            "",
+            "Current runtime keys:",
+            _format_capabilities(presentation.current_runtime_keys),
+            "Proposed runtime keys:",
+            _format_capabilities(presentation.proposed_runtime_keys),
+            "Added runtime keys:",
+            _format_capabilities(presentation.added_runtime_keys),
+            "Removed runtime keys:",
+            _format_capabilities(presentation.removed_runtime_keys),
+        )
+    )
+
+
+class ArchitecturePreviewDetail(Vertical):
+    """Distinct renderer for proposed architecture that has not been applied."""
+
+    def __init__(self) -> None:
+        super().__init__(id="architecture-preview")
+        self.presentation: ArchitecturePreviewPresentation | None = None
+
+    def compose(self) -> ComposeResult:
+        yield Static(
+            "Architecture preview — proposed state only",
+            id="architecture-preview-title",
+            classes="section-title",
+        )
+        yield Static(
+            "No pending architecture preview.",
+            id="architecture-preview-evidence",
+            classes="evidence-body",
+            markup=False,
+        )
+
+    def replace_presentation(
+        self,
+        presentation: ArchitecturePreviewPresentation,
+    ) -> None:
+        self.presentation = presentation
+        self.query_one("#architecture-preview-evidence", Static).update(
+            _format_architecture_preview(presentation)
+        )
 
 
 class WorkspaceDetail(VerticalScroll):
@@ -278,13 +356,7 @@ class WorkspaceDetail(VerticalScroll):
 
 
 class WorkspaceShell(App[None]):
-    """Textual shell over one Workspace presentation and optional app controller.
-
-    The shell renders application-owned evidence. When runtime interaction is
-    enabled, one text submission crosses only the application-owned
-    ``WorkspaceRuntimeController`` boundary and replaces the rendered
-    presentation with the fresh evidence returned by that controller.
-    """
+    """Textual shell over current evidence and application-owned controllers."""
 
     TITLE = "Pyxis"
     SUB_TITLE = "Workspace evidence"
@@ -293,7 +365,9 @@ class WorkspaceShell(App[None]):
         align: center top;
     }
 
-    #runtime-interaction {
+    #runtime-interaction,
+    #architecture-preview-interaction,
+    #architecture-preview {
         width: 94%;
         height: auto;
         padding: 1 2;
@@ -301,7 +375,12 @@ class WorkspaceShell(App[None]):
         border: round $primary;
     }
 
-    #runtime-input-label {
+    #architecture-preview {
+        border: double $warning;
+    }
+
+    #runtime-input-label,
+    #architecture-preview-action-label {
         text-style: bold;
         margin-bottom: 1;
     }
@@ -341,10 +420,12 @@ class WorkspaceShell(App[None]):
         presentation: WorkspacePresentation,
         *,
         runtime_controller: WorkspaceRuntimeController | None = None,
+        architecture_preview_controller: WorkspaceArchitecturePreviewController | None = None,
     ) -> None:
         super().__init__()
         self.presentation = presentation
         self.runtime_controller = runtime_controller
+        self.architecture_preview_controller = architecture_preview_controller
 
     def compose(self) -> ComposeResult:
         if self.runtime_controller is not None:
@@ -354,6 +435,17 @@ class WorkspaceShell(App[None]):
                     placeholder="Enter text and press Enter to run",
                     id="runtime-input",
                 )
+        if self.architecture_preview_controller is not None:
+            with Vertical(id="architecture-preview-interaction"):
+                yield Static(
+                    "Propose architecture change",
+                    id="architecture-preview-action-label",
+                )
+                yield Button(
+                    "Preview removal of normalize_text",
+                    id="preview-remove-normalize-text",
+                )
+            yield ArchitecturePreviewDetail()
         yield WorkspaceDetail(self.presentation)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -364,15 +456,29 @@ class WorkspaceShell(App[None]):
         self.presentation = presentation
         self.query_one(WorkspaceDetail).replace_presentation(presentation)
 
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if (
+            event.button.id != "preview-remove-normalize-text"
+            or self.architecture_preview_controller is None
+        ):
+            return
+
+        presentation = (
+            self.architecture_preview_controller.preview_remove_normalize_text()
+        )
+        self.query_one(ArchitecturePreviewDetail).replace_presentation(presentation)
+
 
 def create_workspace_shell(
     presentation: WorkspacePresentation,
     *,
     runtime_controller: WorkspaceRuntimeController | None = None,
+    architecture_preview_controller: WorkspaceArchitecturePreviewController | None = None,
 ) -> WorkspaceShell:
     """Create the local Workspace shell over application-owned evidence/state."""
 
     return WorkspaceShell(
         presentation,
         runtime_controller=runtime_controller,
+        architecture_preview_controller=architecture_preview_controller,
     )
