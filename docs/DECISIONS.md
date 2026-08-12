@@ -113,6 +113,15 @@ This is a decision about the **first local evidence UI**, not a permanent claim 
 
 The alternatives considered were intentionally rejected for the current slice, not categorically: NiceGUI introduces a local web-server and browser frontend stack; PySide6 introduces a substantially heavier native Qt/platform surface; Streamlit's whole-script rerun model is a poor match for Pyxis's explicit application-operation boundaries; and Flet's shipped-app integration path brings a Flutter build/test toolchain before Repository Zero needs desktop/mobile packaging.
 
+## D085 — Complete Workspace evidence is rendered before UI actions exist
+The first genuine Workspace detail screen must render the complete current `WorkspacePresentation` contract before the renderer gains mutation controls.
+
+The read-only detail surface includes authoritative canonical intent and hash, RIR identity and hash, every compiler artifact status and current integrity identity, the full runtime result, the append-only revision timeline including optional completion evidence, and the complete optional export READY evidence. Missing optional evidence is rendered explicitly as absent; it is not converted into a guessed negative state.
+
+Renderer formatting may make immutable evidence legible—for example by formatting runtime mappings as JSON or displaying absent hashes as an em dash—but it may not acquire, derive, classify, execute, verify, or mutate application state. A `removed` compiler artifact therefore remains `removed` with no invented current hashes.
+
+Milestone 10D deliberately contains no buttons or mutation callbacks. Information architecture and evidence visibility are proven before UI events are connected to application operations. Navigation/layout mechanisms may evolve later without weakening D082/D083 or changing the evidence contract.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
