@@ -121,6 +121,42 @@ Likewise, an export directory on disk does not imply `READY`. Export facts enter
 
 The query boundary is read-only application orchestration. It does not compile, execute, classify, verify exports, scan arbitrary files, or synthesize missing facts.
 
+### Application-owned Workspace operations
+
+A UI event may not jump from Textual directly into compiler/runtime/revision/export/persistence layers. Named application operations own action semantics and return fresh evidence that the renderer can consume.
+
+Milestone 10E establishes the first operation with `rerun_workspace()`:
+
+```text
+Workspace root
+    +
+current BuildAndRunResult
+    +
+new runtime text
+    +
+optional existing WorkspaceExportResult
+    ↓
+query_workspace_presentation() preflight
+    ↓
+run_materialized_workspace()
+    ↓
+new BuildAndRunResult using the same BuildResult
+    ↓
+query_workspace_presentation()
+    ↓
+WorkspaceRerunResult
+    ├── fresh BuildAndRunResult
+    └── fresh WorkspacePresentation
+```
+
+The preflight deliberately happens before runtime execution. It rejects stale run evidence or mismatched export evidence against the persisted Workspace before generated code can run.
+
+A successful rerun is runtime-only. It executes the already-materialized generated entrypoint exactly once and reuses the exact existing `BuildResult`. It does not compile, classify generation status, materialize artifacts, mutate revisions, export, or verify an export.
+
+Optional existing READY evidence may remain part of the returned presentation because no architectural/compiler state changed. That evidence retains its original verification input hash; a rerun with different text does not transform the old READY proof into verification of the new input.
+
+`WorkspaceRerunResult` returns both fresh transient run evidence and the presentation derived from it. The future UI may retain the operation result/controller state, but the renderer still consumes only `WorkspacePresentation`.
+
 ### First local Workspace UI
 
 Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation boundary:
@@ -150,9 +186,11 @@ Optional evidence remains explicitly absent when it was not supplied. `No READY 
 
 Milestone 10D intentionally adds no buttons or mutation callbacks. The first genuine Workspace detail screen proves information architecture and inspectability before UI events are connected back to application operations. Formatting helpers are renderer-only transformations over immutable evidence and may not become application logic.
 
+Milestone 10E likewise adds no Textual control. It proves the application-owned runtime rerun seam independently so the first future callback can invoke a tested operation rather than receive runtime services directly.
+
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` merely because another rendering technology becomes appropriate.
 
 ### Export
 
