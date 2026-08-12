@@ -57,7 +57,7 @@ Repository Zero must treat source-to-wheel construction and wheel installation a
 
 The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
 
-Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
+Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
 The successful offline wheel-install proof therefore remains distinct from the reproduced offline source-build failure.
 
@@ -267,6 +267,15 @@ Milestone 11B adds `compare_build_and_run_measurements()`. It consumes two alrea
 The acceptance proof uses a real first build followed by an identical rebuild of the same Workspace. The first observation reports `new` compiler products and generated writes; the second reports `reused` products and no generated writes. Fake clocks also produce exact negative build/runtime duration deltas. Those facts are presented together, but Repository Zero does not claim that reuse caused the timing difference or that either observation is intrinsically efficient or wasteful.
 
 Milestone 11B adds no measurement persistence, UI, full Execution Ledger, causal model, score, or broader journey instrumentation.
+
+## D098 — Measurement subject identity separates logical Workspace from architectural state
+Every measured cycle must identify what was measured using evidence already owned by its `BuildResult`. The logical measurement subject is the Repository/Workspace identity; the exact architectural state is the RIR SHA-256 already tied to compiler products by the generation manifest.
+
+Milestone 11C adds immutable `MeasurementSubjectEvidence` containing `repository_id`, `workspace_id`, and `rir_sha256`. Measurement derives those values from the returned `RepositoryIR` and generation manifest, verifies that the manifest RIR identity matches the RepositoryIR before recording the subject, and performs no filesystem discovery.
+
+Comparison revalidates each stored subject against its own `BuildResult` before constructing timing or work deltas. Different RIR hashes are allowed when Repository/Workspace identity is unchanged, so one Workspace may be compared across architectural revisions while both exact states remain explicit. Different logical Workspace subjects are rejected before delta construction. Replaced or forged subject metadata that disagrees with the underlying build evidence is also rejected.
+
+Milestone 11C adds no persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
 
 ## Repository Zero rule
 
