@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from copy import deepcopy
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
+from typing import Literal
 
 from pyxis.authoring import WorkspaceSpec
 from pyxis.compiler import (
@@ -68,7 +70,7 @@ class RevisionPresentation:
 class ExportPresentation:
     """Evidence-backed READY facts for one verified portable export."""
 
-    readiness: str
+    readiness: Literal["READY"]
     export_root: Path
     rir_sha256: str
     generation_manifest_sha256: str
@@ -89,9 +91,35 @@ class WorkspacePresentation:
     canonical: CanonicalPresentation
     rir: RIRPresentation
     artifacts: tuple[CompilerArtifactPresentation, ...]
-    runtime_result: dict[str, object]
+    runtime_result: Mapping[str, object]
     revisions: tuple[RevisionPresentation, ...]
     export: ExportPresentation | None
+
+
+def _freeze_runtime_value(value: object) -> object:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        if not all(isinstance(key, str) for key in value):
+            raise TypeError("Runtime presentation mappings require string keys.")
+        return MappingProxyType(
+            {
+                key: _freeze_runtime_value(item)
+                for key, item in value.items()
+            }
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_runtime_value(item) for item in value)
+    raise TypeError(
+        "Runtime presentation supports only JSON-like scalar, mapping, and sequence values."
+    )
+
+
+def _freeze_runtime_result(result: dict[str, object]) -> Mapping[str, object]:
+    frozen = _freeze_runtime_value(result)
+    if not isinstance(frozen, Mapping):
+        raise TypeError("Workspace runtime result must remain a mapping for presentation.")
+    return frozen
 
 
 def _present_artifacts(run: BuildAndRunResult) -> tuple[CompilerArtifactPresentation, ...]:
@@ -282,7 +310,7 @@ def create_workspace_presentation(
         canonical=canonical,
         rir=rir,
         artifacts=_present_artifacts(run),
-        runtime_result=deepcopy(run.runtime_result),
+        runtime_result=_freeze_runtime_result(run.runtime_result),
         revisions=_present_revisions(revision_events, revision_completions),
         export=_present_export(run, export, rir_sha256=rir_sha256),
     )
