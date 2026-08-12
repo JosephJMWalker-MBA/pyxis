@@ -19,6 +19,11 @@ from .package_runtime import (
     PackageRuntimeVerificationResult,
     verify_package_runtime,
 )
+from .package_source_build import (
+    OfflineSourceBuildOutcome,
+    OfflineSourceWheelBuildObservation,
+    observe_offline_source_wheel_build,
+)
 from .package_wheel import (
     PackageWheelBuildResult,
     WheelCompilerProductVerification,
@@ -45,6 +50,8 @@ __all__ = [
     "ExportReadiness",
     "ExportRuntimeVerificationResult",
     "ExportVerificationResult",
+    "OfflineSourceBuildOutcome",
+    "OfflineSourceWheelBuildObservation",
     "PackageCompilerProjection",
     "PackageInstallationMode",
     "PackageInstallationVerificationResult",
@@ -61,6 +68,7 @@ __all__ = [
     "build_package_wheel",
     "materialize_export_plan",
     "materialize_package_layout",
+    "observe_offline_source_wheel_build",
     "verify_export",
     "verify_export_identity",
     "verify_export_runtime",
