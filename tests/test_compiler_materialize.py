@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler import (
     build_generation_manifest,
     compile_repository,
+    inspect_materialized_artifact_integrity,
     materialize_artifacts,
     reconcile_materialized_artifacts,
 )
@@ -27,7 +29,7 @@ def test_materialize_writes_exact_compiler_artifact_set(tmp_path: Path) -> None:
         artifact.path for artifact in artifacts
     )
     for artifact, path in zip(artifacts, written, strict=True):
-        assert path.read_text(encoding="utf-8") == artifact.source
+        assert path.read_bytes() == artifact.source.encode("utf-8")
 
 
 def test_materialize_does_not_recompile_or_mutate_artifacts(tmp_path: Path) -> None:
@@ -58,6 +60,41 @@ def test_materialize_rejects_path_escape(tmp_path: Path) -> None:
         materialize_artifacts((unsafe,), tmp_path)
 
     assert not (tmp_path.parent / "outside.py").exists()
+
+
+def test_integrity_reader_inspects_only_previous_manifest_owned_paths(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Manifest-scoped integrity evidence proof.",
+    )
+    repository = build_repository_ir(spec)
+    artifacts = compile_repository(repository)
+    manifest = build_generation_manifest(repository, artifacts)
+    materialize_artifacts(artifacts, tmp_path)
+
+    untracked = tmp_path / "generated/untracked.py"
+    untracked.write_bytes(b"# not compiler-owned\n")
+    normalize_path = tmp_path / "generated/capabilities/normalize_text.py"
+    normalize_path.write_bytes(b"# manually altered\n")
+    workspace_path = tmp_path / "generated/workspaces/text_lab/main.py"
+    workspace_path.unlink()
+
+    evidence = inspect_materialized_artifact_integrity(manifest, tmp_path)
+
+    assert tuple(entry.path for entry in evidence) == tuple(
+        entry.path for entry in manifest.artifacts
+    )
+    assert evidence[0].artifact_sha256 == hashlib.sha256(
+        artifacts[0].source.encode("utf-8")
+    ).hexdigest()
+    assert evidence[1].artifact_sha256 == hashlib.sha256(
+        b"# manually altered\n"
+    ).hexdigest()
+    assert evidence[2].artifact_sha256 is None
+    assert all(entry.path != "generated/untracked.py" for entry in evidence)
+    assert untracked.read_bytes() == b"# not compiler-owned\n"
 
 
 def test_reconcile_removes_only_stale_manifest_owned_artifacts(
