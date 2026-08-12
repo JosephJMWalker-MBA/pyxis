@@ -161,6 +161,38 @@ Milestone 10F adds `WorkspaceRuntimeController` as the smallest application-owne
 
 The controller is not a new runtime or session implementation. It exists so transient run evidence remains application-owned across repeated UI events rather than being reconstructed from rendered presentation fields.
 
+### Application-owned measurement
+
+Milestone 11A introduces measurement only after the build/run and local UI paths are stable enough to observe without redesigning them.
+
+The first measurement path is:
+
+```text
+WorkspaceSpec + destination + runtime text
+    +
+injectable monotonic clock
+    ↓
+measure_build_and_run_workspace()
+    ↓ calls exactly once
+build_and_run_workspace()
+    ├── build start/end observation
+    └── runtime start/end observation
+    ↓
+existing BuildAndRunResult
+    +
+immutable BuildAndRunMeasurementEvidence
+    ↓
+MeasuredBuildAndRunResult
+```
+
+`build_and_run_workspace()` remains the execution owner. Its private stage observer exposes only the already-existing `build` and `runtime` boundaries so the measurement wrapper can timestamp them without copying the orchestration into another function. Ordinary callers supply no observer and retain the existing behavior.
+
+`StageDurationEvidence` records ordered elapsed seconds for the two observed stages. The clock is injectable so tests can prove exact durations without depending on wall-clock timing.
+
+`BuildWorkEvidence` does not discover or classify work. It carries the exact `generation_statuses`, `written_paths`, `reused_paths`, and `removed_paths` tuples already returned by `BuildResult`. Compiler status remains compiler evidence; materialization paths remain materializer evidence.
+
+Measurement therefore adds observation without a shadow build, shadow runtime, filesystem scan, efficiency label, or waste score. The first boundary is transient and in-memory only. Persistence, UI, a full Execution Ledger, and broader journey instrumentation remain separate decisions.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
@@ -511,7 +543,7 @@ The following remain important but should not expand Repository Zero until the v
 - browser integration
 - broader capability catalog
 - provider-neutral AI services
-- timing and waste instrumentation
+- full Execution Ledger persistence and generalized waste interpretation
 - security permission models
 - educational overlays beyond compiler inspection
 - deployment integrations
