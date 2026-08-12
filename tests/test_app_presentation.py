@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import replace
 import importlib
 from pathlib import Path
@@ -18,7 +19,6 @@ from pyxis.runtime import run_materialized_workspace
 
 
 compiler_repository_module = importlib.import_module("pyxis.compiler.repository")
-presentation_module = importlib.import_module("pyxis.app.presentation")
 runtime_loader_module = importlib.import_module("pyxis.runtime.loader")
 
 
@@ -93,6 +93,12 @@ def test_workspace_presentation_maps_existing_evidence_without_new_io_or_executi
 
     assert presentation.runtime_result == run.runtime_result
     assert presentation.runtime_result is not run.runtime_result
+    normalize_result = presentation.runtime_result["normalize_text"]
+    assert isinstance(normalize_result, Mapping)
+    with pytest.raises(TypeError):
+        presentation.runtime_result["new_key"] = "not allowed"  # type: ignore[index]
+    with pytest.raises(TypeError):
+        normalize_result["changed"] = False  # type: ignore[index]
     assert presentation.revisions == ()
 
     assert presentation.export is not None
