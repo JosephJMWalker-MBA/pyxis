@@ -65,12 +65,12 @@ Portable packaging keeps two forms deliberately distinct:
 - `generated/` remains the original compiler-product/evidence surface.
 - the conventional `src/` package layout is an exact-byte projection of those compiler products plus packaging-only support files.
 
-The current Repository Zero portability proof establishes:
+The Repository Zero portability chain is:
 
 ```text
 exact compiler products
       ↓
-verified portable export
+verified portable source repository
       ↓
 conventional src/ projection
       ↓
@@ -85,15 +85,30 @@ fresh network-disabled wheel installation
 installed console execution with matching behavior
 ```
 
-These proofs must not be collapsed into a stronger claim than the evidence supports:
+The **portable deliverable** is the pair:
 
-- **source package → conventional wheel is proven** using ordinary PEP 517 build isolation when build dependencies are obtainable.
-- **verified wheel → fresh offline install → execution is proven** with network access actively blocked.
-- **offline source package → wheel construction has been tested and currently fails.**
+```text
+conventional source repository + verified wheel
+```
 
-Milestone 9M reproduced the stronger source-build constraint against the current conventional package without changing its packaging architecture. With network/index access disabled and normal PEP 517 build isolation preserved, wheel construction fails because the isolated build environment cannot resolve the declared `setuptools>=77.0.3` build requirement. No wheel is produced.
+The two forms serve different purposes. The source repository preserves inspectability, provenance, conventional Python structure, and the exact relationship back to compiler products. The verified wheel is the offline-installable execution artifact whose payload identity and behavior have already been proven.
 
-This establishes that the current conventional source package is not self-contained for offline source-to-wheel construction. It does **not** choose a remedy. Repository Zero should not introduce a bespoke local build backend, vendor build dependencies, or weaken build isolation unless the stronger offline source-build property is deliberately accepted as a product requirement.
+The permanent portability guarantee is therefore:
+
+- the conventional source repository can build a standard wheel when its declared PEP 517 build dependencies are obtainable;
+- the included verified wheel preserves compiler-product identity;
+- that verified wheel can be installed and executed in a fresh environment with network access blocked, no external build dependencies, and no Pyxis participation; and
+- installed behavior matches the already-verified Workspace behavior.
+
+Offline source-to-wheel construction is **not** a Repository Zero requirement. Milestone 9M deliberately characterized that stronger condition and reproduced its failure: with network/index access blocked and normal PEP 517 build isolation preserved, the isolated environment cannot resolve `setuptools>=77.0.3`, so no wheel is produced.
+
+That observation remains useful evidence about the source form, but D081 accepts it as a conventional build-time dependency boundary rather than introducing bespoke packaging machinery. A future requirement may reopen that decision only if an actual product need demands raw-source offline rebuilding.
+
+### Milestone 9 closure
+
+Repository Zero considers export/portability proven when the exact compiler products can be exported with provenance, verified for identity and runtime behavior, projected into a conventional Python source repository, built into an identity-verified wheel, and that verified wheel can be installed and executed offline with matching behavior.
+
+Milestone 9 does not require a second build backend or self-contained offline reconstruction of the wheel from raw source.
 
 ## Minimum permanent demonstrator
 
