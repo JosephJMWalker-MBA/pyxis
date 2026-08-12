@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyxis.authoring import WorkspaceSpec
 from pyxis.revisions import canonical_sha256
 
 from .preview import ArchitecturePreview
@@ -35,7 +36,7 @@ class ArchitecturePreviewPresentation:
     removed_runtime_keys: tuple[str, ...]
 
 
-def _present_canonical(spec) -> CanonicalPreviewPresentation:
+def _present_canonical(spec: WorkspaceSpec) -> CanonicalPreviewPresentation:
     return CanonicalPreviewPresentation(
         workspace_id=spec.workspace_id,
         name=spec.name,
