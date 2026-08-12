@@ -6,6 +6,8 @@ from pyxis.authoring import persist_workspace_spec
 from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler import (
     build_generation_manifest,
+    classify_generation_statuses,
+    inspect_materialized_artifact_integrity,
     load_generation_manifest,
     persist_generation_manifest,
     reconcile_materialized_artifacts,
@@ -13,6 +15,10 @@ from pyxis.compiler import (
 from pyxis.compiler.repository import compile_repository
 from pyxis.rir import persist_repository_ir
 from pyxis.rir.model import build_repository_ir
+
+
+def _status_pairs(result):
+    return tuple((entry.path, entry.status) for entry in result.generation_statuses)
 
 
 def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
@@ -23,11 +29,20 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
 
     manual_root = tmp_path / "manual"
     manual_previous_manifest = load_generation_manifest(manual_root)
+    manual_existing_integrity = inspect_materialized_artifact_integrity(
+        manual_previous_manifest,
+        manual_root,
+    )
     manual_canonical_path = persist_workspace_spec(spec, manual_root)
     manual_repository = build_repository_ir(spec)
     manual_rir_path = persist_repository_ir(manual_repository, manual_root)
     manual_artifacts = compile_repository(manual_repository)
     manual_manifest = build_generation_manifest(manual_repository, manual_artifacts)
+    manual_statuses = classify_generation_statuses(
+        manual_artifacts,
+        manual_previous_manifest,
+        manual_existing_integrity,
+    )
     manual_materialization = reconcile_materialized_artifacts(
         manual_artifacts,
         manual_previous_manifest,
@@ -47,6 +62,7 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
     )
     assert result.artifacts == manual_artifacts
     assert result.manifest == manual_manifest
+    assert result.generation_statuses == manual_statuses
     assert result.manifest_path.relative_to(built_root) == (
         manual_manifest_path.relative_to(manual_root)
     )
@@ -71,8 +87,8 @@ def test_build_workspace_materializes_complete_repository(tmp_path: Path) -> Non
         "generated/workspaces/text_lab/main.py",
     )
     assert all(path.exists() for path in result.written_paths)
-    assert tuple(path.read_text(encoding="utf-8") for path in result.written_paths) == tuple(
-        artifact.source for artifact in result.artifacts
+    assert tuple(path.read_bytes() for path in result.written_paths) == tuple(
+        artifact.source.encode("utf-8") for artifact in result.artifacts
     )
     assert result.removed_paths == ()
 
@@ -165,6 +181,59 @@ def test_build_workspace_persists_manifest_separately_from_compiler_artifacts(
     )
 
 
+def test_first_build_reports_new_without_changing_full_write_behavior(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec("Text Lab", "First-build status proof.")
+
+    result = build_workspace(spec, tmp_path)
+
+    assert _status_pairs(result) == (
+        ("generated/capabilities/inspect_text.py", "new"),
+        ("generated/capabilities/normalize_text.py", "new"),
+        ("generated/workspaces/text_lab/main.py", "new"),
+    )
+    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == tuple(
+        artifact.path for artifact in result.artifacts
+    )
+
+
+def test_identical_rebuild_reports_reused_but_still_writes_every_artifact(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec("Text Lab", "Identical rebuild status proof.")
+    build_workspace(spec, tmp_path)
+
+    result = build_workspace(spec, tmp_path)
+
+    assert tuple(entry.status for entry in result.generation_statuses) == (
+        "reused",
+        "reused",
+        "reused",
+    )
+    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == tuple(
+        artifact.path for artifact in result.artifacts
+    )
+
+
+def test_tampered_generated_artifact_is_regenerated_not_reused(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec("Text Lab", "Artifact integrity status proof.")
+    baseline = build_workspace(spec, tmp_path)
+    inspect_path = tmp_path / "generated/capabilities/inspect_text.py"
+    inspect_path.write_bytes(b"# manual generated-code edit\n")
+
+    result = build_workspace(spec, tmp_path)
+
+    assert tuple(entry.status for entry in result.generation_statuses) == (
+        "regenerated",
+        "reused",
+        "reused",
+    )
+    assert inspect_path.read_bytes() == baseline.artifacts[0].source.encode("utf-8")
+
+
 def test_build_workspace_reconciles_removed_compiler_artifact_from_prior_manifest(
     tmp_path: Path,
 ) -> None:
@@ -182,6 +251,11 @@ def test_build_workspace_reconciles_removed_compiler_artifact_from_prior_manifes
     proposed_spec = spec.without_capability("normalize_text")
     result = build_workspace(proposed_spec, tmp_path)
 
+    assert _status_pairs(result) == (
+        ("generated/capabilities/inspect_text.py", "reused"),
+        ("generated/workspaces/text_lab/main.py", "regenerated"),
+        ("generated/capabilities/normalize_text.py", "removed"),
+    )
     assert tuple(path.relative_to(tmp_path).as_posix() for path in result.removed_paths) == (
         "generated/capabilities/normalize_text.py",
     )
