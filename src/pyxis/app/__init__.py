@@ -24,6 +24,13 @@ from .controller import (
 )
 from .export import WorkspaceExportResult, export_workspace
 from .export_refresh import WorkspaceExportRefreshResult, refresh_workspace_export
+from .measurement import (
+    BuildAndRunMeasurementEvidence,
+    BuildWorkEvidence,
+    MeasuredBuildAndRunResult,
+    StageDurationEvidence,
+    measure_build_and_run_workspace,
+)
 from .operations import WorkspaceRerunResult, rerun_workspace
 from .presentation import (
     CanonicalPresentation,
@@ -52,14 +59,18 @@ __all__ = [
     "ArchitectureDelta",
     "ArchitecturePreview",
     "ArchitecturePreviewPresentation",
+    "BuildAndRunMeasurementEvidence",
     "BuildAndRunResult",
     "BuildResult",
+    "BuildWorkEvidence",
     "CanonicalPresentation",
     "CanonicalPreviewPresentation",
     "CompilerArtifactPresentation",
     "ExportPresentation",
+    "MeasuredBuildAndRunResult",
     "RIRPresentation",
     "RevisionPresentation",
+    "StageDurationEvidence",
     "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
     "WorkspaceArchitecturePreviewResult",
@@ -77,6 +88,7 @@ __all__ = [
     "create_architecture_preview_presentation",
     "create_workspace_presentation",
     "export_workspace",
+    "measure_build_and_run_workspace",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
     "preview_workspace_remove_normalize_text",
