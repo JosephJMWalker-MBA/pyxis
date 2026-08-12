@@ -12,8 +12,15 @@ from pyxis.compiler.manifest import (
     load_generation_manifest,
     persist_generation_manifest,
 )
-from pyxis.compiler.materialize import reconcile_materialized_artifacts
+from pyxis.compiler.materialize import (
+    inspect_materialized_artifact_integrity,
+    reconcile_materialized_artifacts,
+)
 from pyxis.compiler.repository import compile_repository
+from pyxis.compiler.status import (
+    ArtifactGenerationStatus,
+    classify_generation_statuses,
+)
 from pyxis.rir.model import RepositoryIR, build_repository_ir
 from pyxis.rir.persistence import persist_repository_ir
 from pyxis.runtime.loader import run_materialized_workspace
@@ -21,13 +28,14 @@ from pyxis.runtime.loader import run_materialized_workspace
 
 @dataclass(frozen=True, slots=True)
 class BuildResult:
-    """Observable result of one first-run Workspace build."""
+    """Observable result of one Workspace build."""
 
     canonical_path: Path
     repository: RepositoryIR
     rir_path: Path
     artifacts: tuple[GeneratedArtifact, ...]
     manifest: GenerationManifest
+    generation_statuses: tuple[ArtifactGenerationStatus, ...]
     manifest_path: Path
     written_paths: tuple[Path, ...]
     removed_paths: tuple[Path, ...]
@@ -45,21 +53,33 @@ def build_workspace(
     spec: WorkspaceSpec,
     destination_root: Path,
 ) -> BuildResult:
-    """Persist, lower, compile, reconcile, and record one authored Workspace.
+    """Persist, lower, compile, classify, reconcile, and record one Workspace.
 
     This is orchestration only. Each transformation remains owned by its
     existing layer: authoring persists canonical intent, RIR lowering supplies
     and persists the derived repository model, the compiler supplies immutable
-    artifacts and manifest evidence, and the materializer reconciles only
-    compiler-owned implementation paths proven by the prior manifest.
+    artifacts, manifest evidence, and generation statuses, and the materializer
+    reconciles only compiler-owned paths proven by the prior manifest.
+
+    Generation status is observational in this milestone: even artifacts
+    classified as reused are still written by the existing materializer.
     """
 
     previous_manifest = load_generation_manifest(destination_root)
+    existing_integrity = inspect_materialized_artifact_integrity(
+        previous_manifest,
+        destination_root,
+    )
     canonical_path = persist_workspace_spec(spec, destination_root)
     repository = build_repository_ir(spec)
     rir_path = persist_repository_ir(repository, destination_root)
     artifacts = compile_repository(repository)
     manifest = build_generation_manifest(repository, artifacts)
+    generation_statuses = classify_generation_statuses(
+        artifacts,
+        previous_manifest,
+        existing_integrity,
+    )
     materialization = reconcile_materialized_artifacts(
         artifacts,
         previous_manifest,
@@ -73,6 +93,7 @@ def build_workspace(
         rir_path=rir_path,
         artifacts=artifacts,
         manifest=manifest,
+        generation_statuses=generation_statuses,
         manifest_path=manifest_path,
         written_paths=materialization.written_paths,
         removed_paths=materialization.removed_paths,
