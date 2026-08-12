@@ -16,7 +16,8 @@ def run_materialized_workspace(
 
     The runtime consumes the RIR only to locate the generated Workspace artifact.
     It does not read canonical authoring state, invoke the compiler, or modify the
-    materialized repository.
+    materialized repository. Python bytecode-cache writes are suppressed while
+    generated modules execute so runtime remains a read-only repository boundary.
     """
 
     root = repository_root.resolve()
@@ -38,7 +39,9 @@ def run_materialized_workspace(
         )
 
     previous_path = list(sys.path)
+    previous_dont_write_bytecode = sys.dont_write_bytecode
     sys.path.insert(0, str(generated_root))
+    sys.dont_write_bytecode = True
 
     try:
         spec = importlib.util.spec_from_file_location(
@@ -65,6 +68,7 @@ def run_materialized_workspace(
         return result
     finally:
         sys.path[:] = previous_path
+        sys.dont_write_bytecode = previous_dont_write_bytecode
         for module_name in tuple(sys.modules):
             if module_name == "capabilities" or module_name.startswith("capabilities."):
                 del sys.modules[module_name]
