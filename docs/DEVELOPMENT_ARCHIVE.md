@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10N on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11A on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -205,6 +205,12 @@ A portable directory on disk is not a recovery mechanism. The application must p
 A renderer may use the absence of current READY evidence to decide whether a recovery control should be offered, but that does not make the renderer an evidence producer.
 
 The export control appears because `WorkspacePresentation.export` is absent, not because Textual inspects the filesystem. It disappears only after `WorkspaceController.refresh_export()` returns a fresh presentation containing genuine READY verification evidence. Failed export attempts change only non-evidence interaction status and leave current presentation/controller state untouched.
+
+### 2.26 Measurement should observe before it interprets
+
+Measurement should attach to stable application boundaries rather than create alternate execution paths, and it should reuse work facts already owned by the compiler/materializer rather than infer them again.
+
+New timing evidence may be observed with an explicit clock. Existing generation and materialization evidence should pass through unchanged. Interpretation such as efficiency, causality, or waste should be introduced only after the underlying observations are stable enough to support it.
 
 ---
 
@@ -518,6 +524,16 @@ The real headless path starts READY, performs visible Preview → rationale → 
 
 The failure proof uses an occupied destination. The controller's run/export/pending-preview state and the current `WorkspacePresentation` remain unchanged; only a non-evidence status message changes. Textual never scans the destination, invents READY, overwrites output, or cleans it up.
 
+### 4.26 Measurement should share the permanent operation rather than copy it
+
+Milestone 11A reintroduces timing only after the first Workspace lifecycle is stable.
+
+The first attempt could easily have become a second two-step orchestrator that called `build_workspace()` and `run_materialized_workspace()` itself. Instead, `build_and_run_workspace()` gained only a private stage-observer seam, and `measure_build_and_run_workspace()` invokes that existing operation exactly once. This keeps execution ownership in one place while still exposing exact `build` and `runtime` timing boundaries.
+
+The fake-clock proof makes stage durations deterministic. The work side of the measurement does not infer anything: `generation_statuses`, `written_paths`, `reused_paths`, and `removed_paths` are the exact tuple objects already returned by `BuildResult`. A real incremental removal case proves `reused`, `regenerated`, and `removed` evidence pass through unchanged.
+
+The lesson is to separate observation from interpretation. 11A records time and owned work facts; it does not yet say that one duration caused another, label any work as waste, persist a ledger, or render metrics in the UI.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -646,6 +662,9 @@ Repository Zero adds `refresh_workspace_export()` plus `WorkspaceController.refr
 
 ### D095 — Visible Export Refresh Is Evidence-Gated and Non-Optimistic
 Repository Zero exposes one destination-path input and one Export/Verify action only while current presentation lacks READY evidence. Textual passes the path and visible runtime text to the unified controller, waits for successful verified evidence before replacing current presentation, and leaves current evidence/controller state unchanged on failure except for a non-evidence status message.
+
+### D096 — Measurement Observes Established Operations and Carries Owned Work Evidence
+Repository Zero adds one application-owned measurement wrapper over `build_and_run_workspace()`. An injectable monotonic clock records immutable ordered build/runtime duration evidence while compiler/materializer work facts pass through directly from `BuildResult`. Measurement does not create a shadow execution path, scan the filesystem, classify waste, persist metrics, or add UI.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -905,6 +924,18 @@ On successful return, the fresh `WorkspacePresentation` replaces `WorkspaceDetai
 
 The 10N headless acceptance path proves the export operation receives the exact post-Apply run object plus visible runtime text, compilation is unavailable, current run identity remains unchanged across export, and READY appears only after verification. An occupied destination leaves current presentation and controller export state unchanged while the controls remain available for correction.
 
+### 7.25 First application-owned measurement evidence
+
+`src/pyxis/app/measurement.py` owns the first Repository Zero measurement boundary.
+
+`measure_build_and_run_workspace()` accepts the same `WorkspaceSpec`, destination, and runtime text as `build_and_run_workspace()` plus an injectable monotonic clock. It calls the existing operation exactly once, using only its private stage observer to capture the established `build` and `runtime` start/end boundaries.
+
+The result is `MeasuredBuildAndRunResult`: the unchanged `BuildAndRunResult` paired with immutable `BuildAndRunMeasurementEvidence`. Ordered `StageDurationEvidence` records elapsed build/runtime seconds. `BuildWorkEvidence` carries the exact `BuildResult.generation_statuses`, `written_paths`, `reused_paths`, and `removed_paths` tuples rather than deriving work from disk.
+
+The acceptance tests compare measured and unmeasured fresh executions semantically, prove the measurement wrapper invokes the existing operation once, make stage timing exact with a fake clock, prove measurement dataclasses are frozen, and exercise a real incremental removal where `reused`, `regenerated`, and `removed` statuses plus written/reused/removed paths pass through unchanged.
+
+No measurement persistence, UI, full ledger, waste score, or Preview/Apply/Export timing is introduced in 11A.
+
 ---
 
 ## 8. Proof status
@@ -941,11 +972,13 @@ Milestone 10M proves READY recovery independently of Textual. The exact post-App
 
 Milestone 10N executes the complete visible READY lifecycle in the real headless Textual shell: current READY → Preview → rationale → Apply → no READY → explicit verified export → READY. The export step consumes the exact post-Apply run and visible runtime text with compilation disabled. An occupied destination proves failure changes neither current presentation nor controller state beyond a non-evidence status message.
 
+Milestone 11A executes the first measurement boundary through the real `build_and_run_workspace()` operation. A fake clock proves exact ordered build/runtime durations; measured and unmeasured fresh cycles are semantically equivalent; work evidence is the same compiler/materializer-owned tuples returned by `BuildResult`; and a real incremental removal carries `reused`, `regenerated`, and `removed` evidence without reclassification.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation.
 
 ---
 
@@ -1006,6 +1039,7 @@ The original milestone order proved useful:
 - Milestone 10L — first visible rationale-bearing architectural Apply through the unified controller: complete.
 - Milestone 10M — application-owned verified export refresh and READY recovery: complete.
 - Milestone 10N — first visible verified export refresh and READY restoration: complete.
+- Milestone 11A — first application-owned build/run measurement evidence boundary: complete.
 
 ### Milestone 10 — First local Workspace UI
 
@@ -1015,23 +1049,23 @@ The first local UI now renders the complete current evidence contract, reruns th
 
 This closes the minimum local Workspace lifecycle without adding generalized architecture editing, restoration UI, file pickers, overwrite/cleanup behavior, or filesystem-derived product state.
 
-### Next narrow step — Milestone 11A
-
-Establish the first application-owned **measurement evidence boundary** around one stable `build_and_run_workspace()` cycle before adding any measurement UI or persistence.
-
-Use an injectable monotonic clock so timing behavior is deterministic in tests. Record immutable stage-duration evidence for the existing build and runtime boundaries, and carry compiler/materialization work facts already owned by `BuildResult`—generation statuses plus written/reused/removed paths—without changing compiler decisions or deriving work from filesystem heuristics.
-
-The first proof should show that measurement wraps the existing operation rather than replacing it: the returned build/run evidence must remain semantically identical to an unmeasured execution, stage ordering must be explicit, and a fake clock must make elapsed values exactly testable. Do not build a full Execution Ledger, persist metrics, add UI charts, or instrument the entire Preview/Apply/Export journey in 11A.
-
 ### Milestone 11 — Measurement
 
-Reintroduce time and waste accounting once there is a stable user journey worth measuring.
+Milestone 11A now establishes the first observation primitive: one stable build/run cycle can return exact build/runtime timing alongside compiler/materializer work evidence without changing execution ownership.
 
-The Execution Ledger can then evolve from real observations rather than imagined fields.
+The Execution Ledger should evolve from these real observations rather than imagined fields.
+
+### Next narrow step — Milestone 11B
+
+Add one pure immutable **measurement comparison** boundary over two existing `MeasuredBuildAndRunResult` values.
+
+The first comparison should be deliberately descriptive: require coherent Workspace identity, preserve the ordered `build`/`runtime` stage names, report exact duration deltas, and summarize the already-owned generation/materialization facts for each cycle. Use a real first build followed by an identical rebuild so the second cycle's compiler evidence demonstrates `reused` artifacts and zero generated writes, while fake clocks make timing differences exact.
+
+Do not call the timing delta a speedup caused by reuse, do not assign a waste/efficiency score, and do not infer causal relationships. Do not persist comparisons, add UI, or broaden instrumentation to Preview/Apply/Export in 11B.
 
 ### Milestone 12 — Browser/research capabilities
 
-After the compiler/product spine and first-run journey are stable, return to the original browser/research purpose.
+After the compiler/product spine and measurement foundations are stable, return to the original browser/research purpose.
 
 Chromium remains the browser. Pyxis adds inspectable Python capabilities, evidence, provenance, permissions, and workflows around it.
 
@@ -1041,7 +1075,7 @@ Chromium remains the browser. Pyxis adds inspectable Python capabilities, eviden
 
 Do not let archived ideas create pressure to implement them immediately.
 
-Until measurement begins from the now-stable Repository Zero lifecycle, defer:
+Until the measurement evidence model proves what should actually be retained and interpreted, defer:
 
 - broad capability marketplaces/catalogs
 - model-provider abstractions beyond a real need
@@ -1052,6 +1086,9 @@ Until measurement begins from the now-stable Repository Zero lifecycle, defer:
 - distributed execution
 - deployment platforms
 - broad plugin systems
+- full Execution Ledger persistence
+- generalized waste/efficiency scoring
+- measurement UI/charts
 - premature optimization
 - large schema/generalized ontology work
 - bespoke offline source-build infrastructure without a demonstrated requirement
@@ -1138,6 +1175,10 @@ Do not introduce alternate build/runtime paths merely to collect timing. Measure
 
 Do not estimate compiler work from file timestamps or directory scans when `BuildResult` already reports generation statuses and written/reused/removed paths. Time may be newly observed; work classifications should remain owned by the compiler/materializer.
 
+### Measurement comparison becoming causal explanation
+
+A lower duration alongside more reuse is an observation, not proof that reuse caused the timing difference. Comparison may expose deltas and owned work facts before the system has enough evidence to make causal or waste claims.
+
 ### Shadow implementations
 
 Preview, export, CLI, UI, education, presentation, query, operations, controllers, packaging, and measurement layers must not quietly reimplement capability logic.
@@ -1208,6 +1249,7 @@ Before adding something, ask:
 26. If READY is being restored after architectural change, did a real verified export of the exact current build produce that evidence, or is file/directory presence being mistaken for verification?
 27. If a control is evidence-gated, is the gate based on application presentation rather than filesystem observation?
 28. If measurement is involved, does it wrap the permanent operation without altering behavior, and does it reuse compiler-owned work classifications rather than infer them?
+29. If measurements are compared, are duration/work deltas kept descriptive until there is evidence for any causal or waste interpretation?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -1221,7 +1263,7 @@ That question has been explored enough for the minimum slice.
 
 Begin instead with:
 
-> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export → presentation → query → application operation/controller → local UI` path more usable while preserving its boundaries?
+> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export → presentation → query → application operation/controller → local UI → measurement` path more usable while preserving its boundaries?
 
 Read the current code before modifying it.
 
@@ -1237,10 +1279,12 @@ For packaging, Milestone 9 is closed. The portable contract is conventional sour
 
 For UI work, Milestones 10A through 10N are complete and Milestone 10 is closed for Repository Zero. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply/export-refresh behavior and one unified `WorkspaceController`; and Textual performs runtime, Preview, rationale-bearing Apply, and evidence-gated verified export through that one authority. The real headless lifecycle proves READY → Preview/Apply → no READY → verified export → READY, including non-optimistic failure behavior.
 
-Do not broaden the UI merely because the first lifecycle is now complete. The next pressure is measurement. Milestone 11A should prove one immutable application-owned timing/work record around the existing build-and-run operation using an injectable monotonic clock. Reuse `BuildResult` generation/materialization facts rather than infer work from disk, and do not add measurement UI or persistence yet.
+For measurement, Milestone 11A is complete. `measure_build_and_run_workspace()` observes the existing `build_and_run_workspace()` operation through a private stage hook, uses an injectable monotonic clock, and pairs unchanged build/run evidence with immutable timing plus the exact compiler/materializer work tuples already owned by `BuildResult`. Nothing is persisted and no efficiency/waste interpretation exists yet.
+
+Milestone 11B should compare two existing measured cycles purely and immutably. Start with a real first build followed by an identical rebuild, use fake clocks for exact timing deltas, and expose the second cycle's compiler-owned reuse/zero-write evidence without claiming that reuse caused a speedup. Do not add a ledger, UI, persistence, or broaden instrumentation in the same step.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 10N closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, and a first local Textual UI that completes the minimum evidence-governed lifecycle. The real headless UI proves current READY → Preview → rationale-bearing Apply → READY retirement → explicit verified export of the exact post-Apply build → READY restoration; failed Apply/export attempts do not optimistically advance current evidence. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. The next narrow step is Milestone 11A: one application-owned, exactly testable measurement record around the stable build-and-run cycle before any measurement UI, persistence, or full Execution Ledger.
+At the 2026-08-12 Milestone 11A closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and a first application-owned measurement boundary. Measurement now proves exact ordered build/runtime durations with an injectable monotonic clock while carrying compiler/materializer work evidence directly from `BuildResult`, without changing execution ownership or inferring work from the filesystem. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestone 11A is complete; the next narrow step is 11B: pure descriptive comparison of two genuine measured cycles before any persistence, UI, causal interpretation, or full Execution Ledger.
