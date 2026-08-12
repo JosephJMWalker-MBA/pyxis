@@ -10,6 +10,7 @@ from .build import (
     build_workspace,
 )
 from .export import WorkspaceExportResult, export_workspace
+from .operations import WorkspaceRerunResult, rerun_workspace
 from .presentation import (
     CanonicalPresentation,
     CompilerArtifactPresentation,
@@ -40,6 +41,7 @@ __all__ = [
     "RevisionPresentation",
     "WorkspaceExportResult",
     "WorkspacePresentation",
+    "WorkspaceRerunResult",
     "apply_remove_normalize_text",
     "apply_restore_normalize_text",
     "build_and_run_workspace",
@@ -49,4 +51,5 @@ __all__ = [
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
     "query_workspace_presentation",
+    "rerun_workspace",
 ]
