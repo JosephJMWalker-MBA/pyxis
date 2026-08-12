@@ -53,11 +53,16 @@ The minimum exported repository can be installed and executed without network ac
 ## D079 — Separate source-build and wheel-install portability proofs
 Repository Zero must treat source-to-wheel construction and wheel installation as separate evidence boundaries.
 
-The current permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
+The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
 
-That does **not** establish that the source package itself can build a wheel while offline. Offline source → wheel construction remains an explicit unproven criterion.
+Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
-D078 must therefore not be treated as fully resolved for the stronger source-build interpretation unless that requirement is chosen deliberately and proven. A bespoke local build backend should not be reintroduced merely because the prototype once needed one; reopen that design only if the stronger offline source-build proof is actually required.
+The successful offline wheel-install proof therefore remains distinct from the now-reproduced offline source-build failure.
+
+## D080 — Reproduce a portability constraint before choosing its remedy
+The 9M failure establishes that the stronger interpretation of D078—raw exported source must construct its wheel with no network or externally available build dependency—is **not satisfied by the current conventional package**.
+
+That evidence does not select a solution. Repository Zero must not reintroduce the prototype's local build backend, vendor Setuptools, disable normal build isolation, or otherwise change packaging merely to make the test green. First decide whether offline source-to-wheel construction is actually a required product property. Only then should a remedy be evaluated against the existing constraints: exact compiler-product identity, conventional portable shape where possible, and export remaining packaging rather than compilation.
 
 ## Repository Zero rule
 
