@@ -60,6 +60,39 @@ Architectural changes are append-only events carrying human rationale, before/af
 
 Export is packaging, not compilation. It packages existing compiler products and verifies their identity and runtime behavior.
 
+Portable packaging keeps two forms deliberately distinct:
+
+- `generated/` remains the original compiler-product/evidence surface.
+- the conventional `src/` package layout is an exact-byte projection of those compiler products plus packaging-only support files.
+
+The current Repository Zero portability proof establishes:
+
+```text
+exact compiler products
+      ↓
+verified portable export
+      ↓
+conventional src/ projection
+      ↓
+standalone package runtime without Pyxis
+      ↓
+standard wheel built with ordinary PEP 517 tooling
+      ↓
+wheel payload identity verification
+      ↓
+fresh network-disabled wheel installation
+      ↓
+installed console execution with matching behavior
+```
+
+These proofs must not be collapsed into a stronger claim than the evidence supports:
+
+- **source package → conventional wheel is proven** using ordinary PEP 517 build isolation.
+- **verified wheel → fresh offline install → execution is proven** with network access actively blocked.
+- **offline source package → wheel construction remains unproven.**
+
+A successful offline wheel installation does not prove that build dependencies for source-to-wheel construction are available offline. Repository Zero should not introduce a bespoke local build backend unless a later explicit decision concludes that the stronger offline source-build proof is required.
+
 ## Minimum permanent demonstrator
 
 `examples/text_lab/` should remain the executable architectural specification for the first vertical slice.
