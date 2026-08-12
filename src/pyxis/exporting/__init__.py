@@ -10,6 +10,10 @@ from .package_plan import (
     PackageSupportRole,
     build_package_layout_plan,
 )
+from .package_runtime import (
+    PackageRuntimeVerificationResult,
+    verify_package_runtime,
+)
 from .plan import ExportCompilerProduct, ExportPlan, build_export_plan
 from .readiness import (
     ExportReadiness,
@@ -34,6 +38,7 @@ __all__ = [
     "PackageCompilerProjection",
     "PackageLayoutPlan",
     "PackageMaterializationResult",
+    "PackageRuntimeVerificationResult",
     "PackageSupportFile",
     "PackageSupportRole",
     "VerifiedExportCompilerProduct",
@@ -44,4 +49,5 @@ __all__ = [
     "verify_export",
     "verify_export_identity",
     "verify_export_runtime",
+    "verify_package_runtime",
 ]
