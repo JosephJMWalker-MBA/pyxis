@@ -23,6 +23,7 @@ from .controller import (
     WorkspaceRuntimeController,
 )
 from .export import WorkspaceExportResult, export_workspace
+from .export_refresh import WorkspaceExportRefreshResult, refresh_workspace_export
 from .operations import WorkspaceRerunResult, rerun_workspace
 from .presentation import (
     CanonicalPresentation,
@@ -63,6 +64,7 @@ __all__ = [
     "WorkspaceArchitecturePreviewController",
     "WorkspaceArchitecturePreviewResult",
     "WorkspaceController",
+    "WorkspaceExportRefreshResult",
     "WorkspaceExportResult",
     "WorkspacePresentation",
     "WorkspaceRerunResult",
@@ -79,5 +81,6 @@ __all__ = [
     "preview_restore_normalize_text",
     "preview_workspace_remove_normalize_text",
     "query_workspace_presentation",
+    "refresh_workspace_export",
     "rerun_workspace",
 ]
