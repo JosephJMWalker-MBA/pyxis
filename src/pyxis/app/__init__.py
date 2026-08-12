@@ -9,6 +9,7 @@ from .build import (
     build_and_run_workspace,
     build_workspace,
 )
+from .controller import WorkspaceRuntimeController
 from .export import WorkspaceExportResult, export_workspace
 from .operations import WorkspaceRerunResult, rerun_workspace
 from .presentation import (
@@ -42,6 +43,7 @@ __all__ = [
     "WorkspaceExportResult",
     "WorkspacePresentation",
     "WorkspaceRerunResult",
+    "WorkspaceRuntimeController",
     "apply_remove_normalize_text",
     "apply_restore_normalize_text",
     "build_and_run_workspace",
