@@ -91,6 +91,17 @@ The presentation contract itself must remain read-only. Runtime mappings/sequenc
 
 This boundary is framework-independent. A future UI renders the contract; it does not become a second query, compiler, runtime, revision, or verification implementation.
 
+## D083 — Existing Workspace queries separate durable and transient evidence
+An application query for an existing Workspace may reload only evidence that has an owning persistence boundary: canonical `WorkspaceSpec`, persisted RIR, generation manifest, and append-only revision event/completion history.
+
+Runtime output and generation statuses remain transient evidence. The existence of generated files, a manifest, or an RIR does not permit the query layer to recreate `BuildAndRunResult`, infer `new`/`reused`/`regenerated`/`removed`, or execute the Workspace automatically. A caller must supply the current `BuildAndRunResult`, and it must agree with the persisted RIR and generation manifest before presentation is assembled.
+
+Export readiness is transient verification evidence under the current Repository Zero model. A portable directory on disk does not imply `READY`. Export presentation may be included only when the actual `WorkspaceExportResult` is supplied, refers to the queried source Workspace, and remains coherent with its verified export root.
+
+Revision history is durable evidence and therefore gains typed read-only loaders owned by the revisions persistence layer. The application query consumes those loaders rather than parsing JSONL itself.
+
+This decision keeps reopening an existing Workspace honest: durable facts can be recovered after process loss; transient facts must be rerun or explicitly retained rather than reconstructed heuristically.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
