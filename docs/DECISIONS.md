@@ -244,6 +244,19 @@ If export fails—for example because the requested destination already exists�
 
 Milestone 10N closes the first local Workspace UI lifecycle without adding file pickers, overwrite/cleanup semantics, restoration, a second architectural edit, or generalized file-management UI.
 
+## D096 — Measurement observes established operations and carries owned work evidence
+Measurement must remain an application-owned observation boundary rather than becoming a second build/runtime implementation or a filesystem-derived accounting system.
+
+Milestone 11A adds `measure_build_and_run_workspace()`. It invokes the existing `build_and_run_workspace()` operation exactly once and supplies only a private stage observer so the established `build` and `runtime` boundaries can be timed without duplicating their orchestration. Normal unmeasured callers retain the existing behavior.
+
+Timing uses an injectable monotonic clock. The measurement result records immutable ordered `StageDurationEvidence` for `build` followed by `runtime`; tests can therefore make elapsed values exact without relying on wall-clock timing.
+
+Compiler/materialization work evidence is not recalculated. `BuildWorkEvidence` carries the exact `generation_statuses`, `written_paths`, `reused_paths`, and `removed_paths` tuples already owned by the returned `BuildResult`. Measurement does not scan files, reinterpret compiler status, classify efficiency, or manufacture a waste score.
+
+`MeasuredBuildAndRunResult` pairs the unchanged `BuildAndRunResult` with immutable `BuildAndRunMeasurementEvidence`. The acceptance proof compares measured and unmeasured executions semantically, verifies stage ordering and exact fake-clock durations, and proves incremental `reused`/`regenerated`/`removed` work facts pass through unchanged.
+
+Milestone 11A adds no metric persistence, UI, charting, full Execution Ledger, or Preview/Apply/Export instrumentation.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
