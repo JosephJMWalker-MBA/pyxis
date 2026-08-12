@@ -11,6 +11,7 @@ from .manifest import (
     generation_manifest_sha256,
     load_generation_manifest,
     persist_generation_manifest,
+    repository_ir_sha256,
 )
 from .materialize import (
     MaterializationResult,
@@ -46,4 +47,5 @@ __all__ = [
     "materialize_artifacts",
     "persist_generation_manifest",
     "reconcile_materialized_artifacts",
+    "repository_ir_sha256",
 ]
