@@ -5,7 +5,7 @@ import pytest
 from textual.widgets import Button, Input, Static
 
 from pyxis.app import (
-    WorkspaceArchitecturePreviewController,
+    WorkspaceController,
     build_and_run_workspace,
     export_workspace,
     query_workspace_presentation,
@@ -44,7 +44,7 @@ async def test_single_visible_architecture_preview_changes_only_proposed_display
         run=run,
         export=export,
     )
-    controller = WorkspaceArchitecturePreviewController(
+    controller = WorkspaceController(
         source,
         run,
         export=export,
@@ -77,14 +77,15 @@ async def test_single_visible_architecture_preview_changes_only_proposed_display
 
     shell = create_workspace_shell(
         presentation,
-        architecture_preview_controller=controller,
+        controller=controller,
     )
 
     async with shell.run_test(size=(120, 46)) as pilot:
         await pilot.pause()
 
         assert len(shell.query(Button)) == 1
-        assert len(shell.query(Input)) == 0
+        assert len(shell.query(Input)) == 1
+        assert shell.query_one("#runtime-input", Input)
         button = shell.query_one("#preview-remove-normalize-text", Button)
         detail = shell.query_one(WorkspaceDetail)
         preview_detail = shell.query_one(ArchitecturePreviewDetail)
@@ -115,6 +116,8 @@ async def test_single_visible_architecture_preview_changes_only_proposed_display
 
         assert preview_calls == 1
         assert controller.pending_preview is not None
+        assert controller.current_run is run
+        assert controller.current_export is export
         assert shell.presentation is presentation
         assert detail.presentation is presentation
         assert preview_detail.presentation is not None
@@ -142,7 +145,7 @@ async def test_single_visible_architecture_preview_changes_only_proposed_display
         }
         assert current_after == current_before
         assert len(shell.query(Button)) == 1
-        assert len(shell.query(Input)) == 0
+        assert len(shell.query(Input)) == 1
 
     assert _file_snapshot(source) == source_before
     assert _file_snapshot(portable) == portable_before
