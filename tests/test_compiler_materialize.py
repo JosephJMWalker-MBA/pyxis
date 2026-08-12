@@ -6,6 +6,7 @@ import pytest
 from pyxis.authoring.workspace import create_workspace_spec
 from pyxis.compiler import (
     build_generation_manifest,
+    classify_generation_statuses,
     compile_repository,
     inspect_materialized_artifact_integrity,
     materialize_artifacts,
@@ -97,6 +98,80 @@ def test_integrity_reader_inspects_only_previous_manifest_owned_paths(
     assert untracked.read_bytes() == b"# not compiler-owned\n"
 
 
+def test_reconcile_skips_every_proven_reused_write(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Proven reuse write-skip proof.",
+    )
+    repository = build_repository_ir(spec)
+    artifacts = compile_repository(repository)
+    previous_manifest = build_generation_manifest(repository, artifacts)
+    materialize_artifacts(artifacts, tmp_path)
+    integrity = inspect_materialized_artifact_integrity(previous_manifest, tmp_path)
+    statuses = classify_generation_statuses(
+        artifacts,
+        previous_manifest,
+        integrity,
+    )
+
+    def fail_write_bytes(self, data):
+        raise AssertionError(f"reused artifact was rewritten: {self}")
+
+    monkeypatch.setattr(Path, "write_bytes", fail_write_bytes)
+
+    result = reconcile_materialized_artifacts(
+        artifacts,
+        statuses,
+        previous_manifest,
+        tmp_path,
+    )
+
+    assert result.written_paths == ()
+    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.reused_paths) == tuple(
+        artifact.path for artifact in artifacts
+    )
+    assert result.removed_paths == ()
+
+
+def test_reconcile_rejects_incomplete_status_evidence_before_mutation(
+    tmp_path: Path,
+) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Status coverage guard proof.",
+    )
+    repository = build_repository_ir(spec)
+    artifacts = compile_repository(repository)
+    previous_manifest = build_generation_manifest(repository, artifacts)
+    materialize_artifacts(artifacts, tmp_path)
+    integrity = inspect_materialized_artifact_integrity(previous_manifest, tmp_path)
+    statuses = classify_generation_statuses(
+        artifacts,
+        previous_manifest,
+        integrity,
+    )
+    before = {
+        artifact.path: (tmp_path / artifact.path).read_bytes()
+        for artifact in artifacts
+    }
+
+    with pytest.raises(ValueError, match="cover exactly"):
+        reconcile_materialized_artifacts(
+            artifacts,
+            statuses[:-1],
+            previous_manifest,
+            tmp_path,
+        )
+
+    assert {
+        artifact.path: (tmp_path / artifact.path).read_bytes()
+        for artifact in artifacts
+    } == before
+
+
 def test_reconcile_removes_only_stale_manifest_owned_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -114,20 +189,32 @@ def test_reconcile_removes_only_stale_manifest_owned_artifacts(
 
     untracked = tmp_path / "generated/untracked.py"
     untracked.write_text("# not declared by the compiler manifest\n", encoding="utf-8")
+    existing_integrity = inspect_materialized_artifact_integrity(
+        previous_manifest,
+        tmp_path,
+    )
 
     proposed_spec = current_spec.without_capability("normalize_text")
     proposed_repository = build_repository_ir(proposed_spec)
     proposed_artifacts = compile_repository(proposed_repository)
+    statuses = classify_generation_statuses(
+        proposed_artifacts,
+        previous_manifest,
+        existing_integrity,
+    )
 
     result = reconcile_materialized_artifacts(
         proposed_artifacts,
+        statuses,
         previous_manifest,
         tmp_path,
     )
 
     assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == (
-        "generated/capabilities/inspect_text.py",
         "generated/workspaces/text_lab/main.py",
+    )
+    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.reused_paths) == (
+        "generated/capabilities/inspect_text.py",
     )
     assert tuple(path.relative_to(tmp_path).as_posix() for path in result.removed_paths) == (
         "generated/capabilities/normalize_text.py",
