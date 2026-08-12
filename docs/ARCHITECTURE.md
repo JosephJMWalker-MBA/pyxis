@@ -247,11 +247,49 @@ Architectural mutation invalidates pre-change READY as current evidence. The pri
 
 Milestone 10I still adds no Textual rationale input or Apply control. Renderer mutation remains unavailable until the UI can invoke this already-proven application boundary without creating a second live-state owner.
 
+### Shared live Workspace controller
+
+Milestone 10J introduces `WorkspaceController` as the one application-owned transient state authority for a combined interactive Workspace session.
+
+It owns:
+
+```text
+one current BuildAndRunResult
+    +
+one optional current WorkspaceExportResult
+    +
+one optional pending ArchitecturePreview
+```
+
+and delegates behavior to the existing application operations:
+
+```text
+WorkspaceController.rerun(text)
+    ↓
+rerun_workspace()
+
+WorkspaceController.preview_remove_normalize_text()
+    ↓
+preview_workspace_remove_normalize_text()
+
+WorkspaceController.apply_pending_remove_normalize_text(rationale, text)
+    ↓
+apply_workspace_remove_normalize_text()
+```
+
+No compiler, runtime, revision, export, preview, or presentation implementation moves into the controller. It owns only the live evidence required to sequence those operations coherently.
+
+A successful rerun replaces the controller's one current run and leaves current READY evidence valid because architecture did not change. A pending architectural preview may also remain retained across runtime-only reruns because its current canonical architecture is unchanged. Preview construction always consumes that same current run/export state. Successful Apply consumes the exact retained preview, replaces the same current run with post-apply evidence, clears pre-change READY, and clears the consumed preview. The next rerun therefore receives the post-apply `BuildResult` by construction.
+
+Controller fields advance only after delegated operations return successfully. Operation failure leaves the shared state unadvanced.
+
+`WorkspaceRuntimeController` and `WorkspaceArchitecturePreviewController` remain temporarily as compatibility surfaces for the already-proven Textual slices. They are not the target ownership model for a combined UI session. Textual remains unchanged in 10J and must migrate to the shared `WorkspaceController` before rationale/Apply controls are exposed.
+
 ### First local Workspace UI
 
 Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation and operation boundaries.
 
-The proven interactive path is now:
+The currently wired interactive path is still:
 
 ```text
 current evidence:
@@ -284,6 +322,8 @@ ArchitecturePreviewPresentation
 ArchitecturePreviewDetail
 ```
 
+That dual-controller renderer shape is now explicitly transitional. Milestone 10J proves the single `WorkspaceController` application authority that the renderer should consume next; Textual has not yet migrated to it.
+
 `WorkspaceShell` still receives no Workspace root and no compiler/runtime/revision/export/persistence service. It may receive application-owned controllers alongside the current immutable presentation.
 
 Milestone 10C proved the renderer boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable evidence surface that renders the complete current presentation contract:
@@ -311,9 +351,11 @@ The preview panel shows current/proposed canonical hashes and capabilities, pred
 
 Milestone 10I proves the rationale-bearing apply operation/controller seam but deliberately leaves Textual unchanged. The renderer therefore still exposes Preview only; it has no rationale field or Apply action yet.
 
+Milestone 10J proves that combined runtime and architectural interactions can share one live application state authority, but also deliberately leaves Textual unchanged. The next renderer change should migrate the existing runtime/preview interactions to `WorkspaceController` before exposing Apply.
+
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. D091 requires combined interactive operations to share one live application state authority. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
