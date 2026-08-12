@@ -1,0 +1,86 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+from pyxis.revisions import canonical_sha256
+from pyxis.runtime import run_materialized_workspace
+
+from .apply import ApplyResult, apply_remove_normalize_text
+from .build import BuildAndRunResult
+from .export import WorkspaceExportResult
+from .presentation import WorkspacePresentation
+from .preview import ArchitecturePreview
+from .query import query_workspace_presentation
+
+
+@dataclass(frozen=True, slots=True)
+class WorkspaceArchitectureApplyResult:
+    """Fresh evidence produced by one governed architectural apply operation."""
+
+    apply: ApplyResult
+    run: BuildAndRunResult
+    presentation: WorkspacePresentation
+
+
+def apply_workspace_remove_normalize_text(
+    workspace_root: Path,
+    preview: ArchitecturePreview,
+    current_run: BuildAndRunResult,
+    rationale: str,
+    text: str,
+    *,
+    export: WorkspaceExportResult | None = None,
+) -> WorkspaceArchitectureApplyResult:
+    """Apply one retained normalize_text-removal preview and rerun the result.
+
+    The operation consumes the exact typed preview supplied by the application
+    controller. Current run/export evidence is preflighted before mutation. The
+    existing governed apply path owns revision/canonical/compiler mutation. A
+    fresh runtime result and presentation are then produced from the new build.
+
+    Pre-change export evidence is intentionally not carried into the post-apply
+    presentation because compiler products and RIR identity have changed.
+    """
+
+    clean_rationale = rationale.strip()
+    if not clean_rationale:
+        raise ValueError("Architecture rationale is required before apply.")
+
+    root = workspace_root.resolve()
+    current_presentation = query_workspace_presentation(
+        root,
+        run=current_run,
+        export=export,
+    )
+    if (
+        canonical_sha256(preview.current_spec)
+        != current_presentation.canonical.canonical_sha256
+    ):
+        raise ValueError("Pending preview does not match current canonical Workspace state.")
+
+    applied = apply_remove_normalize_text(
+        preview,
+        root,
+        clean_rationale,
+    )
+    runtime_result = run_materialized_workspace(
+        applied.build.repository,
+        root,
+        text,
+    )
+    run = BuildAndRunResult(
+        build=applied.build,
+        runtime_result=runtime_result,
+    )
+    presentation = query_workspace_presentation(
+        root,
+        run=run,
+        export=None,
+    )
+
+    return WorkspaceArchitectureApplyResult(
+        apply=applied,
+        run=run,
+        presentation=presentation,
+    )
