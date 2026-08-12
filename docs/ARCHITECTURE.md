@@ -202,9 +202,12 @@ Textual is the selected framework for the first local Workspace UI. It is introd
 The proven interactive path is now:
 
 ```text
+current evidence:
 WorkspacePresentation
     +
 optional WorkspaceRuntimeController
+    +
+optional WorkspaceArchitecturePreviewController
     ↓
 WorkspaceShell (Textual)
     ↓
@@ -218,9 +221,18 @@ WorkspaceRuntimeController.rerun(text)
 fresh WorkspacePresentation
     ↓
 WorkspaceDetail.replace_presentation()
+
+architecture preview interaction:
+Button.Pressed
+    ↓
+WorkspaceArchitecturePreviewController.preview_remove_normalize_text()
+    ↓
+ArchitecturePreviewPresentation
+    ↓
+ArchitecturePreviewDetail
 ```
 
-`WorkspaceShell` still receives no Workspace root and no compiler/runtime/revision/export/persistence service. When runtime interaction is enabled it receives exactly one application-owned `WorkspaceRuntimeController` alongside the current immutable presentation.
+`WorkspaceShell` still receives no Workspace root and no compiler/runtime/revision/export/persistence service. It may receive application-owned controllers alongside the current immutable presentation.
 
 Milestone 10C proved the renderer boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable evidence surface that renders the complete current presentation contract:
 
@@ -239,13 +251,17 @@ Milestone 10F introduces the first visible runtime interaction: one Textual `Inp
 
 `WorkspaceDetail.replace_presentation()` is renderer-only. It updates existing `Static` widgets from a supplied immutable presentation and performs no evidence acquisition or domain work.
 
-The 10F interaction remains non-architectural. It adds no button, rationale flow, preview/apply action, export action, compiler invocation, or filesystem mutation. Headless tests prove that runtime evidence changes while canonical/RIR/compiler/revision/export display remains unchanged and the source/portable trees remain byte-identical.
+Milestone 10G proves the architectural preview presentation/controller boundary independently before a visible architecture control is connected.
 
-Milestone 10G still adds no Textual architectural control. It proves the preview presentation/controller boundary independently so a later visible preview action can render proposed evidence without owning the typed domain preview or mutating the Workspace.
+Milestone 10H introduces exactly one visible architectural action: a button that calls only `WorkspaceArchitecturePreviewController.preview_remove_normalize_text()`. Its result is rendered in `ArchitecturePreviewDetail`, a separate proposed-state panel labeled `PROPOSED — NOT APPLIED` and visually distinguished from `WorkspaceDetail`.
+
+The preview panel shows current/proposed canonical hashes and capabilities, predicted compiler-product path consequences, and current/proposed runtime-key contracts. Displaying it does not replace `WorkspaceShell.presentation`, update current Workspace evidence, invalidate READY, write files, compile, append revisions, or execute runtime code. The typed pending preview remains in the application controller.
+
+Milestone 10H still adds no rationale field and no Apply action. Preview visibility is not mutation permission.
 
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
