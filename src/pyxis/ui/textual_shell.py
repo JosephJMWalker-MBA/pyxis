@@ -217,6 +217,41 @@ class ArchitecturePreviewDetail(Vertical):
             _format_architecture_preview(presentation)
         )
 
+    def clear_presentation(self) -> None:
+        """Return the proposed-state surface to its explicit empty state."""
+
+        self.presentation = None
+        self.query_one("#architecture-preview-evidence", Static).update(
+            "No pending architecture preview."
+        )
+
+
+class ArchitectureApplyControls(Vertical):
+    """Rationale-bearing controls mounted only for a retained pending preview."""
+
+    def __init__(self) -> None:
+        super().__init__(id="architecture-apply-controls")
+
+    def compose(self) -> ComposeResult:
+        yield Static(
+            "Rationale required before Apply",
+            id="architecture-rationale-label",
+        )
+        yield Input(
+            placeholder="Explain why this architecture change should be applied",
+            id="architecture-rationale",
+        )
+        yield Button(
+            "Apply removal of normalize_text",
+            id="apply-remove-normalize-text",
+            variant="warning",
+        )
+        yield Static(
+            "",
+            id="architecture-apply-status",
+            markup=False,
+        )
+
 
 class WorkspaceDetail(VerticalScroll):
     """Complete renderer for one immutable Workspace presentation."""
@@ -377,9 +412,20 @@ class WorkspaceShell(App[None]):
     }
 
     #runtime-input-label,
-    #architecture-preview-action-label {
+    #architecture-preview-action-label,
+    #architecture-rationale-label {
         text-style: bold;
         margin-bottom: 1;
+    }
+
+    #architecture-apply-controls {
+        width: 100%;
+        height: auto;
+        margin-top: 1;
+    }
+
+    #architecture-apply-status {
+        margin-top: 1;
     }
 
     #workspace-detail {
@@ -450,15 +496,42 @@ class WorkspaceShell(App[None]):
         self.presentation = presentation
         self.query_one(WorkspaceDetail).replace_presentation(presentation)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if (
-            event.button.id != "preview-remove-normalize-text"
-            or self.controller is None
-        ):
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        if self.controller is None:
             return
 
-        presentation = self.controller.preview_remove_normalize_text()
-        self.query_one(ArchitecturePreviewDetail).replace_presentation(presentation)
+        if event.button.id == "preview-remove-normalize-text":
+            presentation = self.controller.preview_remove_normalize_text()
+            self.query_one(ArchitecturePreviewDetail).replace_presentation(presentation)
+
+            if len(self.query("#architecture-apply-controls")) == 0:
+                container = self.query_one("#architecture-preview-interaction", Vertical)
+                await container.mount(ArchitectureApplyControls())
+            else:
+                self.query_one("#architecture-apply-status", Static).update("")
+            return
+
+        if event.button.id != "apply-remove-normalize-text":
+            return
+
+        rationale_input = self.query_one("#architecture-rationale", Input)
+        runtime_input = self.query_one("#runtime-input", Input)
+        status = self.query_one("#architecture-apply-status", Static)
+
+        try:
+            presentation = self.controller.apply_pending_remove_normalize_text(
+                rationale_input.value,
+                runtime_input.value,
+            )
+        except Exception as exc:
+            status.update(f"Apply failed: {exc}")
+            return
+
+        self.presentation = presentation
+        self.query_one(WorkspaceDetail).replace_presentation(presentation)
+        self.query_one(ArchitecturePreviewDetail).clear_presentation()
+        controls = self.query_one("#architecture-apply-controls", ArchitectureApplyControls)
+        await controls.remove()
 
 
 def create_workspace_shell(
