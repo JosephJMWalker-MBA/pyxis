@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10E on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10F on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -149,6 +149,12 @@ A mutation control should therefore arrive only after canonical intent, RIR, com
 A renderer event is not permission to bypass the application boundary.
 
 Before a visible control is connected, the intended action should exist as an independently testable application operation with explicit inputs, coherence checks, side effects, and fresh returned evidence. The renderer should receive application results rather than compiler/runtime/revision/export services.
+
+### 2.17 Transient operation state belongs outside the renderer
+
+A rendered presentation is not enough to perform the next stateful operation. If an application action returns fresh transient evidence, the application/controller layer should retain it directly.
+
+The UI may retain the current presentation for rendering, but it should not reconstruct `BuildAndRunResult` or other live operation inputs from visible fields.
 
 ---
 
@@ -390,6 +396,14 @@ Milestone 10E deliberately chose runtime rerun rather than a rationale-bearing a
 
 This isolates the event-boundary lesson from revision semantics: before the UI is allowed to change architecture, it proves that an ordinary user action can cross a named application operation without Textual acquiring runtime or compiler services.
 
+### 4.17 The first visible interaction should change only the evidence it owns
+
+Milestone 10F connected one Textual `Input.Submitted` event to the already-proven runtime rerun operation through `WorkspaceRuntimeController`.
+
+The controller retains the current `BuildAndRunResult`; Textual retains only the current presentation for rendering. After submission, runtime evidence changes on screen while canonical intent, RIR identity, compiler status, revision provenance, and export verification remain exactly the same evidence.
+
+That separation proves a complete event loop without giving the renderer ownership of transient application state or broader domain services.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -491,6 +505,9 @@ Repository Zero requires the first genuine Workspace detail view to expose the c
 
 ### D086 — UI Actions Cross an Application-Owned Operation Boundary
 Repository Zero proves the first action seam with a runtime-only `rerun_workspace()` application operation. It preflights live evidence, executes the already-materialized Workspace once, reuses the existing build evidence, and returns fresh run/presentation evidence without compiler, revision, export, or UI ownership leakage.
+
+### D087 — Visible Runtime Interaction Retains Live Evidence Outside the Renderer
+Repository Zero wires one Textual runtime input through an application-owned `WorkspaceRuntimeController`, which retains fresh `BuildAndRunResult` evidence across submissions while the renderer consumes only fresh `WorkspacePresentation` values.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -652,23 +669,27 @@ Tests prove the query does not compile or execute, does not infer READY from exp
 
 Milestone 10C selected Textual for the first local Workspace UI after comparing it against NiceGUI, PySide6, Streamlit, and Flet. Textual remains optional through the `ui` dependency group; the compiler/runtime core has no required UI dependency.
 
-`WorkspaceShell` receives only an immutable `WorkspacePresentation`. It receives no Workspace root and owns no query, compiler, runtime, revision, or export operation. The 10C headless test proves the real Textual app can mount and render supplied evidence while application work is disabled and the source/export trees remain unchanged.
-
 Milestone 10D adds `WorkspaceDetail`, a vertically scrollable renderer for the complete presentation contract. The detail surface shows canonical intent/hash, RIR identity/hash, every compiler artifact status and current hashes where applicable, complete runtime output, revision provenance/completion evidence, and complete optional export READY verification evidence.
 
-Runtime mappings are formatted as deterministic JSON only for legibility. Missing optional evidence is rendered neutrally. A removed artifact remains visible with `removed` status and no fabricated current hashes. The 10D acceptance test exercises a real governed removal plus real READY export evidence and asserts that the screen contains zero Textual `Button` widgets.
+Runtime mappings are formatted as deterministic JSON only for legibility. Missing optional evidence is rendered neutrally. A removed artifact remains visible with `removed` status and no fabricated current hashes.
 
 ### 7.15 First application-owned UI operation seam
 
-`src/pyxis/app/operations.py` now owns the first operation intended for a future UI event: `rerun_workspace()`.
+`src/pyxis/app/operations.py` owns `rerun_workspace()`.
 
 The operation accepts the existing Workspace root, current `BuildAndRunResult`, new runtime text, and optional current export evidence. It preflights those live facts through `query_workspace_presentation()` before runtime execution, so stale RIR/manifest/export evidence cannot reach generated code.
 
 A successful operation invokes `run_materialized_workspace()` exactly once, reuses the exact previous `BuildResult`, and returns `WorkspaceRerunResult` containing both the fresh `BuildAndRunResult` and fresh `WorkspacePresentation`. It does not compile, materialize, classify generation status, append revisions, export, or re-verify READY.
 
-Tests prove Workspace/export bytes remain unchanged, compiler execution is unavailable, runtime occurs exactly once, prior runtime evidence is not mutated, legitimate existing READY evidence remains explicitly the same proof, and stale run evidence fails before runtime.
+### 7.16 First visible runtime interaction
 
-No Textual control is added by Milestone 10E.
+`src/pyxis/app/controller.py` now contains `WorkspaceRuntimeController`, the minimal application-owned holder for transient runtime interaction state. It retains the current `BuildAndRunResult`, Workspace root, and optional export evidence and delegates its only operation to `rerun_workspace()`.
+
+`WorkspaceShell` may receive this controller alongside its current presentation. When present, the shell renders exactly one runtime `Input`. Pressing Enter posts Textual's `Input.Submitted` event; the shell sends the submitted text to `WorkspaceRuntimeController.rerun()` exactly once.
+
+The controller retains the returned fresh run evidence. The shell retains the returned presentation, and `WorkspaceDetail.replace_presentation()` updates the existing evidence widgets from that presentation. The renderer never reconstructs the run evidence from its fields.
+
+The 10F acceptance test starts from real governed revision evidence plus real READY export evidence. After one text submission, only runtime evidence changes. Canonical, RIR, compiler, revision, and export presentation remain unchanged; compilation remains unavailable; one Input and zero Buttons are present; and the Workspace/export trees remain byte-for-byte unchanged.
 
 ---
 
@@ -688,11 +709,13 @@ Milestone 10D renders the complete presentation contract in that real Textual sh
 
 Milestone 10E proves the first application-owned UI operation independently of Textual. Runtime rerun preflights current evidence, executes exactly once, reuses build evidence, returns a fresh presentation, and leaves persisted Workspace/export bytes unchanged.
 
+Milestone 10F executes the first complete visible event loop headlessly: one Textual input submission crosses the application controller/operation seam, updates runtime evidence on screen, retains fresh run evidence outside the renderer, and leaves all non-runtime evidence and repository bytes unchanged.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership: renderer events cross named application operations rather than reaching domain/runtime services directly.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership.
 
 ---
 
@@ -744,20 +767,21 @@ The original milestone order proved useful:
 - Milestone 10C — first local UI framework selection and headless boot-shell proof: complete.
 - Milestone 10D — complete read-only Workspace detail screen: complete.
 - Milestone 10E — first application-owned runtime-only UI operation seam: complete.
+- Milestone 10F — first visible runtime interaction and retained live controller evidence: complete.
 
 ### Milestone 10 — First local Workspace UI
 
-The first local UI now has a proven renderer, complete read-only detail surface, and one tested application-owned operation that can safely produce fresh presentation evidence. Textual still owns no product logic.
+The first local UI now has a proven renderer, complete evidence surface, application-owned operation seam, and one complete non-architectural event loop. Textual still owns no product/domain logic.
 
-### Next narrow step — Milestone 10F
+### Next narrow step — Milestone 10G
 
-Wire exactly one visible runtime interaction to the proven `rerun_workspace()` seam.
+Establish the first **application-owned architectural preview presentation seam** before adding any mutation control.
 
-Keep the interaction non-architectural. Prefer one text-input submission path so the user can supply runtime text and trigger the existing application operation without introducing rationale-bearing mutation, export controls, or multiple actions at once.
+Use the already-proven preview-first architecture path rather than inventing a UI-specific diff. Start with the existing `normalize_text` removal preview because it is the permanent Repository Zero change fixture.
 
-The Textual layer must not receive compiler/runtime/revision/export services. It should receive only the minimum application-owned controller/callback state needed to invoke the proven operation and then replace the rendered `WorkspacePresentation` with the returned fresh presentation. The callback must retain the returned `BuildAndRunResult` for the next operation rather than reconstructing it from the screen.
+The application layer should expose the preview facts the UI needs—current/proposed canonical identity, structural capability delta, predicted compiler consequences already owned by the preview, and predicted observable runtime contract—without writing canonical state, compiling, appending a revision, or invalidating the current run/export evidence.
 
-Prove headlessly that one user interaction changes runtime evidence on screen, preserves canonical/RIR/compiler/revision/export facts, and performs no compilation or filesystem mutation.
+The controller may retain a typed preview result for a later rationale/apply step, but Textual should still receive only a presentation-safe immutable preview object. Prove this seam independently before adding a visible architectural control.
 
 ### Milestone 11 — Measurement
 
@@ -826,9 +850,13 @@ Do not wire Textual callbacks directly to compiler, runtime, revision, export, o
 
 A presentation is not a substitute for the `BuildAndRunResult` that produced it. After an application operation, retain the returned fresh run evidence for future operations rather than trying to reconstruct it from rendered fields.
 
+### Renderer becoming the live-state owner
+
+Do not store the only authoritative current run state inside Textual widgets or derive it back from displayed JSON/status fields. The renderer displays presentation; the application controller retains transient operation evidence.
+
 ### Shadow implementations
 
-Preview, export, CLI, UI, education, presentation, query, operations, and packaging layers must not quietly reimplement capability logic.
+Preview, export, CLI, UI, education, presentation, query, operations, controllers, and packaging layers must not quietly reimplement capability logic.
 
 ### Filesystem discovery becoming architecture
 
@@ -885,6 +913,7 @@ Before adding something, ask:
 15. Is each displayed fact durable or transient, and does the code recover it only through the boundary that actually owns it?
 16. If the UI initiates an action, which named application operation owns that action, and what fresh evidence does it return?
 17. After an operation, which live evidence must be retained for the next operation rather than reconstructed from presentation?
+18. Does the renderer own only display state, or has transient application/domain state leaked into widgets?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -898,7 +927,7 @@ That question has been explored enough for the minimum slice.
 
 Begin instead with:
 
-> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export → presentation → query → application operation → local UI` path more usable while preserving its boundaries?
+> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export → presentation → query → application operation/controller → local UI` path more usable while preserving its boundaries?
 
 Read the current code before modifying it.
 
@@ -912,12 +941,12 @@ When a prototype lesson and current code disagree, reproduce the contradiction w
 
 For packaging, Milestone 9 is closed. The portable contract is conventional source plus a verified wheel, and the offline guarantee applies to installing/executing that wheel. Do not reopen offline source-build machinery unless a new real requirement explicitly demands it.
 
-For UI work, Milestones 10A through 10E are complete. `WorkspacePresentation` is the immutable renderer contract, `query_workspace_presentation()` is the application-owned existing-Workspace assembly path, Textual is the selected first local renderer, `WorkspaceDetail` renders the complete evidence contract, and `rerun_workspace()` is the first tested application-owned operation seam.
+For UI work, Milestones 10A through 10F are complete. `WorkspacePresentation` is the immutable renderer contract, `query_workspace_presentation()` is the application-owned existing-Workspace assembly path, Textual is the selected first local renderer, `WorkspaceDetail` renders the complete evidence contract, `rerun_workspace()` is the first application-owned operation seam, and `WorkspaceRuntimeController` retains live run evidence while the single visible Textual runtime input refreshes only presentation.
 
-Do not let Textual call `run_materialized_workspace()` or other domain services directly. The next narrow work is Milestone 10F: wire one visible runtime text submission to the proven application operation, retain the returned fresh run evidence, and refresh the detail view from the returned presentation. Do not add architectural mutation or a second action yet.
+Do not jump directly from this runtime interaction to canonical mutation. The next narrow work is Milestone 10G: establish a presentation-safe, application-owned architectural preview seam over the already-proven preview path, with no mutation or new Textual control yet.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 10E closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, an immutable framework-independent `WorkspacePresentation`, an application-owned existing-Workspace query that reloads only durable evidence while requiring transient run/READY evidence explicitly, a Textual local UI whose `WorkspaceDetail` renders the complete presentation contract read-only, and a tested application-owned `rerun_workspace()` operation that preflights live evidence, executes the existing materialized Workspace exactly once, reuses the prior build evidence, and returns fresh run/presentation evidence without adding any UI control. Milestone 9 is closed. Milestones 10A–10E are complete; the next narrow step is one visible runtime interaction wired to that proven operation boundary.
+At the 2026-08-12 Milestone 10F closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, an immutable framework-independent `WorkspacePresentation`, an application-owned existing-Workspace query that reloads only durable evidence while requiring transient run/READY evidence explicitly, a Textual local UI whose `WorkspaceDetail` renders the complete presentation contract, a tested runtime-only `rerun_workspace()` operation, and an application-owned `WorkspaceRuntimeController` wired to one visible Textual input submission that retains fresh `BuildAndRunResult` evidence and refreshes only runtime presentation without compilation or filesystem mutation. Milestone 9 is closed. Milestones 10A–10F are complete; the next narrow step is an application-owned architectural preview presentation seam before any canonical mutation control is introduced.
