@@ -189,6 +189,17 @@ Pre-change READY evidence is deliberately not carried into that post-apply prese
 
 `WorkspaceArchitecturePreviewController` updates its retained run, clears its retained export evidence, and clears the consumed pending preview only after the application operation returns successfully. Validation or governed-apply failure leaves those retained controller values unchanged. Milestone 10I adds no Textual rationale or Apply control; mutation ownership is proven independently before rendering can invoke it.
 
+## D091 — One live Workspace controller owns transient interaction state
+A combined interactive Workspace session must have one application-owned authority for the transient state shared by runtime and architectural operations: one current `BuildAndRunResult`, one optional current `WorkspaceExportResult`, and one optional pending `ArchitecturePreview`.
+
+Milestone 10J adds `WorkspaceController`. Its methods delegate only to the already-proven `rerun_workspace()`, `preview_workspace_remove_normalize_text()`, and `apply_workspace_remove_normalize_text()` operations. The controller does not absorb runtime, preview, revision, compiler, export, or presentation implementation.
+
+A successful runtime rerun replaces the one current run while preserving still-valid READY evidence and any pending architecture preview because canonical/RIR/compiler identity has not changed. Preview is created against that same current run and retained as the exact typed proposal for Apply. Successful Apply consumes that retained preview, replaces the same current run with post-apply evidence, clears pre-change READY, and clears the consumed preview. A later runtime rerun therefore necessarily uses the post-apply `BuildResult` rather than a stale pre-change copy.
+
+Controller state advances only after delegated operations return successfully. Failure must not partially replace the shared run/export/preview state.
+
+The specialized `WorkspaceRuntimeController` and `WorkspaceArchitecturePreviewController` remain temporarily for compatibility with the already-proven Textual slices, but they must not be composed as independent live-state authorities in the eventual combined UI. Textual remains unchanged in 10J; the renderer should migrate to `WorkspaceController` before rationale/Apply controls are exposed.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
