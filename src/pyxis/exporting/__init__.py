@@ -14,6 +14,11 @@ from .package_runtime import (
     PackageRuntimeVerificationResult,
     verify_package_runtime,
 )
+from .package_wheel import (
+    PackageWheelBuildResult,
+    WheelCompilerProductVerification,
+    build_package_wheel,
+)
 from .plan import ExportCompilerProduct, ExportPlan, build_export_plan
 from .readiness import (
     ExportReadiness,
@@ -41,9 +46,12 @@ __all__ = [
     "PackageRuntimeVerificationResult",
     "PackageSupportFile",
     "PackageSupportRole",
+    "PackageWheelBuildResult",
     "VerifiedExportCompilerProduct",
+    "WheelCompilerProductVerification",
     "build_export_plan",
     "build_package_layout_plan",
+    "build_package_wheel",
     "materialize_export_plan",
     "materialize_package_layout",
     "verify_export",
