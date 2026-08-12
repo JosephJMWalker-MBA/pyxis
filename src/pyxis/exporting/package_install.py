@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
-import importlib.util
 import json
 import os
 from pathlib import Path
@@ -41,20 +40,20 @@ _NETWORK_AND_IMPORT_GUARD = (
 )
 
 _ISOLATION_PROBE = (
-    "import importlib.util\n"
+    "from importlib.machinery import PathFinder\n"
     "import socket\n\n"
-    "if importlib.util.find_spec(\"pyxis\") is not None:\n"
-    "    raise RuntimeError(\"Pyxis unexpectedly importable in fresh installation environment.\")\n"
+    "if PathFinder.find_spec(\"pyxis\") is not None:\n"
+    "    raise RuntimeError(\"Pyxis unexpectedly discoverable in fresh installation environment.\")\n"
     "if socket.create_connection.__name__ != \"_pyxis_block_network\":\n"
     "    raise RuntimeError(\"Offline network guard is not active.\")\n"
 )
 
 _INSTALLED_PROBE = (
-    "import importlib.util\n"
+    "from importlib.machinery import PathFinder\n"
     "import socket\n\n"
-    "if importlib.util.find_spec(\"pyxis\") is not None:\n"
+    "if PathFinder.find_spec(\"pyxis\") is not None:\n"
     "    raise RuntimeError(\"Installed wheel unexpectedly exposes Pyxis.\")\n"
-    "if importlib.util.find_spec(\"pyxis_workspace\") is None:\n"
+    "if PathFinder.find_spec(\"pyxis_workspace\") is None:\n"
     "    raise RuntimeError(\"Installed wheel does not expose its standalone runner.\")\n"
     "if socket.create_connection.__name__ != \"_pyxis_block_network\":\n"
     "    raise RuntimeError(\"Offline network guard is not active after installation.\")\n"
