@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .artifacts import GeneratedArtifact
 from .manifest import GenerationManifest
-from .status import ExistingArtifactIntegrity
+from .status import ArtifactGenerationStatus, ExistingArtifactIntegrity
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,6 +14,7 @@ class MaterializationResult:
     """Observable filesystem consequence of one artifact materialization pass."""
 
     written_paths: tuple[Path, ...]
+    reused_paths: tuple[Path, ...]
     removed_paths: tuple[Path, ...]
 
 
@@ -90,14 +91,16 @@ def materialize_artifacts(
 
 def reconcile_materialized_artifacts(
     artifacts: tuple[GeneratedArtifact, ...],
+    generation_statuses: tuple[ArtifactGenerationStatus, ...],
     previous_manifest: GenerationManifest | None,
     destination_root: Path,
 ) -> MaterializationResult:
-    """Write current compiler products and remove only previously owned stale ones.
+    """Materialize current compiler products from proven generation statuses.
 
-    Prior ownership comes exclusively from the previous generation manifest.
-    This function does not scan the filesystem to infer generated artifacts and
-    does not make incremental reuse or status decisions.
+    Only artifacts classified as ``new`` or ``regenerated`` are written.
+    ``reused`` artifacts are preserved in place, and ``removed`` paths are
+    deleted only when prior ownership is proven by the previous manifest. This
+    function consumes compiler status evidence; it does not classify artifacts.
     """
 
     root = destination_root.resolve()
@@ -117,12 +120,46 @@ def reconcile_materialized_artifacts(
     stale_paths = tuple(
         path for path in previous_paths if path not in current_path_set
     )
+    expected_status_paths = (*current_paths, *stale_paths)
+    status_paths = tuple(entry.path for entry in generation_statuses)
+    if len(set(status_paths)) != len(status_paths):
+        raise ValueError("Generation status paths must be unique.")
+    if set(status_paths) != set(expected_status_paths):
+        raise ValueError(
+            "Generation statuses must cover exactly current and removed artifact paths."
+        )
+
+    status_by_path = {entry.path: entry.status for entry in generation_statuses}
+    for path in current_paths:
+        if status_by_path[path] not in {"new", "reused", "regenerated"}:
+            raise ValueError(
+                f"Current compiler artifact has invalid status: {path!r}."
+            )
+    for path in stale_paths:
+        if status_by_path[path] != "removed":
+            raise ValueError(
+                f"Stale compiler artifact must have removed status: {path!r}."
+            )
 
     # Validate every path before mutating the filesystem.
-    for path in (*current_paths, *stale_paths):
+    for path in expected_status_paths:
         _resolve_artifact_target(path, root)
 
-    written_paths = materialize_artifacts(artifacts, root)
+    reused: list[Path] = []
+    artifacts_to_write: list[GeneratedArtifact] = []
+    for artifact in artifacts:
+        status = status_by_path[artifact.path]
+        if status == "reused":
+            target = _resolve_artifact_target(artifact.path, root)
+            if not target.is_file():
+                raise ValueError(
+                    f"Reused compiler artifact is not a file: {artifact.path!r}."
+                )
+            reused.append(target)
+        else:
+            artifacts_to_write.append(artifact)
+
+    written_paths = materialize_artifacts(tuple(artifacts_to_write), root)
     removed: list[Path] = []
 
     for path in stale_paths:
@@ -138,5 +175,6 @@ def reconcile_materialized_artifacts(
 
     return MaterializationResult(
         written_paths=written_paths,
+        reused_paths=tuple(reused),
         removed_paths=tuple(removed),
     )
