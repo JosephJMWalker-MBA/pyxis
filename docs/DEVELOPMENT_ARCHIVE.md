@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11A on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11B on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -211,6 +211,12 @@ The export control appears because `WorkspacePresentation.export` is absent, not
 Measurement should attach to stable application boundaries rather than create alternate execution paths, and it should reuse work facts already owned by the compiler/materializer rather than infer them again.
 
 New timing evidence may be observed with an explicit clock. Existing generation and materialization evidence should pass through unchanged. Interpretation such as efficiency, causality, or waste should be introduced only after the underlying observations are stable enough to support it.
+
+### 2.27 Comparison is still observation, not explanation
+
+Once two measured cycles exist, Pyxis may align their matching stages and compiler/materializer facts and state literal differences between them.
+
+A duration delta is only `after - before`. A path status transition such as `new → reused` is only the transition the compiler reported. Seeing those facts in the same comparison does not prove one caused the other, and the comparison boundary should not smuggle in labels such as faster, better, efficient, or wasteful before an evidence model can justify them.
 
 ---
 
@@ -534,6 +540,14 @@ The fake-clock proof makes stage durations deterministic. The work side of the m
 
 The lesson is to separate observation from interpretation. 11A records time and owned work facts; it does not yet say that one duration caused another, label any work as waste, persist a ledger, or render metrics in the UI.
 
+### 4.27 A comparison can expose association without claiming cause
+
+Milestone 11B compares two real measured cycles without introducing another execution boundary.
+
+A first build and an identical rebuild of the same Workspace naturally produce different compiler/materializer evidence: the first cycle reports `new` artifacts and writes them, while the second reports `reused` artifacts and performs no generated writes. Fake clocks independently make the second build/runtime durations lower in the acceptance fixture.
+
+`compare_build_and_run_measurements()` reports those facts side by side and calculates only arithmetic `after - before` duration deltas. It performs no timing, compilation, runtime execution, filesystem access, or work reclassification. The important restraint is semantic: the coexistence of more reuse and lower duration in this pair is a correlation in two observations, not a demonstrated causal effect and not yet a waste/efficiency judgment.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -665,6 +679,9 @@ Repository Zero exposes one destination-path input and one Export/Verify action 
 
 ### D096 — Measurement Observes Established Operations and Carries Owned Work Evidence
 Repository Zero adds one application-owned measurement wrapper over `build_and_run_workspace()`. An injectable monotonic clock records immutable ordered build/runtime duration evidence while compiler/materializer work facts pass through directly from `BuildResult`. Measurement does not create a shadow execution path, scan the filesystem, classify waste, persist metrics, or add UI.
+
+### D097 — Measurement Comparison Reports Observation Deltas Without Causal Interpretation
+Repository Zero adds a pure comparison over two existing measured cycles. Ordered stage durations are reported as before/after values plus arithmetic deltas; exact before/after build-work evidence is retained; compiler-status changes are stated per artifact path. Comparison performs no execution or filesystem work and makes no causal, efficiency, or waste claim.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -936,6 +953,16 @@ The acceptance tests compare measured and unmeasured fresh executions semantical
 
 No measurement persistence, UI, full ledger, waste score, or Preview/Apply/Export timing is introduced in 11A.
 
+### 7.26 Pure measurement comparison
+
+`compare_build_and_run_measurements()` consumes two existing `MeasuredBuildAndRunResult` values and returns immutable `BuildAndRunMeasurementComparisonEvidence`.
+
+The function does no execution or acquisition. It requires the two measurement stage-name sequences to match exactly, then produces `StageDurationComparisonEvidence` containing each stage's before seconds, after seconds, and arithmetic delta. It retains the exact before/after `BuildWorkEvidence` objects and produces path-level `ArtifactGenerationStatusComparisonEvidence` without reclassifying compiler work.
+
+The 11B acceptance fixture performs a genuine first build and identical rebuild on the same Workspace. All three artifacts transition from `new` to `reused`; generated writes go from all three artifact paths to none; reused paths go from none to all three. Fake-clock durations are exact and lower in the second observation. The comparison exposes those facts together but does not characterize the second run as faster due to reuse, efficient, or less wasteful.
+
+A separate test rejects mismatched stage ordering rather than silently pairing unrelated stage positions. Comparison remains transient, pure, and in-memory only.
+
 ---
 
 ## 8. Proof status
@@ -974,11 +1001,13 @@ Milestone 10N executes the complete visible READY lifecycle in the real headless
 
 Milestone 11A executes the first measurement boundary through the real `build_and_run_workspace()` operation. A fake clock proves exact ordered build/runtime durations; measured and unmeasured fresh cycles are semantically equivalent; work evidence is the same compiler/materializer-owned tuples returned by `BuildResult`; and a real incremental removal carries `reused`, `regenerated`, and `removed` evidence without reclassification.
 
+Milestone 11B executes a real first build followed by an identical rebuild and compares the completed measurement records without running anything during comparison. Exact fake-clock stage deltas, `new → reused` artifact transitions, all-writes → no-writes, and no-reuse → all-reuse facts are returned as immutable evidence. A mismatched stage order is rejected, and no causal/efficiency/waste claim is introduced.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims.
 
 ---
 
@@ -1040,6 +1069,7 @@ The original milestone order proved useful:
 - Milestone 10M — application-owned verified export refresh and READY recovery: complete.
 - Milestone 10N — first visible verified export refresh and READY restoration: complete.
 - Milestone 11A — first application-owned build/run measurement evidence boundary: complete.
+- Milestone 11B — pure descriptive comparison of two measured build/run cycles: complete.
 
 ### Milestone 10 — First local Workspace UI
 
@@ -1051,17 +1081,17 @@ This closes the minimum local Workspace lifecycle without adding generalized arc
 
 ### Milestone 11 — Measurement
 
-Milestone 11A now establishes the first observation primitive: one stable build/run cycle can return exact build/runtime timing alongside compiler/materializer work evidence without changing execution ownership.
+Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves.
 
-The Execution Ledger should evolve from these real observations rather than imagined fields.
+The Execution Ledger should continue to evolve from these proven observations rather than imagined fields.
 
-### Next narrow step — Milestone 11B
+### Next narrow step — Milestone 11C
 
-Add one pure immutable **measurement comparison** boundary over two existing `MeasuredBuildAndRunResult` values.
+Add explicit immutable **measurement-subject identity/coherence evidence** before any ledger or broader interpretation is introduced.
 
-The first comparison should be deliberately descriptive: require coherent Workspace identity, preserve the ordered `build`/`runtime` stage names, report exact duration deltas, and summarize the already-owned generation/materialization facts for each cycle. Use a real first build followed by an identical rebuild so the second cycle's compiler evidence demonstrates `reused` artifacts and zero generated writes, while fake clocks make timing differences exact.
+Use identity already owned by the measured `BuildResult`/RepositoryIR/generation manifest—such as repository/workspace identity and current RIR identity—rather than filesystem discovery. The measurement record should make clear what Workspace and architectural state an observation belongs to, and the comparison boundary should reject genuinely unrelated Workspace subjects instead of relying on caller memory.
 
-Do not call the timing delta a speedup caused by reuse, do not assign a waste/efficiency score, and do not infer causal relationships. Do not persist comparisons, add UI, or broaden instrumentation to Preview/Apply/Export in 11B.
+The first proof should preserve the current identical-rebuild comparison, demonstrate that two measurements of the same Workspace carry coherent subject identity, and reject a comparison between unrelated Workspace subjects before producing timing/work deltas. Do not persist identities, add UI, create a full Execution Ledger, infer causal performance, or instrument Preview/Apply/Export in 11C.
 
 ### Milestone 12 — Browser/research capabilities
 
@@ -1179,6 +1209,10 @@ Do not estimate compiler work from file timestamps or directory scans when `Buil
 
 A lower duration alongside more reuse is an observation, not proof that reuse caused the timing difference. Comparison may expose deltas and owned work facts before the system has enough evidence to make causal or waste claims.
 
+### Comparing subjects without explicit identity
+
+As measurement grows beyond one controlled fixture, do not rely on caller memory to know whether two observations belong to the same Workspace or architectural state. Subject/coherence evidence should come from already-owned Repository/RIR identities before comparisons feed later accounting.
+
 ### Shadow implementations
 
 Preview, export, CLI, UI, education, presentation, query, operations, controllers, packaging, and measurement layers must not quietly reimplement capability logic.
@@ -1250,6 +1284,7 @@ Before adding something, ask:
 27. If a control is evidence-gated, is the gate based on application presentation rather than filesystem observation?
 28. If measurement is involved, does it wrap the permanent operation without altering behavior, and does it reuse compiler-owned work classifications rather than infer them?
 29. If measurements are compared, are duration/work deltas kept descriptive until there is evidence for any causal or waste interpretation?
+30. Do compared measurements identify their Workspace/architectural subject from owned evidence rather than caller assumptions or filesystem shape?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -1279,12 +1314,12 @@ For packaging, Milestone 9 is closed. The portable contract is conventional sour
 
 For UI work, Milestones 10A through 10N are complete and Milestone 10 is closed for Repository Zero. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply/export-refresh behavior and one unified `WorkspaceController`; and Textual performs runtime, Preview, rationale-bearing Apply, and evidence-gated verified export through that one authority. The real headless lifecycle proves READY → Preview/Apply → no READY → verified export → READY, including non-optimistic failure behavior.
 
-For measurement, Milestone 11A is complete. `measure_build_and_run_workspace()` observes the existing `build_and_run_workspace()` operation through a private stage hook, uses an injectable monotonic clock, and pairs unchanged build/run evidence with immutable timing plus the exact compiler/materializer work tuples already owned by `BuildResult`. Nothing is persisted and no efficiency/waste interpretation exists yet.
+For measurement, Milestones 11A and 11B are complete. `measure_build_and_run_workspace()` observes the existing `build_and_run_workspace()` operation through a private stage hook, uses an injectable monotonic clock, and pairs unchanged build/run evidence with immutable timing plus the exact compiler/materializer work tuples already owned by `BuildResult`. `compare_build_and_run_measurements()` is pure: it aligns matching stage names, reports arithmetic duration deltas, retains exact before/after work evidence, and reports literal artifact-status transitions without causal or waste interpretation.
 
-Milestone 11B should compare two existing measured cycles purely and immutably. Start with a real first build followed by an identical rebuild, use fake clocks for exact timing deltas, and expose the second cycle's compiler-owned reuse/zero-write evidence without claiming that reuse caused a speedup. Do not add a ledger, UI, persistence, or broaden instrumentation in the same step.
+The next pressure is subject identity. Before a comparison becomes part of a ledger or broader journey, Milestone 11C should make each observation's Workspace/architectural subject explicit from existing Repository/RIR evidence and reject unrelated subjects rather than relying on caller memory. Do not add persistence, UI, or performance interpretation in the same step.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 11A closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and a first application-owned measurement boundary. Measurement now proves exact ordered build/runtime durations with an injectable monotonic clock while carrying compiler/materializer work evidence directly from `BuildResult`, without changing execution ownership or inferring work from the filesystem. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestone 11A is complete; the next narrow step is 11B: pure descriptive comparison of two genuine measured cycles before any persistence, UI, causal interpretation, or full Execution Ledger.
+At the 2026-08-12 Milestone 11B closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement plus pure comparison boundaries. Measurement now proves exact ordered build/runtime durations with an injectable monotonic clock while carrying compiler/materializer work evidence directly from `BuildResult`; comparison reports exact before/after timing deltas and compiler-status/materialization changes without execution, filesystem inference, causal attribution, or waste scoring. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A and 11B are complete; the next narrow step is 11C: explicit measurement-subject identity/coherence from owned Repository/RIR evidence before any persistence, UI, causal interpretation, or full Execution Ledger.
