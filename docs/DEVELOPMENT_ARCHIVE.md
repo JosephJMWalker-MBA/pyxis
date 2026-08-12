@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10J on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10K on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -181,6 +181,12 @@ Application state should advance only from fresh operation results. If multiple 
 Runtime rerun, architecture preview, and architecture apply all consume the same transient current Workspace evidence. Once those operations can occur in one user session, the application layer must own one current run, one optional current READY result, and one optional pending architecture preview.
 
 The renderer should not synchronize sibling controllers or infer which transient copy is newest. Successful operations advance the one application-owned state; failed operations leave it unchanged.
+
+### 2.22 The renderer should receive that authority once
+
+Once the shared live-state authority exists, the renderer should not preserve separate runtime and architecture controller inputs as a second synchronization problem.
+
+A combined interactive shell receives one `WorkspaceController`. Runtime submission and architectural Preview route through that same object, so later operations inherit the application-owned ordering already proven below the UI. Read-only rendering still requires no controller at all.
 
 ---
 
@@ -462,6 +468,14 @@ The controller retains one current `BuildAndRunResult`, one optional current `Wo
 
 The acceptance path proves object-identity handoff across `rerun → preview → apply → rerun`: the run returned by the first rerun is exactly the run consumed by Preview and Apply; the run returned by Apply is exactly the run consumed by the final rerun. READY remains current across runtime-only work and is cleared by architectural mutation. Failed Apply leaves all shared state unchanged.
 
+### 4.22 Renderer migration should preserve ordering evidence, not simulate synchronization
+
+Milestone 10K moves the already-visible runtime and Preview interactions onto the same `WorkspaceController` rather than adding synchronization code between the earlier specialized controllers.
+
+The headless UI proof submits runtime text first and then requests Preview. It verifies by object identity that Preview receives the exact fresh `BuildAndRunResult` produced by the preceding runtime operation, while READY remains the same valid pre-change evidence and the proposed architecture remains confined to `PROPOSED — NOT APPLIED` presentation.
+
+This is the last state-ownership prerequisite before visible architectural mutation: the application owns one live state, and the renderer now receives that authority once.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -578,6 +592,9 @@ Repository Zero adds the application-owned rationale-bearing apply operation/con
 
 ### D091 — One Live Workspace Controller Owns Transient Interaction State
 Repository Zero consolidates combined runtime/architecture interaction state into `WorkspaceController`: one current run, one optional current export result, and one optional pending architecture preview. Runtime, preview, and apply all delegate to the existing application operations and advance that one state only after success.
+
+### D092 — Textual Runtime and Preview Interactions Share the Unified Workspace Controller
+Repository Zero removes separate runtime/architecture controller inputs from the combined Textual shell. One optional `WorkspaceController` now owns both visible event paths, and the headless runtime → Preview proof verifies that Preview consumes the exact fresh run produced by the preceding runtime submission while READY remains current.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -753,13 +770,9 @@ A successful operation invokes `run_materialized_workspace()` exactly once, reus
 
 ### 7.16 First visible runtime interaction
 
-`src/pyxis/app/controller.py` contains `WorkspaceRuntimeController`, the minimal application-owned holder for transient runtime interaction state. It retains the current `BuildAndRunResult`, Workspace root, and optional export evidence and delegates its only operation to `rerun_workspace()`.
+Milestone 10F originally connected the runtime `Input` through `WorkspaceRuntimeController`. That proof established that Textual submits one runtime action, receives fresh presentation evidence, and never reconstructs the `BuildAndRunResult` from rendered fields.
 
-`WorkspaceShell` may receive this controller alongside its current presentation. When present, the shell renders exactly one runtime `Input`. Pressing Enter posts Textual's `Input.Submitted` event; the shell sends the submitted text to `WorkspaceRuntimeController.rerun()` exactly once.
-
-The controller retains the returned fresh run evidence. The shell retains the returned presentation, and `WorkspaceDetail.replace_presentation()` updates the existing evidence widgets from that presentation. The renderer never reconstructs the run evidence from its fields.
-
-The 10F acceptance test starts from real governed revision evidence plus real READY export evidence. After one text submission, only runtime evidence changes. Canonical, RIR, compiler, revision, and export presentation remain unchanged; compilation remains unavailable; one Input and zero Buttons are present; and the Workspace/export trees remain byte-for-byte unchanged.
+The 10F acceptance path starts from real governed revision evidence plus real READY export evidence. After one text submission, only runtime evidence changes; canonical, RIR, compiler, revision, and export presentation remain unchanged, and Workspace/export bytes remain unchanged.
 
 ### 7.17 Application-owned architectural preview presentation seam
 
@@ -769,21 +782,13 @@ It first calls `query_workspace_presentation()` with current run/optional export
 
 `src/pyxis/app/preview_presentation.py` defines immutable `CanonicalPreviewPresentation` and `ArchitecturePreviewPresentation`. These expose current/proposed canonical hashes and capabilities, capability additions/removals, predicted added/changed/removed compiler artifact paths, and current/proposed/added/removed runtime result keys. The adapter validates that proposed RIR and delta evidence agree with the canonical proposal but does not compile or execute it.
 
-`WorkspaceArchitecturePreviewController` retains the typed pending `ArchitecturePreview` so a later rationale/apply operation can consume the exact proposal that was shown. Its preview method returns only `ArchitecturePreviewPresentation`.
-
 The 10G acceptance path proves that preview construction leaves both source and portable-export trees unchanged, current run/READY evidence remains queryable and identical afterward, compiler execution is unavailable, and stale live evidence is rejected before the underlying preview function runs.
 
 ### 7.18 First visible architectural preview
 
-`WorkspaceShell` may now receive a `WorkspaceArchitecturePreviewController` alongside the current `WorkspacePresentation`.
+Milestone 10H originally connected the Preview button through `WorkspaceArchitecturePreviewController`. It established the dedicated `ArchitecturePreviewDetail` surface whose body begins with `PROPOSED — NOT APPLIED` and whose contents never replace current `WorkspaceDetail` evidence.
 
-When present, the shell renders exactly one architectural button: `Preview removal of normalize_text`. Pressing it calls only `WorkspaceArchitecturePreviewController.preview_remove_normalize_text()`.
-
-The returned `ArchitecturePreviewPresentation` is rendered by `ArchitecturePreviewDetail`, a separate proposed-state panel. Its body begins with `PROPOSED — NOT APPLIED` and shows the current/proposed canonical hashes and capabilities, predicted compiler-product path additions/changes/removals, and current/proposed runtime-key contract.
-
-The current `WorkspaceDetail` is not replaced or refreshed by this action. `WorkspaceShell.presentation` remains the current presentation, existing READY evidence remains current, and the typed pending preview remains owned by the application controller.
-
-The 10H acceptance test starts from a real built/run/READY Workspace, disables compiler execution, snapshots every current evidence section plus both repository trees, triggers the button once in a real headless Textual app, and verifies that only the proposed-preview panel changes. With only the architecture preview controller enabled there is one Button and zero Inputs. No rationale or Apply control exists.
+The 10H acceptance test starts from a real built/run/READY Workspace, disables compiler execution, snapshots every current evidence section plus both repository trees, triggers Preview once in a real headless Textual app, and verifies that only the proposed-preview panel changes.
 
 ### 7.19 First rationale-bearing architectural apply seam
 
@@ -793,21 +798,27 @@ The operation requires non-empty rationale and explicit runtime text. It preflig
 
 The existing governed apply path appends revision intent, builds the proposed canonical state through the permanent compiler/materializer path, and appends completion evidence. The new application operation then runs the newly materialized Workspace once and queries fresh presentation evidence with `export=None`.
 
-`WorkspaceArchitecturePreviewController` now exposes its current run/export evidence and adds `apply_pending_remove_normalize_text(rationale, text)`. It refuses apply without a pending typed preview. On successful operation return it replaces its retained run, clears the old export evidence, clears the consumed preview, and returns the fresh current presentation. Empty rationale or failed/stale apply leaves controller-retained values unchanged.
-
 The 10I acceptance path proves the exact retained preview object reaches governed apply, runtime executes once from the proposed RepositoryIR, revision rationale/completion appear in the new presentation, `normalize_text` appears as `removed`, and physically unchanged pre-change portable files do not cause READY to survive in the new current presentation.
-
-Textual is unchanged in 10I. No rationale or Apply widget exists yet.
 
 ### 7.20 Unified live Workspace controller
 
-`src/pyxis/app/controller.py` now also defines `WorkspaceController`, the intended live-state authority for combined runtime and architectural interactions.
+`src/pyxis/app/controller.py` defines `WorkspaceController`, the live-state authority for combined runtime and architectural interactions.
 
 It retains exactly one current `BuildAndRunResult`, one optional current `WorkspaceExportResult`, and one optional pending `ArchitecturePreview`. Its `rerun()`, `preview_remove_normalize_text()`, and `apply_pending_remove_normalize_text()` methods delegate to the already-proven application operations and replace controller state only from successful operation results.
 
 Runtime rerun keeps READY because architecture is unchanged. Preview retains the typed proposal against the same current run. Successful Apply advances that same run to the new architecture, clears READY, and consumes the pending preview. A later rerun therefore uses the post-apply build rather than stale sibling-controller evidence.
 
-The specialized runtime/architecture controllers remain temporarily for compatibility with existing Textual tests. Textual itself is unchanged in 10J.
+The earlier specialized controllers remain available as compatibility/application proof surfaces, but they are no longer accepted as separate live-state inputs by the combined Textual shell.
+
+### 7.21 Textual uses the unified live Workspace controller
+
+Milestone 10K migrates the current Textual interaction boundary itself. `WorkspaceShell` and `create_workspace_shell()` now accept one optional `WorkspaceController`; when it is present, the shell renders both the existing runtime `Input` and Preview button and routes both events to that same controller.
+
+A runtime submission replaces current `WorkspacePresentation` from `WorkspaceController.rerun()`. Preview does not replace that current presentation; it calls `WorkspaceController.preview_remove_normalize_text()` and updates only `ArchitecturePreviewDetail`.
+
+The combined 10K acceptance path starts from READY evidence, submits new runtime text, captures the fresh run retained by `WorkspaceController`, then clicks Preview. Instrumentation proves that the preview application operation receives that exact fresh run object and the same export evidence. READY remains visible, the runtime result remains the just-submitted result, the proposed panel remains `PROPOSED — NOT APPLIED`, compiler execution is unavailable, and both source/export trees remain byte-identical.
+
+There is still exactly one runtime Input and one Preview button in the interactive shell. No rationale field or Apply control exists yet.
 
 ---
 
@@ -837,11 +848,13 @@ Milestone 10I proves the first rationale-bearing architectural apply operation i
 
 Milestone 10J proves one application-owned live Workspace state authority across runtime and architecture operations. The acceptance path tracks exact object identity through rerun → preview → apply → rerun, proves READY survives only the non-architectural portion, proves post-apply runtime consumes the new `BuildResult`, and proves failed Apply leaves all shared controller state unchanged.
 
+Milestone 10K executes runtime → Preview through that same authority in the real headless Textual shell. It proves the Preview operation receives the exact fresh run produced by the preceding runtime submission, READY remains current because no architecture changed, current runtime evidence remains current beside the proposal, no compiler work occurs, and no rationale/Apply control has been introduced.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary: runtime and Preview are no longer allowed separate live-state controller inputs.
 
 ---
 
@@ -898,20 +911,21 @@ The original milestone order proved useful:
 - Milestone 10H — first visible architectural preview action and distinct proposed-state surface: complete.
 - Milestone 10I — first application-owned rationale-bearing architectural apply seam: complete.
 - Milestone 10J — one application-owned live Workspace state authority: complete.
+- Milestone 10K — Textual runtime and Preview migrated to the unified Workspace controller: complete.
 
 ### Milestone 10 — First local Workspace UI
 
-The first local UI renders complete current evidence, performs one runtime-only action, and can visibly preview one proposed architecture change. The application layer can commit that exact retained preview with rationale and now has one shared live-state authority that keeps runtime, preview, apply, READY, and pending-preview evidence coherent. Textual has not yet migrated to that unified controller and still cannot invoke Apply.
+The first local UI renders complete current evidence, performs runtime-only execution, visibly previews one proposed architecture change, and now routes both interactions through the same live application authority. The application layer can already commit the exact retained preview with rationale and produce fresh post-apply evidence, but Textual still cannot invoke that mutation.
 
-### Next narrow step — Milestone 10K
+### Next narrow step — Milestone 10L
 
-Migrate the existing Textual runtime and Preview interactions to **one `WorkspaceController` instance** without adding rationale or Apply controls yet.
+Expose the first visible **rationale-bearing Apply** interaction through the existing `WorkspaceController` without adding another application state owner.
 
-`WorkspaceShell` should no longer need separate runtime and architecture controllers for the combined path. Its current runtime `Input` and Preview button should call the unified controller, preserving all existing visible behavior while proving both interactions consume the same live state.
+Add one rationale input and one Apply control only after a pending preview has been created. Apply must call `WorkspaceController.apply_pending_remove_normalize_text()` and consume the exact retained typed preview already displayed. Supply runtime text explicitly from the visible runtime input rather than deriving it from runtime output.
 
-Prove headlessly that a runtime submission updates the unified controller's current run, a subsequent Preview consumes that exact fresh run, READY remains current because no architecture changed, the preview remains `PROPOSED — NOT APPLIED`, and no rationale/Apply control exists. Keep compatibility only where existing tests genuinely require it; do not create a second synchronization mechanism in Textual.
+The headless proof should exercise Preview → rationale → Apply and verify that the current Workspace detail is replaced by the fresh post-apply presentation, the proposal is cleared/visibly no longer pending, `normalize_text` becomes `removed`, the completed rationale-bearing revision appears, pre-change READY disappears, and the unified controller retains the new run with no current export or pending preview. Failed/empty rationale must leave current evidence and the displayed proposal unchanged.
 
-Only after the renderer itself is using the one live authority should a later milestone expose rationale and Apply.
+Do not add export regeneration, restoration, a second architectural action, or generalized forms in 10L.
 
 ### Milestone 11 — Measurement
 
@@ -1006,7 +1020,7 @@ Once apply changes canonical/RIR/compiler products, do not carry the previous `W
 
 ### Multiple live-state controllers diverging
 
-Do not compose independent runtime and architecture controllers as the authoritative state of one combined session. `WorkspaceController` is the application-owned authority for current run/export/pending-preview evidence; the renderer should migrate to it rather than synchronizing duplicated copies.
+Do not reintroduce separate runtime and architecture controller inputs into the combined renderer. `WorkspaceController` is the application-owned authority for current run/export/pending-preview evidence; Textual now routes both existing interaction paths through that one object.
 
 ### Shadow implementations
 
@@ -1073,6 +1087,7 @@ Before adding something, ask:
 21. If Apply is involved, is it consuming the exact retained typed preview and explicitly retiring transient evidence that belonged only to the prior architecture?
 22. Are multiple application controllers retaining duplicate live evidence that can diverge after the operation?
 23. For a combined interactive session, is there exactly one application-owned authority for current run, current READY evidence, and pending architectural intent?
+24. Does the renderer receive that live authority once, or has it recreated separate per-action state ownership above the application layer?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -1100,12 +1115,12 @@ When a prototype lesson and current code disagree, reproduce the contradiction w
 
 For packaging, Milestone 9 is closed. The portable contract is conventional source plus a verified wheel, and the offline guarantee applies to installing/executing that wheel. Do not reopen offline source-build machinery unless a new real requirement explicitly demands it.
 
-For UI work, Milestones 10A through 10J are complete. `WorkspacePresentation` is the immutable current-evidence renderer contract, `query_workspace_presentation()` is the existing-Workspace assembly path, Textual renders complete current evidence plus one runtime interaction and one clearly separate architectural preview action, the application layer can consume that exact retained preview with rationale through the governed apply path, and `WorkspaceController` now owns the single live run/export/pending-preview state required to sequence runtime → preview → apply → runtime coherently.
+For UI work, Milestones 10A through 10K are complete. `WorkspacePresentation` is the immutable current-evidence renderer contract, `query_workspace_presentation()` is the existing-Workspace assembly path, the application layer owns runtime/preview/apply behavior and one unified `WorkspaceController` live state, and Textual now receives that one controller for both its existing runtime Input and `PROPOSED — NOT APPLIED` Preview action. The headless combined proof establishes that Preview consumes the exact fresh run produced by the preceding runtime submission while READY remains current.
 
-Textual still uses the earlier specialized controller surfaces. Milestone 10K should migrate the existing runtime and Preview controls to one `WorkspaceController` instance without adding rationale or Apply yet. Prove in the headless UI that runtime updates the same live state subsequently consumed by Preview and that READY remains valid across that non-architectural sequence.
+The next step may finally expose mutation, but keep it narrow. Milestone 10L should add one rationale input and one Apply control that call `WorkspaceController.apply_pending_remove_normalize_text()` using the exact pending preview already retained/displayed. Successful Apply should replace current evidence, clear the proposal, and visibly retire pre-change READY. Do not add export, restore, or generalized editing in the same milestone.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 10J closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, a Textual local UI with one runtime interaction and one distinct `PROPOSED — NOT APPLIED` architecture preview, a governed rationale-bearing architectural apply operation, and a unified application-owned `WorkspaceController` whose one current run/export/pending-preview state has been proven coherent across rerun → preview → apply → rerun with failure-safe state advancement. Milestone 9 is closed. Milestones 10A–10J are complete; the next narrow step is migrating the existing Textual runtime/Preview interactions to that one controller before any visible rationale or Apply control is added.
+At the 2026-08-12 Milestone 10K closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply application operations, and one application-owned `WorkspaceController` that is now also the sole live-state authority supplied to the combined Textual runtime and Preview interactions. The real headless UI has proven runtime submission → exact fresh shared run → Preview while READY stays current and the proposal remains `PROPOSED — NOT APPLIED`; no rationale or Apply control exists yet. Milestone 9 is closed. Milestones 10A–10K are complete; the next narrow step is one visible rationale-bearing Apply interaction through that same unified controller.
