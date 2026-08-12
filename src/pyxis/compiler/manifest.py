@@ -46,6 +46,12 @@ def _normalized_rir_bytes(repository: RepositoryIR) -> bytes:
     return payload.encode("utf-8")
 
 
+def repository_ir_sha256(repository: RepositoryIR) -> str:
+    """Return the deterministic identity of one compiler-input RIR."""
+
+    return hashlib.sha256(_normalized_rir_bytes(repository)).hexdigest()
+
+
 def _normalized_manifest_bytes(manifest: GenerationManifest) -> bytes:
     payload = json.dumps(
         manifest.to_dict(),
@@ -72,7 +78,7 @@ def build_generation_manifest(
     the filesystem, persist anything, or make reuse decisions.
     """
 
-    rir_sha256 = hashlib.sha256(_normalized_rir_bytes(repository)).hexdigest()
+    rir_sha256 = repository_ir_sha256(repository)
     manifest_artifacts = tuple(
         ManifestArtifact(
             path=artifact.path,
