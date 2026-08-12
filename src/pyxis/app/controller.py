@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .architecture_apply import apply_workspace_remove_normalize_text
 from .architecture_preview import preview_workspace_remove_normalize_text
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
@@ -50,11 +51,11 @@ class WorkspaceRuntimeController:
 
 
 class WorkspaceArchitecturePreviewController:
-    """Application-owned pending state for preview-first architecture changes.
+    """Application-owned state for preview-first architecture changes.
 
-    The controller retains the typed ArchitecturePreview needed by a later
-    rationale/apply operation. Its public preview method returns only immutable
-    presentation-safe evidence and does not mutate the Workspace.
+    The controller retains the typed ArchitecturePreview shown to the user and
+    the live run/export evidence required to apply it coherently. Preview and
+    apply behavior remain delegated to named application operations.
     """
 
     def __init__(
@@ -68,6 +69,18 @@ class WorkspaceArchitecturePreviewController:
         self._run = run
         self._export = export
         self._pending_preview: ArchitecturePreview | None = None
+
+    @property
+    def current_run(self) -> BuildAndRunResult:
+        """Return the current transient run evidence retained by this controller."""
+
+        return self._run
+
+    @property
+    def current_export(self) -> WorkspaceExportResult | None:
+        """Return export evidence still valid for the controller's current build."""
+
+        return self._export
 
     @property
     def pending_preview(self) -> ArchitecturePreview | None:
@@ -84,4 +97,29 @@ class WorkspaceArchitecturePreviewController:
             export=self._export,
         )
         self._pending_preview = result.preview
+        return result.presentation
+
+    def apply_pending_remove_normalize_text(
+        self,
+        rationale: str,
+        text: str,
+    ) -> WorkspacePresentation:
+        """Apply the exact retained preview and retain fresh post-apply evidence."""
+
+        preview = self._pending_preview
+        if preview is None:
+            raise ValueError("No pending architecture preview is available to apply.")
+
+        result = apply_workspace_remove_normalize_text(
+            self._workspace_root,
+            preview,
+            self._run,
+            rationale,
+            text,
+            export=self._export,
+        )
+
+        self._run = result.run
+        self._export = None
+        self._pending_preview = None
         return result.presentation
