@@ -7,7 +7,7 @@ from textual.widgets import Button, Input, Static
 
 from pyxis.app import (
     BuildAndRunResult,
-    WorkspaceRuntimeController,
+    WorkspaceController,
     apply_remove_normalize_text,
     build_and_run_workspace,
     export_workspace,
@@ -32,7 +32,7 @@ def _file_snapshot(root: Path) -> dict[str, bytes]:
 
 
 @pytest.mark.asyncio
-async def test_single_runtime_input_reruns_through_application_controller(
+async def test_single_runtime_input_reruns_through_unified_workspace_controller(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -66,7 +66,7 @@ async def test_single_runtime_input_reruns_through_application_controller(
         run=run,
         export=export,
     )
-    controller = WorkspaceRuntimeController(
+    controller = WorkspaceController(
         source,
         run,
         export=export,
@@ -95,14 +95,15 @@ async def test_single_runtime_input_reruns_through_application_controller(
 
     shell = create_workspace_shell(
         presentation,
-        runtime_controller=controller,
+        controller=controller,
     )
 
     async with shell.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
 
         assert len(shell.query(Input)) == 1
-        assert len(shell.query(Button)) == 0
+        assert len(shell.query(Button)) == 1
+        assert shell.query_one("#preview-remove-normalize-text", Button)
         runtime_input = shell.query_one("#runtime-input", Input)
         detail = shell.query_one(WorkspaceDetail)
         assert detail.presentation is presentation
@@ -129,6 +130,8 @@ async def test_single_runtime_input_reruns_through_application_controller(
         assert rerun_calls == 1
         assert controller.current_run.build is run.build
         assert controller.current_run.runtime_result != runtime_result
+        assert controller.current_export is export
+        assert controller.pending_preview is None
         assert shell.presentation.runtime_result == controller.current_run.runtime_result
         assert detail.presentation is shell.presentation
         assert shell.query_one("#runtime-result", Static).content == json.dumps(
@@ -145,7 +148,7 @@ async def test_single_runtime_input_reruns_through_application_controller(
         }
         assert stable_after == stable_before
         assert len(shell.query(Input)) == 1
-        assert len(shell.query(Button)) == 0
+        assert len(shell.query(Button)) == 1
 
     assert _file_snapshot(source) == source_before
     assert _file_snapshot(portable) == portable_before
