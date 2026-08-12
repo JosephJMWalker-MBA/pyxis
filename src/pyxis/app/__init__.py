@@ -3,6 +3,10 @@ from .apply import (
     apply_remove_normalize_text,
     apply_restore_normalize_text,
 )
+from .architecture_apply import (
+    WorkspaceArchitectureApplyResult,
+    apply_workspace_remove_normalize_text,
+)
 from .architecture_preview import (
     WorkspaceArchitecturePreviewResult,
     preview_workspace_remove_normalize_text,
@@ -54,6 +58,7 @@ __all__ = [
     "ExportPresentation",
     "RIRPresentation",
     "RevisionPresentation",
+    "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
     "WorkspaceArchitecturePreviewResult",
     "WorkspaceExportResult",
@@ -62,6 +67,7 @@ __all__ = [
     "WorkspaceRuntimeController",
     "apply_remove_normalize_text",
     "apply_restore_normalize_text",
+    "apply_workspace_remove_normalize_text",
     "build_and_run_workspace",
     "build_workspace",
     "create_architecture_preview_presentation",
