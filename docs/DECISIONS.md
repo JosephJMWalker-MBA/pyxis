@@ -102,6 +102,17 @@ Revision history is durable evidence and therefore gains typed read-only loaders
 
 This decision keeps reopening an existing Workspace honest: durable facts can be recovered after process loss; transient facts must be rerun or explicitly retained rather than reconstructed heuristically.
 
+## D084 — Textual is the first local Workspace UI framework
+Repository Zero selects Textual for the first local Workspace UI because it satisfies the current product need with the smallest new runtime surface: Python-native application code, local cross-platform execution, built-in interactive widgets/layout/styling, and a headless test harness that can be exercised directly from pytest.
+
+Textual is a renderer boundary only. `WorkspaceShell` receives an existing immutable `WorkspacePresentation`; it does not accept a Workspace path and must not load/query persisted state, compile, run generated code, mutate revisions, export, or infer readiness. Textual therefore sits strictly downstream of D082 and D083.
+
+The framework is installed through the optional `ui` extra rather than becoming a dependency of Pyxis's compiler/runtime core. Development dependencies include Textual only so the normal Repository Zero CI suite can execute the UI boundary headlessly.
+
+This is a decision about the **first local evidence UI**, not a permanent claim that every future Pyxis surface must use Textual or remain terminal-based. Textual can run locally and may also be served in a browser, but future browser/research integration must be selected from its own demonstrated product requirements rather than being forced through D084.
+
+The alternatives considered were intentionally rejected for the current slice, not categorically: NiceGUI introduces a local web-server and browser frontend stack; PySide6 introduces a substantially heavier native Qt/platform surface; Streamlit's whole-script rerun model is a poor match for Pyxis's explicit application-operation boundaries; and Flet's shipped-app integration path brings a Flutter build/test toolchain before Repository Zero needs desktop/mobile packaging.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
