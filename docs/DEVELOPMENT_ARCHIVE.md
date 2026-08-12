@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10L on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10M on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -193,6 +193,12 @@ A combined interactive shell receives one `WorkspaceController`. Runtime submiss
 A renderer must not optimistically turn a pending proposal into current state merely because the user pressed Apply.
 
 Rationale collection and the button event are UI concerns; rationale validation, retained-preview consumption, governed revision/build/runtime work, and READY invalidation remain application concerns. The UI replaces current evidence and clears proposed evidence only after the unified controller returns a fresh successful `WorkspacePresentation`. Failed or empty rationale leaves both evidence surfaces unchanged.
+
+### 2.24 READY recovery is a verified state transition
+
+Once architectural mutation correctly retires prior READY evidence, the live Workspace may regain READY only by producing a new verified export for its current compiler products.
+
+A portable directory on disk is not a recovery mechanism. The application must preflight the current run, export the exact current `BuildResult` through the existing packaging path, verify identity and runtime behavior, and retain the resulting `WorkspaceExportResult` only after success. Failed refresh attempts leave current live state unchanged.
 
 ---
 
@@ -490,6 +496,14 @@ The runtime text passed to Apply comes directly from the visible runtime input; 
 
 The acceptance path proves success and failure asymmetrically. Success reveals the new canonical/RIR/compiler/runtime/revision evidence and drops pre-change READY. Empty rationale or a simulated governed-apply failure leaves the current presentation, proposed presentation, controller run/export/pending-preview state, and repository bytes unchanged. Only a non-evidence status message changes.
 
+### 4.24 READY recovery should reuse verification ownership
+
+Milestone 10M closes the live-state loop after architectural mutation without weakening the meaning of READY.
+
+`refresh_workspace_export()` first proves the supplied current run still matches persisted Workspace evidence. It then passes that exact run's `BuildResult` to the existing `export_workspace()` path, which continues to own planning, exact-byte materialization, identity verification, runtime equivalence, and READY. The application controller retains the returned export evidence only after the entire operation succeeds.
+
+The acceptance path proves the post-Apply `BuildResult` is used by object identity, compilation is unavailable, stale run evidence fails before export begins, occupied destinations are rejected by the existing materializer, source/revision state is unchanged by export, and failed refresh does not partially restore READY.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -612,6 +626,9 @@ Repository Zero removes separate runtime/architecture controller inputs from the
 
 ### D093 — Visible Apply Advances Only From Successful Application Evidence
 Repository Zero adds one rationale input and one Apply button only after Preview succeeds. Textual passes rationale and visible runtime text to the unified controller, then waits for fresh application evidence before replacing current state or clearing proposed state. Empty rationale or failed Apply changes neither controller state nor current/proposed evidence.
+
+### D094 — READY Can Re-Enter Live State Only Through Verified Export Refresh
+Repository Zero adds `refresh_workspace_export()` plus `WorkspaceController.refresh_export()`. The operation preflights the exact current run, exports its current `BuildResult` through the existing verified packaging path to an explicitly supplied fresh destination, and returns genuine READY evidence plus fresh presentation. Controller export state advances only after successful verification; stale runs and failed/occupied destinations do not partially restore READY.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -821,9 +838,9 @@ The 10I acceptance path proves the exact retained preview object reaches governe
 
 `src/pyxis/app/controller.py` defines `WorkspaceController`, the live-state authority for combined runtime and architectural interactions.
 
-It retains exactly one current `BuildAndRunResult`, one optional current `WorkspaceExportResult`, and one optional pending `ArchitecturePreview`. Its `rerun()`, `preview_remove_normalize_text()`, and `apply_pending_remove_normalize_text()` methods delegate to the already-proven application operations and replace controller state only from successful operation results.
+It retains exactly one current `BuildAndRunResult`, one optional current `WorkspaceExportResult`, and one optional pending `ArchitecturePreview`. Its runtime, preview, apply, and export-refresh methods delegate to proven application operations and replace controller state only from successful operation results.
 
-Runtime rerun keeps READY because architecture is unchanged. Preview retains the typed proposal against the same current run. Successful Apply advances that same run to the new architecture, clears READY, and consumes the pending preview. A later rerun therefore uses the post-apply build rather than stale sibling-controller evidence.
+Runtime rerun keeps READY because architecture is unchanged. Preview retains the typed proposal against the same current run. Successful Apply advances that same run to the new architecture, clears READY, and consumes the pending preview. Verified export refresh leaves that run unchanged while replacing only current export evidence with newly verified READY. A later rerun therefore uses the current build and carries only export evidence that belongs to that architecture.
 
 The earlier specialized controllers remain available as compatibility/application proof surfaces, but they are no longer accepted as separate live-state inputs by the combined Textual shell.
 
@@ -848,6 +865,18 @@ The renderer waits for the controller call to succeed. On success, the returned 
 The successful 10L acceptance path proves that `normalize_text` is shown as `removed` with no current hashes, the normalized rationale appears in a completed revision, fresh runtime evidence contains only `inspect_text`, and pre-change READY is visibly absent even though the old portable tree remains byte-identical.
 
 Empty rationale and simulated governed-apply failure are also exercised through the real headless Textual event path. Both leave controller live-state object identity, current presentation, proposed presentation, and repository bytes unchanged. Only the interaction-status text changes.
+
+### 7.23 Verified export refresh for current live state
+
+`src/pyxis/app/export_refresh.py` owns `refresh_workspace_export()` and returns `WorkspaceExportRefreshResult` containing a genuine `WorkspaceExportResult` plus the fresh `WorkspacePresentation` assembled with that READY evidence.
+
+The operation first calls `query_workspace_presentation()` with the current `BuildAndRunResult` and no export evidence, ensuring stale live state fails before export begins. It then calls the existing `export_workspace()` with the exact `current_run.build`, the physical Workspace root, an explicitly supplied destination, and explicit verification runtime text. A second query introduces the returned export evidence only after verification succeeds.
+
+`WorkspaceController.refresh_export(destination, text)` delegates to that operation and assigns `_export` only after successful return. It does not replace the current run or pending preview.
+
+The 10M acceptance path starts from a real post-Apply Workspace whose old portable tree still exists but whose controller correctly has no current export evidence. With compilation disabled, the operation exports the exact post-Apply build to a fresh destination and returns READY while leaving source/revision bytes unchanged. A stale pre-Apply run is rejected before `export_workspace()` can execute. An occupied destination raises through the existing materialization boundary and leaves controller run/export/pending-preview state unchanged; a subsequent fresh destination succeeds and retains the new READY result.
+
+Textual is unchanged in 10M. No export control or destination picker exists yet.
 
 ---
 
@@ -881,11 +910,13 @@ Milestone 10K executes runtime → Preview through that same authority in the re
 
 Milestone 10L executes Preview → rationale → Apply through the same unified controller in the real headless Textual shell. Success proves the exact retained preview and explicit visible runtime text reach the application operation, then current UI evidence advances to the post-apply architecture while proposed evidence and pre-change READY disappear. Empty rationale and simulated operation failure prove neither application state nor current/proposed evidence advances before successful return.
 
+Milestone 10M proves READY recovery independently of Textual. The exact post-Apply `BuildResult` reaches verified export with compilation disabled; stale live evidence fails before export; an occupied destination is rejected through the existing materialization boundary; source/revision state remains unchanged; and `WorkspaceController` retains new READY evidence only after the complete export verification operation succeeds.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness.
 
 ---
 
@@ -944,20 +975,21 @@ The original milestone order proved useful:
 - Milestone 10J — one application-owned live Workspace state authority: complete.
 - Milestone 10K — Textual runtime and Preview migrated to the unified Workspace controller: complete.
 - Milestone 10L — first visible rationale-bearing architectural Apply through the unified controller: complete.
+- Milestone 10M — application-owned verified export refresh and READY recovery: complete.
 
 ### Milestone 10 — First local Workspace UI
 
-The first local UI now renders complete current evidence, performs runtime-only execution, visibly previews one proposed architecture change, collects rationale only after preview, and can commit that exact retained proposal through the governed compiler/revision/runtime path. Successful mutation visibly replaces current evidence and retires pre-change READY; failed mutation leaves current and proposed evidence intact.
+The first local UI renders complete current evidence, performs runtime-only execution, visibly previews one proposed architecture change, collects rationale only after preview, and can commit that exact retained proposal through the governed compiler/revision/runtime path. The application layer can now also regain genuine READY for the resulting current build through a separately proven verified export refresh. Textual has not yet exposed that export action.
 
-### Next narrow step — Milestone 10M
+### Next narrow step — Milestone 10N
 
-Establish an application-owned **verified export refresh operation/controller seam** for the current `WorkspaceController` before adding any export button to Textual.
+Wire exactly one visible **verified export refresh** interaction to `WorkspaceController.refresh_export()` and then reassess whether Milestone 10 can close.
 
-The pressure is now concrete: after a successful architectural Apply, current READY evidence is correctly absent even though an older portable tree may remain on disk. The next operation should let the unified controller export its current `BuildResult` to an explicitly supplied fresh destination using explicit runtime text, receive a genuine `WorkspaceExportResult`, retain that READY evidence only after verification succeeds, and return a fresh `WorkspacePresentation` showing READY again.
+Use one explicit destination-path input and one Export/Verify button; do not add a file picker, overwrite semantics, cleanup behavior, or destination discovery. The current visible runtime input should be passed explicitly as verification text. Textual must wait for the controller operation to return before replacing `WorkspaceDetail` with READY evidence.
 
-Prove independently of Textual that the operation uses the controller's exact current post-apply run/build, does not compile or mutate canonical/revision state, rejects stale or already-occupied destinations through existing export boundaries, advances controller export evidence only on success, and leaves controller state unchanged on failure.
+The headless proof should start from a successful visible architectural Apply with `No READY evidence`, enter a fresh destination, invoke export, and verify the controller's current run remains the exact post-Apply run while current export becomes genuine READY and the detail screen updates accordingly. An occupied/invalid destination or verification failure must leave current presentation and controller export state unchanged except for a non-evidence status message.
 
-Do not add an export button, destination picker, overwrite/cleanup semantics, restoration, or another architectural edit in 10M.
+Do not add restoration, a second architectural edit, export overwrite, destination cleanup, or generalized file-management UI in 10N.
 
 ### Milestone 11 — Measurement
 
@@ -1050,6 +1082,10 @@ Do not derive an apply proposal from Textual labels, hashes, capability strings,
 
 Once apply changes canonical/RIR/compiler products, do not carry the previous `WorkspaceExportResult` forward as current READY evidence merely because the old portable directory still exists. READY belongs to the state that was actually verified.
 
+### READY recovery by filesystem presence
+
+Do not restore READY because a new or old portable directory exists. READY re-enters controller/presentation state only from a successful `WorkspaceExportResult` produced by the verified export refresh operation for the exact current build.
+
 ### Multiple live-state controllers diverging
 
 Do not reintroduce separate runtime and architecture controller inputs into the combined renderer. `WorkspaceController` is the application-owned authority for current run/export/pending-preview evidence; Textual routes all existing interaction paths through that one object.
@@ -1125,6 +1161,7 @@ Before adding something, ask:
 23. For a combined interactive session, is there exactly one application-owned authority for current run, current READY evidence, and pending architectural intent?
 24. Does the renderer receive that live authority once, or has it recreated separate per-action state ownership above the application layer?
 25. Does the renderer wait for successful application evidence before replacing current/proposed state, or is it optimistically assuming the operation succeeded?
+26. If READY is being restored after architectural change, did a real verified export of the exact current build produce that evidence, or is file/directory presence being mistaken for verification?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -1152,12 +1189,12 @@ When a prototype lesson and current code disagree, reproduce the contradiction w
 
 For packaging, Milestone 9 is closed. The portable contract is conventional source plus a verified wheel, and the offline guarantee applies to installing/executing that wheel. Do not reopen offline source-build machinery unless a new real requirement explicitly demands it.
 
-For UI work, Milestones 10A through 10L are complete. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply behavior and one unified `WorkspaceController`; and Textual now performs runtime, Preview, rationale, and Apply through that one authority. Successful Apply consumes the exact retained proposal, refreshes current evidence, clears proposed evidence, records the completed rationale-bearing revision, and visibly retires pre-change READY. Empty rationale or failed Apply leaves current/proposed evidence and controller state unchanged.
+For UI work, Milestones 10A through 10M are complete. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply/export-refresh behavior and one unified `WorkspaceController`; and Textual currently performs runtime, Preview, rationale, and Apply through that one authority. Successful Apply retires pre-change READY. `refresh_workspace_export()` and `WorkspaceController.refresh_export()` now independently prove how that exact post-Apply build can regain genuine READY through a fresh verified export without compilation or canonical/revision mutation.
 
-The next pressure is not another architectural edit. Milestone 10M should prove, independently of Textual, how the unified controller can take its current post-apply `BuildResult` and regain genuine READY by exporting to an explicitly supplied fresh destination through the existing verified export path. Do not add an export button until that state transition is independently proven.
+Textual still has no export interaction. Milestone 10N should wire one explicit destination-path input and one verified-export button to the existing controller method, pass the visible runtime text explicitly, and update current presentation only after successful verification. Do not add a file picker, overwrite/cleanup semantics, restoration, or another architecture action in the same milestone.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 10L closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply application operations, and one unified `WorkspaceController` supplied to the Textual shell. The real headless UI now proves runtime → Preview → rationale-bearing Apply: it consumes the exact retained proposal and explicit visible runtime input, advances current evidence only after successful application return, shows `normalize_text` removed plus completed revision provenance, clears proposed evidence, and visibly retires pre-change READY; empty or failed Apply leaves both application state and evidence displays unchanged. Milestone 9 is closed. Milestones 10A–10L are complete; the next narrow step is an application-owned verified export refresh operation so the post-apply Workspace can regain genuine READY before any export UI is added.
+At the 2026-08-12 Milestone 10M closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, and one unified `WorkspaceController`. The real headless UI proves runtime → Preview → rationale-bearing Apply and correctly retires pre-change READY. Independently of Textual, the application layer now proves that the exact post-Apply build can regain READY only through a fresh verified export to an explicitly supplied destination; stale run evidence and failed/occupied destinations do not partially advance controller state. Milestone 9 is closed. Milestones 10A–10M are complete; the next narrow step is one visible verified-export refresh interaction through the existing unified controller before deciding whether Milestone 10 can close.
