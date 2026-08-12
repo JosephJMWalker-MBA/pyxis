@@ -82,6 +82,15 @@ The Milestone 9M offline source-build failure remains valuable characterization 
 
 This decision closes the Milestone 9 packaging requirement. Future packaging work must be driven by a new demonstrated product need rather than by the stronger D078 interpretation that D081 has now explicitly declined.
 
+## D082 — Workspace presentation is an application-owned evidence adapter
+A user interface must consume a read-only Workspace presentation contract assembled from evidence Pyxis already owns. The presentation layer may validate that supplied evidence belongs to the same Workspace, but it may not load or scan repository files, compile, execute runtime code, export, infer compiler status, or synthesize readiness.
+
+Canonical identity must come from authoritative `WorkspaceSpec`, not copied RIR fields. RIR identity and compiler artifact status come from existing build/manifest evidence. Runtime output comes from an existing run result. Revision presentation preserves append-only event intent separately from optional compiler completion evidence. Export presentation exists only when actual `READY` verification evidence is supplied.
+
+The presentation contract itself must remain read-only. Runtime mappings/sequences are recursively exposed as immutable values so a UI cannot mutate application evidence through the view model. A `removed` artifact status must not invent current hashes that no longer exist in the current generation manifest.
+
+This boundary is framework-independent. A future UI renders the contract; it does not become a second query, compiler, runtime, revision, or verification implementation.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
