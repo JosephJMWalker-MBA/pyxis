@@ -5,8 +5,9 @@ import json
 
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
-from textual.widgets import Static
+from textual.widgets import Input, Static
 
+from pyxis.app.controller import WorkspaceRuntimeController
 from pyxis.app.presentation import (
     CompilerArtifactPresentation,
     ExportPresentation,
@@ -109,8 +110,41 @@ def _format_export(export: ExportPresentation | None) -> str:
     )
 
 
+def _format_canonical(presentation: WorkspacePresentation) -> str:
+    canonical = presentation.canonical
+    return "\n".join(
+        (
+            f"Workspace ID: {canonical.workspace_id}",
+            f"Name: {canonical.name}",
+            f"Description: {canonical.description}",
+            "Capabilities:",
+            _format_capabilities(canonical.capabilities),
+            f"Canonical SHA-256: {canonical.canonical_sha256}",
+        )
+    )
+
+
+def _format_rir(presentation: WorkspacePresentation) -> str:
+    rir = presentation.rir
+    return "\n".join(
+        (
+            f"Schema version: {rir.schema_version}",
+            f"Repository ID: {rir.repository_id}",
+            f"Workspace ID: {rir.workspace_id}",
+            f"Entrypoint: {rir.entrypoint}",
+            "Capabilities:",
+            _format_capabilities(rir.capabilities),
+            f"RIR SHA-256: {rir.rir_sha256}",
+        )
+    )
+
+
+def _export_summary(presentation: WorkspacePresentation) -> str:
+    return "READY" if presentation.export is not None else "No READY evidence"
+
+
 class WorkspaceDetail(VerticalScroll):
-    """Complete read-only renderer for one immutable Workspace presentation."""
+    """Complete renderer for one immutable Workspace presentation."""
 
     def __init__(self, presentation: WorkspacePresentation) -> None:
         super().__init__(id="workspace-detail")
@@ -120,11 +154,6 @@ class WorkspaceDetail(VerticalScroll):
         presentation = self.presentation
         canonical = presentation.canonical
         rir = presentation.rir
-        export_evidence = (
-            "READY"
-            if presentation.export is not None
-            else "No READY evidence"
-        )
 
         with Vertical(id="workspace-summary"):
             yield Static("Pyxis Workspace", id="shell-title")
@@ -150,7 +179,7 @@ class WorkspaceDetail(VerticalScroll):
                 markup=False,
             )
             yield Static(
-                f"Export evidence: {export_evidence}",
+                f"Export evidence: {_export_summary(presentation)}",
                 id="export-evidence",
                 markup=False,
             )
@@ -158,16 +187,7 @@ class WorkspaceDetail(VerticalScroll):
         with Vertical(classes="evidence-section", id="canonical-section"):
             yield Static("Canonical intent", classes="section-title")
             yield Static(
-                "\n".join(
-                    (
-                        f"Workspace ID: {canonical.workspace_id}",
-                        f"Name: {canonical.name}",
-                        f"Description: {canonical.description}",
-                        "Capabilities:",
-                        _format_capabilities(canonical.capabilities),
-                        f"Canonical SHA-256: {canonical.canonical_sha256}",
-                    )
-                ),
+                _format_canonical(presentation),
                 id="canonical-evidence",
                 classes="evidence-body",
                 markup=False,
@@ -176,17 +196,7 @@ class WorkspaceDetail(VerticalScroll):
         with Vertical(classes="evidence-section", id="rir-section"):
             yield Static("Repository Intermediate Representation", classes="section-title")
             yield Static(
-                "\n".join(
-                    (
-                        f"Schema version: {rir.schema_version}",
-                        f"Repository ID: {rir.repository_id}",
-                        f"Workspace ID: {rir.workspace_id}",
-                        f"Entrypoint: {rir.entrypoint}",
-                        "Capabilities:",
-                        _format_capabilities(rir.capabilities),
-                        f"RIR SHA-256: {rir.rir_sha256}",
-                    )
-                ),
+                _format_rir(presentation),
                 id="rir-evidence",
                 classes="evidence-body",
                 markup=False,
@@ -228,13 +238,52 @@ class WorkspaceDetail(VerticalScroll):
                 markup=False,
             )
 
+    def replace_presentation(self, presentation: WorkspacePresentation) -> None:
+        """Replace rendered evidence with one fresh application presentation."""
+
+        self.presentation = presentation
+        canonical = presentation.canonical
+        rir = presentation.rir
+
+        self.query_one("#workspace-name", Static).update(canonical.name)
+        self.query_one("#workspace-description", Static).update(canonical.description)
+        self.query_one("#repository-identity", Static).update(
+            f"Repository: {rir.repository_id}"
+        )
+        self.query_one("#compiler-evidence", Static).update(
+            f"Compiler evidence: {len(presentation.artifacts)} artifacts"
+        )
+        self.query_one("#revision-evidence", Static).update(
+            f"Revision evidence: {len(presentation.revisions)} events"
+        )
+        self.query_one("#export-evidence", Static).update(
+            f"Export evidence: {_export_summary(presentation)}"
+        )
+        self.query_one("#canonical-evidence", Static).update(
+            _format_canonical(presentation)
+        )
+        self.query_one("#rir-evidence", Static).update(_format_rir(presentation))
+        self.query_one("#compiler-artifacts", Static).update(
+            _format_artifacts(presentation)
+        )
+        self.query_one("#runtime-result", Static).update(
+            _format_runtime(presentation)
+        )
+        self.query_one("#revision-timeline", Static).update(
+            _format_revisions(presentation)
+        )
+        self.query_one("#export-verification", Static).update(
+            _format_export(presentation.export)
+        )
+
 
 class WorkspaceShell(App[None]):
-    """Textual application shell over one immutable Workspace presentation.
+    """Textual shell over one Workspace presentation and optional app controller.
 
-    The shell renders application-owned evidence only. It does not load a
-    Workspace, compile, execute runtime code, query revision files, export, or
-    infer READY state.
+    The shell renders application-owned evidence. When runtime interaction is
+    enabled, one text submission crosses only the application-owned
+    ``WorkspaceRuntimeController`` boundary and replaces the rendered
+    presentation with the fresh evidence returned by that controller.
     """
 
     TITLE = "Pyxis"
@@ -244,9 +293,22 @@ class WorkspaceShell(App[None]):
         align: center top;
     }
 
+    #runtime-interaction {
+        width: 94%;
+        height: auto;
+        padding: 1 2;
+        margin-top: 1;
+        border: round $primary;
+    }
+
+    #runtime-input-label {
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
     #workspace-detail {
         width: 94%;
-        height: 100%;
+        height: 1fr;
         padding: 1 2 2 2;
     }
 
@@ -274,15 +336,43 @@ class WorkspaceShell(App[None]):
     }
     """
 
-    def __init__(self, presentation: WorkspacePresentation) -> None:
+    def __init__(
+        self,
+        presentation: WorkspacePresentation,
+        *,
+        runtime_controller: WorkspaceRuntimeController | None = None,
+    ) -> None:
         super().__init__()
         self.presentation = presentation
+        self.runtime_controller = runtime_controller
 
     def compose(self) -> ComposeResult:
+        if self.runtime_controller is not None:
+            with Vertical(id="runtime-interaction"):
+                yield Static("Runtime input", id="runtime-input-label")
+                yield Input(
+                    placeholder="Enter text and press Enter to run",
+                    id="runtime-input",
+                )
         yield WorkspaceDetail(self.presentation)
 
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id != "runtime-input" or self.runtime_controller is None:
+            return
 
-def create_workspace_shell(presentation: WorkspacePresentation) -> WorkspaceShell:
-    """Create the local read-only UI shell without acquiring or changing evidence."""
+        presentation = self.runtime_controller.rerun(event.value)
+        self.presentation = presentation
+        self.query_one(WorkspaceDetail).replace_presentation(presentation)
 
-    return WorkspaceShell(presentation)
+
+def create_workspace_shell(
+    presentation: WorkspacePresentation,
+    *,
+    runtime_controller: WorkspaceRuntimeController | None = None,
+) -> WorkspaceShell:
+    """Create the local Workspace shell over application-owned evidence/state."""
+
+    return WorkspaceShell(
+        presentation,
+        runtime_controller=runtime_controller,
+    )
