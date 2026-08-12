@@ -12,12 +12,101 @@ from .preview import ArchitecturePreview
 from .preview_presentation import ArchitecturePreviewPresentation
 
 
+class WorkspaceController:
+    """Single application-owned authority for one live Workspace interaction state.
+
+    The controller owns exactly one current run, one optional current export
+    result, and one optional pending architecture preview. It delegates runtime,
+    preview, and apply behavior to the already-proven application operations so
+    those operations remain the owners of coherence checks and domain effects.
+    """
+
+    def __init__(
+        self,
+        workspace_root: Path,
+        run: BuildAndRunResult,
+        *,
+        export: WorkspaceExportResult | None = None,
+    ) -> None:
+        self._workspace_root = workspace_root.resolve()
+        self._run = run
+        self._export = export
+        self._pending_preview: ArchitecturePreview | None = None
+
+    @property
+    def current_run(self) -> BuildAndRunResult:
+        """Return the one current transient run retained for future operations."""
+
+        return self._run
+
+    @property
+    def current_export(self) -> WorkspaceExportResult | None:
+        """Return READY evidence still valid for the controller's current build."""
+
+        return self._export
+
+    @property
+    def pending_preview(self) -> ArchitecturePreview | None:
+        """Return the exact proposed architecture retained for a later apply."""
+
+        return self._pending_preview
+
+    def rerun(self, text: str) -> WorkspacePresentation:
+        """Rerun the current architecture and advance only live runtime evidence."""
+
+        result = rerun_workspace(
+            self._workspace_root,
+            self._run,
+            text,
+            export=self._export,
+        )
+        self._run = result.run
+        return result.presentation
+
+    def preview_remove_normalize_text(self) -> ArchitecturePreviewPresentation:
+        """Preview against the same live state used by runtime and later apply."""
+
+        result = preview_workspace_remove_normalize_text(
+            self._workspace_root,
+            self._run,
+            export=self._export,
+        )
+        self._pending_preview = result.preview
+        return result.presentation
+
+    def apply_pending_remove_normalize_text(
+        self,
+        rationale: str,
+        text: str,
+    ) -> WorkspacePresentation:
+        """Apply the retained preview and advance the one shared live state."""
+
+        preview = self._pending_preview
+        if preview is None:
+            raise ValueError("No pending architecture preview is available to apply.")
+
+        result = apply_workspace_remove_normalize_text(
+            self._workspace_root,
+            preview,
+            self._run,
+            rationale,
+            text,
+            export=self._export,
+        )
+
+        self._run = result.run
+        self._export = None
+        self._pending_preview = None
+        return result.presentation
+
+
 class WorkspaceRuntimeController:
     """Application-owned live state for runtime-only Workspace interactions.
 
-    The controller retains transient run evidence between UI operations while
-    delegating the actual operation to ``rerun_workspace()``. It owns no
-    compiler, runtime, revision, export, persistence, or presentation logic.
+    This specialized controller remains for compatibility with the existing
+    Textual runtime proof. New combined interaction flows should use
+    ``WorkspaceController`` so runtime and architecture operations share one
+    live state authority.
     """
 
     def __init__(
@@ -53,9 +142,10 @@ class WorkspaceRuntimeController:
 class WorkspaceArchitecturePreviewController:
     """Application-owned state for preview-first architecture changes.
 
-    The controller retains the typed ArchitecturePreview shown to the user and
-    the live run/export evidence required to apply it coherently. Preview and
-    apply behavior remain delegated to named application operations.
+    This specialized controller remains for compatibility with the existing
+    Textual preview proof. New combined interaction flows should use
+    ``WorkspaceController`` so runtime and architecture operations share one
+    live state authority.
     """
 
     def __init__(
