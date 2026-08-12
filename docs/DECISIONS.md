@@ -133,6 +133,31 @@ A runtime-only rerun does not compile, classify generation status, materialize a
 
 The application result carries both the fresh transient run evidence and the fresh presentation so a future UI controller can retain the former while rendering only the latter. Milestone 10E intentionally adds no Textual callback or button; the operation boundary is proven independently before the first control is wired.
 
+## D087 — Visible runtime interaction retains live evidence outside the renderer
+The first visible Workspace interaction is a single Textual text-input submission connected only to an application-owned `WorkspaceRuntimeController`.
+
+The controller retains the current transient `BuildAndRunResult`, Workspace root, and optional existing export evidence. Its `rerun(text)` method delegates to the already-proven `rerun_workspace()` operation, replaces its retained run evidence only after success, and returns the fresh `WorkspacePresentation` to the renderer. Textual therefore does not own or reconstruct the transient run state required by the next operation.
+
+`WorkspaceShell` receives the controller as one application boundary rather than receiving compiler, runtime, revision, export, or persistence services. When the runtime `Input` is submitted, the shell calls the controller exactly once and replaces the fields in the existing `WorkspaceDetail` from the returned presentation. `WorkspaceDetail` remains presentation-only.
+
+Milestone 10F introduces no button and no architectural mutation. The headless acceptance path proves that the single submission changes only runtime evidence on screen while canonical, RIR, compiler, revision, and export presentation remain unchanged; the controller retains the new run evidence; compilation remains unavailable; and both Workspace and portable-export bytes remain unchanged.
+
+This establishes the first complete UI event loop without weakening D082–D086:
+
+```text
+Textual Input.Submitted
+    ↓
+WorkspaceRuntimeController.rerun(text)
+    ↓
+rerun_workspace()
+    ↓
+fresh BuildAndRunResult retained by controller
+    +
+fresh WorkspacePresentation returned to renderer
+    ↓
+WorkspaceDetail refresh
+```
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
