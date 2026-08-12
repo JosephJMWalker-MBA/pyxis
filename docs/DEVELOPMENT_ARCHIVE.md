@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -316,6 +316,10 @@ The prototype was eventually made self-contained enough to prove a network-disab
 
 That proof is useful history, but Repository Zero should still prefer conventional tooling where it is available rather than making bespoke packaging infrastructure part of the core product prematurely.
 
+Repository Zero later clarified the original constraint instead of immediately importing the prototype backend. A conventional source package now builds a standard wheel using ordinary PEP 517 build isolation, and the verified wheel can be installed and executed in a fresh virtual environment while network access is actively blocked. Because installation consumes a prebuilt wheel, Setuptools is not needed during that installation proof.
+
+The stronger statement remains deliberately unproven: Repository Zero has **not** yet shown that the source package can construct its wheel while offline. Successful offline wheel installation therefore does not, by itself, justify either claiming full offline source-build self-containment or reintroducing a bespoke local backend.
+
 ---
 
 ## 5. Prototype decision sequence that led here
@@ -418,6 +422,10 @@ Portable output should look conventional to another Python developer.
 
 The prototype successfully demonstrated clean, network-disabled installation while preserving generated artifact identity.
 
+### D079 — Separate Source-Build and Wheel-Install Portability Proofs
+
+Repository Zero proved conventional source-to-wheel construction under ordinary PEP 517 build isolation and separately proved verified-wheel installation/execution with network access blocked. Offline source-to-wheel construction remains unproven and must not be inferred from the successful wheel-install proof.
+
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
 ---
@@ -462,278 +470,188 @@ This transition is important. Future work should not restart broad architectural
 
 ## 7. Current Repository Zero implementation
 
-The permanent repository has been populated incrementally rather than through one bulk import of prototype code.
+Repository Zero has now carried the original architecture through the permanent path rather than merely preserving prototype intent.
 
-That was intentional. Prototype code proved ideas; Repository Zero should contain only the implementation that still deserves to exist.
+### 7.1 Authoring and canonical persistence
 
-### 7.1 Authoring
+`WorkspaceSpec` remains the authoritative intent object. The Workspace build persists deterministic canonical state under `authoring/canonical/workspace.json` and can reload it without deriving truth from generated code.
 
-`src/pyxis/authoring/workspace.py`
+### 7.2 RIR persistence
 
-`WorkspaceSpec` is a frozen canonical intent object created from the minimum first-run inputs:
+Canonical state lowers deterministically into `RepositoryIR` / `WorkspaceIR`, persisted as `generated/repository.rir.json`. A strict read-only loader reconstructs the typed RIR for later verification and runtime use.
 
-- name
-- description
+### 7.3 Compiler products and generation evidence
 
-It derives a stable Workspace ID and currently references the two demonstrator capabilities.
+The compiler emits deterministic `GeneratedArtifact` values for the `text_lab` capabilities and Workspace entrypoint. A generation manifest records:
 
-Boundary: no compiler or runtime behavior belongs here.
+- RIR SHA-256
+- artifact path
+- semantic node SHA-256
+- artifact SHA-256
 
-### 7.2 RIR
+Generation status is a compiler fact: `new`, `reused`, `regenerated`, or `removed`.
 
-`src/pyxis/rir/model.py`
+### 7.4 Incremental materialization
 
-`WorkspaceSpec` deterministically lowers into `RepositoryIR` / `WorkspaceIR`.
+Materialization reconciles current compiler products against prior manifest ownership. Reused artifacts are not rewritten; regenerated/new artifacts are written; removed artifacts are deleted only when the prior manifest established compiler ownership.
 
-Boundary: RIR is derived compiler-facing structure. It does not contain generated source or execute behavior.
+Filesystem discovery does not substitute for compiler evidence.
 
-### 7.3 Compiler artifact generation
+### 7.5 Revision provenance
 
-`src/pyxis/compiler/artifacts.py`
-
-The compiler currently emits deterministic artifacts for:
-
-- `generated/capabilities/inspect_text.py`
-- `generated/capabilities/normalize_text.py`
-- `generated/workspaces/<workspace_id>/main.py`
-
-Each artifact carries a deterministic node SHA-256 identity.
-
-### 7.4 Repository compiler
-
-`src/pyxis/compiler/repository.py`
-
-`compile_repository(repository)` converts one RIR into one ordered immutable artifact tuple.
-
-Unknown capabilities fail explicitly.
-
-Boundary: compilation remains pure and performs no filesystem writes.
-
-### 7.5 Materialization
-
-`src/pyxis/compiler/materialize.py`
-
-`materialize_artifacts(artifacts, destination_root)` is the first filesystem boundary.
-
-It writes only already-compiled artifact source to already-declared relative paths and rejects path escapes.
-
-Boundary: materialization does not compile, inspect canonical state, or execute generated code.
+Architectural change follows preview → rationale → append-only revision → canonical mutation → compiler completion. Removal and restoration of `normalize_text` both use the same current-intent path; restore is a forward revision, not rollback.
 
 ### 7.6 Runtime
 
-`src/pyxis/runtime/loader.py`
+`run_materialized_workspace()` executes generated implementation from the materialized tree and does not compile or write. Runtime execution suppresses Python bytecode-cache writes so the runtime boundary remains read-only in observable filesystem terms.
 
-`run_materialized_workspace(repository, repository_root, text)` locates the generated Workspace entrypoint from the RIR and executes it.
+### 7.7 Verified export
 
-Boundary: runtime does not compile or write.
-
-### 7.7 Application orchestration
-
-`src/pyxis/app/build.py`
-
-`build_workspace(spec, destination_root)` composes:
+Export now follows the permanent application path:
 
 ```text
-build_repository_ir
+existing BuildResult
       ↓
-compile_repository
+ExportPlan
       ↓
-materialize_artifacts
+exact-byte portable materialization
+      ↓
+exported RIR / manifest / artifact identity verification
+      ↓
+source ↔ export runtime equivalence
+      ↓
+READY
 ```
 
-It returns a frozen `BuildResult` containing the RIR, generated artifacts, and written paths.
+READY is derived only after both identity and runtime evidence succeed for the same export tree, Repository, and Workspace.
 
-`build_and_run_workspace(spec, destination_root, text)` then composes:
+### 7.8 Conventional package projection and independent runtime
 
-```text
-build_workspace
-      ↓
-run_materialized_workspace
-```
+The verified export can be projected into a conventional `src/` package layout. Compiler products are copied byte-for-byte from `generated/` into their package paths; packaging support files remain a distinct ownership class.
 
-This is the current complete permanent vertical slice.
+The materialized `src/` package executes in a fresh subprocess with Pyxis unavailable and reproduces the already-verified Workspace behavior.
+
+### 7.9 Wheel construction and fresh offline installation
+
+The conventional package can build a standard wheel using ordinary PEP 517 tooling. Wheel inspection independently verifies that compiler-product bytes inside the archive still match their recorded artifact hashes and that no Pyxis package has leaked into the payload.
+
+That verified wheel can then be installed into a fresh virtual environment with:
+
+- index access disabled
+- dependencies disabled
+- network resolution/connections actively blocked
+- user/system site-package leakage excluded
+- Pyxis import attempts rejected
+
+The installed console command reproduces the verified package behavior for the same input.
+
+This proves offline **wheel installation and execution**, not offline **source-to-wheel construction**.
+
+### 7.10 Application surfaces
+
+The CLI remains a thin interface over application orchestration. `examples/text_lab/` is the permanent executable specification for the minimum Workspace. Export has a thin application-level orchestration seam over existing build/export verification APIs.
 
 ---
 
-## 8. Proof status: an important distinction
+## 8. Proof status
 
-Two different kinds of evidence exist and should not be conflated.
+The original warning against claiming unexecuted tests remains valid as a general rule, but Repository Zero is no longer in that unverified state.
 
-### Prototype proofs
+The permanent implementation is exercised by GitHub Actions on Python 3.11. Development through Milestone 9K repeatedly ran the complete pytest suite after each narrow step. The 9K final run additionally performed real conventional wheel builds, fresh virtual-environment creation, network-blocked local-wheel installation, and execution of the installed console command.
 
-The pre-Repository-Zero prototypes were actually executed during development. Their smoke tests and targeted tests were used to discover several of the lessons above, including incremental waste, revision behavior, portability, and clean installation.
+Therefore the current portability statements in this archive are based on executed CI evidence, not design intent alone.
 
-### Current GitHub Repository Zero
+The rule remains:
 
-The permanent repository has been authored through the GitHub connector in small commits. Tests have been written to specify the intended boundaries, but this connector session does not execute the repository test suite.
+> Never broaden a claim beyond the exact condition that was executed and verified.
 
-Therefore:
-
-> Do not claim the current Repository Zero suite is passing until it has been run in a real checkout or CI environment.
-
-One of the earliest next actions should be to establish that executable verification.
+That rule is why successful offline wheel installation does not become a claim of successful offline source-to-wheel construction.
 
 ---
 
-## 9. Known gaps in the permanent implementation
+## 9. Current gaps and decision points
 
-The current vertical slice executes, conceptually, through all permanent layers, but several pieces proven in prototypes have not yet been migrated.
+Most gaps listed in the original 2026-08-11 snapshot—canonical persistence, RIR persistence, generation manifests, append-only revisions, incremental generation, permanent example, CLI, and export—have now been migrated into Repository Zero.
 
-### 9.1 Canonical authoring is not yet persisted as a repository artifact
+The important current gaps are narrower.
 
-`WorkspaceSpec` currently exists as an in-memory canonical object during the build path.
+### 9.1 Offline source-to-wheel construction is unproven
 
-The first real user-created Workspace should persist its authoritative authoring state, likely under a path similar to:
-
-```text
-authoring/canonical/workspace.json
-```
-
-The exact format should remain small and deterministic.
-
-### 9.2 RIR is not yet serialized into the generated repository
-
-Inspectability improves substantially when the normalized compiler input can be examined alongside generated code.
-
-A permanent form similar to:
+Repository Zero has proven:
 
 ```text
-generated/repository.rir.json
+source package
+      ↓
+standard wheel
 ```
 
-should be restored from the prototype architecture.
+using ordinary PEP 517 build isolation, and separately:
 
-### 9.3 Generation manifest / artifact integrity is not yet permanent
+```text
+verified wheel
+      ↓
+fresh network-disabled install
+      ↓
+installed execution
+```
 
-The prototypes proved semantic fingerprints, artifact hashes, and incremental status. Repository Zero has node hashes but not yet the full manifest/reconciliation layer.
+It has **not** proven:
 
-### 9.4 Revision history has not yet been migrated
+```text
+source package
+      ↓
+network-disabled wheel construction
+```
 
-Append-only rationale-bearing revision events, canonical snapshots, preview-first change, restore, and reapply remain proven prototype behavior but are not yet in the permanent code.
+This is now an explicit decision point rather than an accidental packaging failure.
 
-### 9.5 Export has not yet been migrated
+### 9.2 D078 scope must be chosen before reopening packaging architecture
 
-The export architecture is well proven, but Repository Zero should reintroduce it only after the permanent build path, serialization, manifest, and tests are stable.
+If D078 is interpreted as requiring only portable output that can be installed and executed offline once built, Repository Zero already has strong evidence through the verified wheel path.
 
-### 9.6 User-facing first-run command is not yet connected
+If D078 is interpreted as requiring a raw exported source repository to build its wheel with zero network/build dependency availability, another proof is required.
 
-The next interface should call the existing orchestration rather than creating a second implementation path.
+Do not reintroduce the prototype's tiny local standard-library backend until that stronger requirement is deliberately chosen.
 
-### 9.7 `examples/text_lab/` has not yet become the permanent executable specification
+### 9.3 Packaging proofs are not yet the primary user journey
 
-The example should eventually be committed as the smallest repository whose expected canonical state, RIR, generated artifacts, runtime behavior, and later revision behavior can be inspected end to end.
+The low-level package layout, package materialization, package runtime, wheel build, and offline install proofs are intentionally separate boundaries. They have not yet been collapsed into UI or broad orchestration that would hide their evidence model.
+
+### 9.4 First local Workspace UI remains downstream
+
+The permanent compiler/revision/export spine is now much stronger than it was when this archive began. The next user-facing work should consume these APIs rather than recreate them.
+
+### 9.5 Measurement and browser/research capabilities remain deferred
+
+Timing/waste accounting and the original Chromium-centered research product remain foreseeable, but should follow a stable first-run Workspace experience rather than interrupt the current consolidation.
 
 ---
 
 ## 10. Foreseeable implementation path
 
-The order matters. The purpose is to keep proving the same architecture under increasing product realism, not to add breadth prematurely.
+The original milestone order proved useful and should remain visible as history:
 
-### Milestone 1 — Verify Repository Zero in an executable environment
+- Milestone 1 — executable CI: complete.
+- Milestone 2 — canonical persistence: complete.
+- Milestone 3 — RIR + generation evidence: complete.
+- Milestone 4 — thin CLI: complete.
+- Milestone 5 — permanent `examples/text_lab/`: complete.
+- Milestone 6 — preview-first architectural edit: complete.
+- Milestone 7 — rationale-bearing append-only revisions and restoration: complete.
+- Milestone 8 — evidence-backed incremental generation: complete.
+- Milestone 9 — export as packaging: implemented through verified export, conventional package projection, independent package runtime, wheel construction, and offline verified-wheel installation.
 
-Run the full current test suite in a checkout or CI.
+### Milestone 9 decision point — offline source build
 
-Fix real integration errors before adding architecture.
+Before adding another packaging mechanism, choose the acceptance criterion explicitly.
 
-Do not infer correctness from the fact that individual files look coherent.
+**If offline source-to-wheel construction is not required:** preserve the conventional PEP 517 package shape, keep the successful offline-wheel installation proof, and continue toward the user-facing Workspace journey.
 
-### Milestone 2 — Persist the first Workspace's canonical state
-
-Make first-run creation produce a real Workspace directory with authoritative authoring data.
-
-Target conceptual shape:
-
-```text
-<workspace>/
-├── authoring/
-│   └── canonical/
-│       └── workspace.json
-└── generated/
-```
-
-Keep name + description as the first-run inputs.
-
-### Milestone 3 — Persist RIR and a minimal generation manifest
-
-The compiler path should leave inspectable evidence of what it consumed and what it produced.
-
-Initial manifest concerns:
-
-- RIR hash
-- artifact path
-- node fingerprint
-- artifact hash
-
-Do not add incremental optimization until this evidence exists cleanly.
-
-### Milestone 4 — Connect the first real CLI
-
-The CLI should remain a thin interface over application orchestration.
-
-A first useful command should be able to:
-
-```text
-name + description + destination + sample text
-      ↓
-create canonical Workspace
-      ↓
-build
-      ↓
-run
-      ↓
-show observable result
-```
-
-The CLI must not contain compiler behavior.
-
-### Milestone 5 — Commit `examples/text_lab/`
-
-Turn the demonstrator into a permanent executable architectural specification rather than another disposable fixture.
-
-A change to Pyxis that breaks the reference path should be immediately visible.
-
-### Milestone 6 — Restore preview-first architectural editing
-
-Begin with one edit only: remove `normalize_text`.
-
-The permanent flow should reproduce the successful prototype:
-
-```text
-current canonical state
-      ↓
-derive proposed state in memory
-      ↓
-show capability + artifact consequences
-      ↓
-no mutation yet
-```
-
-### Milestone 7 — Restore rationale-bearing append-only revisions
-
-Apply should require rationale, append revision provenance, write canonical state, compile, and record completion.
-
-Then add restore through the same path.
-
-### Milestone 8 — Restore incremental generation
-
-Once the manifest and revision path are stable, reintroduce node-level reuse.
-
-Reuse requires both:
-
-- unchanged semantic fingerprint
-- unchanged artifact integrity hash
-
-Compiler status should again become visible evidence.
-
-### Milestone 9 — Restore export as packaging
-
-Package the exact current compiler products into an independently runnable repository.
-
-Verification should establish RIR/artifact identity and runtime behavior before READY.
+**If offline source-to-wheel construction is required:** make that the next narrow proof. Test the conventional environment first under actual network denial. Only if the build dependency constraint reproduces should Repository Zero consider a local backend or another self-contained mechanism. Any solution must preserve exact compiler-product identity and must remain packaging, not compilation.
 
 ### Milestone 10 — First local Workspace UI
 
-Only after the CLI and permanent path are stable should the UI become the primary first-run surface.
+Only after the packaging decision is explicit should the UI become the primary first-run surface.
 
 The UI should orchestrate existing product APIs rather than absorb architecture.
 
@@ -745,7 +663,7 @@ The Execution Ledger can then evolve from real observations rather than imagined
 
 ### Milestone 12 — Browser/research capabilities
 
-After the compiler/product spine is stable, return to the original browser/research purpose.
+After the compiler/product spine and first-run journey are stable, return to the original browser/research purpose.
 
 Chromium remains the browser. Pyxis adds inspectable Python capabilities, evidence, provenance, permissions, and workflows around it.
 
@@ -785,7 +703,7 @@ Do not reconstruct compiler state from timestamps, Git diffs, or file existence 
 
 ### Shadow implementations
 
-Preview, export, CLI, UI, and education layers must not quietly reimplement capability logic.
+Preview, export, CLI, UI, education, and packaging layers must not quietly reimplement capability logic.
 
 ### Filesystem discovery becoming architecture
 
@@ -811,6 +729,10 @@ Git is repository history. Pyxis revision provenance has different product seman
 
 Preserve the distinction between designed tests and executed tests.
 
+### Collapsing build and install evidence
+
+A package that installs offline from a verified wheel has not thereby proven that its source repository can build a wheel offline. Keep source-build evidence and wheel-install evidence separate.
+
 ---
 
 ## 13. A useful test for every new feature
@@ -827,6 +749,7 @@ Before adding something, ask:
 8. Can a user inspect enough of this transformation to learn from it?
 9. Can we measure whether the implementation wastes work?
 10. Is this feature required by the current vertical slice, or are we expanding too early?
+11. If portability is involved, which exact boundary is being claimed: source build, artifact packaging, wheel installation, or installed execution?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -840,7 +763,7 @@ That question has been explored enough for the minimum slice.
 
 Begin instead with:
 
-> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime` path more real while preserving its boundaries?
+> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export` path more real while preserving its boundaries?
 
 Read the current code before modifying it.
 
@@ -852,8 +775,10 @@ Migrate only the behavior whose architectural value is still understood.
 
 When a prototype lesson and current code disagree, reproduce the contradiction with a test before redesigning the architecture.
 
+For packaging specifically, do not reopen the local-backend prototype merely because it once solved an environment constraint. First decide whether offline source-to-wheel construction is actually part of Repository Zero's acceptance criterion, then reproduce that constraint in the permanent implementation.
+
 ---
 
 ## 15. Current continuity sentence
 
-At this snapshot, Pyxis has moved from architectural proof into a permanent minimal reference implementation. The core path exists in source as distinct authoring, RIR, compiler, materialization, runtime, and orchestration layers. The immediate challenge is no longer inventing the architecture; it is making that path persist its own canonical/RIR evidence, execute under real CI, and become the first genuinely usable Workspace workflow without allowing interface convenience to collapse the boundaries that made the architecture valuable.
+At the 2026-08-12 Repository Zero update, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, and fresh network-disabled wheel installation with matching installed behavior. The unresolved portability question is now narrow and explicit: whether Repository Zero must also prove **offline source-to-wheel construction**. That requirement should be chosen before any new packaging architecture is introduced.
