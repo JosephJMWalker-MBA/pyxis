@@ -87,11 +87,13 @@ installed console execution with matching behavior
 
 These proofs must not be collapsed into a stronger claim than the evidence supports:
 
-- **source package → conventional wheel is proven** using ordinary PEP 517 build isolation.
+- **source package → conventional wheel is proven** using ordinary PEP 517 build isolation when build dependencies are obtainable.
 - **verified wheel → fresh offline install → execution is proven** with network access actively blocked.
-- **offline source package → wheel construction remains unproven.**
+- **offline source package → wheel construction has been tested and currently fails.**
 
-A successful offline wheel installation does not prove that build dependencies for source-to-wheel construction are available offline. Repository Zero should not introduce a bespoke local build backend unless a later explicit decision concludes that the stronger offline source-build proof is required.
+Milestone 9M reproduced the stronger source-build constraint against the current conventional package without changing its packaging architecture. With network/index access disabled and normal PEP 517 build isolation preserved, wheel construction fails because the isolated build environment cannot resolve the declared `setuptools>=77.0.3` build requirement. No wheel is produced.
+
+This establishes that the current conventional source package is not self-contained for offline source-to-wheel construction. It does **not** choose a remedy. Repository Zero should not introduce a bespoke local build backend, vendor build dependencies, or weaken build isolation unless the stronger offline source-build property is deliberately accepted as a product requirement.
 
 ## Minimum permanent demonstrator
 
