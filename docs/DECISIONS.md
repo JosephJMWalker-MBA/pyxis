@@ -222,6 +222,17 @@ If rationale is empty or the application operation fails, controller state and b
 
 Milestone 10L does not regenerate export, add restoration, introduce a second architecture action, or generalize editing forms.
 
+## D094 — READY can re-enter live state only through verified export refresh
+After an architectural mutation retires pre-change READY evidence, the unified live Workspace state may regain READY only through a fresh verified export of its current build.
+
+Milestone 10M adds `refresh_workspace_export()`. The operation preflights the supplied current `BuildAndRunResult` against persisted Workspace evidence before export starts, then delegates planning, exact-byte materialization, and verification to the existing `export_workspace()` path using that exact current `BuildResult`, an explicitly supplied fresh destination, and explicit verification runtime text. It performs no compilation, canonical mutation, or revision append.
+
+The operation returns both the genuine `WorkspaceExportResult` and a fresh `WorkspacePresentation` assembled with that READY evidence. A destination directory merely existing on disk is never enough to re-establish READY.
+
+`WorkspaceController.refresh_export()` delegates to that operation and replaces only its retained export evidence, only after the operation returns successfully. The current run and any pending preview remain unchanged. Stale live evidence, occupied destinations, materialization failure, or verification failure therefore cannot partially advance controller READY state.
+
+Milestone 10M adds no Textual export control, destination picker, overwrite/cleanup behavior, restoration, or second architectural edit.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
