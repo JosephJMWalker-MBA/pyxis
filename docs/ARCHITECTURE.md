@@ -161,6 +161,40 @@ Milestone 10F adds `WorkspaceRuntimeController` as the smallest application-owne
 
 The controller is not a new runtime or session implementation. It exists so transient run evidence remains application-owned across repeated UI events rather than being reconstructed from rendered presentation fields.
 
+### Application-owned architectural preview
+
+Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
+
+The application path is:
+
+```text
+Workspace root
+    +
+current BuildAndRunResult
+    +
+optional existing WorkspaceExportResult
+    ↓
+query_workspace_presentation() preflight
+    ↓
+load_workspace_spec()
+    ↓
+preview_remove_normalize_text()
+    ↓
+ArchitecturePreview
+    ↓
+create_architecture_preview_presentation()
+    ↓
+ArchitecturePreviewPresentation
+```
+
+The preflight requires the caller's live run/READY evidence to still match the persisted Workspace before the proposed architecture is created. The canonical state is then reloaded through its owning persistence boundary rather than reconstructed from presentation fields.
+
+`ArchitecturePreviewPresentation` is immutable and contains only preview facts already justified by current/proposed canonical intent and the existing `ArchitecturePreview`: current/proposed canonical identity and SHA-256, capability additions/removals, predicted added/changed/removed artifact paths, and the current/proposed observable runtime-key contract. It does not compile proposed artifacts or execute proposed generated code.
+
+`WorkspaceArchitecturePreviewController` retains the typed pending `ArchitecturePreview` for a later rationale/apply operation while returning only presentation-safe preview evidence from its preview method.
+
+A pending preview is not current Workspace state. Preview creation performs no canonical write, compiler invocation, materialization, revision append, runtime execution, export, or READY verification. Therefore the current `BuildAndRunResult` and legitimate current READY evidence remain valid until an apply operation actually commits new canonical intent.
+
 ### First local Workspace UI
 
 Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation and operation boundaries.
@@ -207,9 +241,11 @@ Milestone 10F introduces the first visible runtime interaction: one Textual `Inp
 
 The 10F interaction remains non-architectural. It adds no button, rationale flow, preview/apply action, export action, compiler invocation, or filesystem mutation. Headless tests prove that runtime evidence changes while canonical/RIR/compiler/revision/export display remains unchanged and the source/portable trees remain byte-identical.
 
+Milestone 10G still adds no Textual architectural control. It proves the preview presentation/controller boundary independently so a later visible preview action can render proposed evidence without owning the typed domain preview or mutating the Workspace.
+
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
