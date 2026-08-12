@@ -56,6 +56,8 @@ Generated files are compiler products. UI actions and export logic must not patc
 
 Architectural changes are append-only events carrying human rationale, before/after canonical hashes, and compiler completion evidence.
 
+Revision event and completion logs have typed read-only loaders. Existing Workspace queries consume those loaders rather than parsing JSONL outside the revisions persistence layer.
+
 ### Presentation
 
 `WorkspacePresentation` is the framework-independent read-only application contract for a future user interface.
@@ -86,6 +88,38 @@ The contract preserves the authority of each layer:
 - export presentation is absent until actual evidence-backed `READY` verification exists.
 
 A removed compiler product has no current manifest entry, so presentation must not fabricate current node or artifact hashes for it. A future UI renders these facts rather than scanning files or reconstructing product state itself.
+
+### Existing Workspace query
+
+`query_workspace_presentation()` is the application-owned assembly boundary for reopening an existing Workspace while preserving the distinction between durable and transient evidence.
+
+It reloads durable evidence only through owning persistence APIs:
+
+```text
+Workspace root
+    ↓
+load_workspace_spec()
+load_repository_ir()
+load_generation_manifest()
+load_revision_events()
+load_revision_completions()
+    +
+supplied current BuildAndRunResult
+    +
+optional supplied WorkspaceExportResult
+    ↓
+coherence checks
+    ↓
+create_workspace_presentation()
+```
+
+Persisted RIR and generation-manifest evidence must exactly agree with the supplied run before the presentation can be assembled. Revision history is loaded because it is durable. Runtime output and generation statuses are not loaded because Repository Zero does not persist them.
+
+The presence of generated Python files, RIR JSON, or a generation manifest must never be treated as permission to infer generation status or rerun the Workspace automatically. If no current `BuildAndRunResult` is available, the full `WorkspacePresentation` is unavailable until the Workspace is run again or a future explicit persistence design is introduced.
+
+Likewise, an export directory on disk does not imply `READY`. Export facts enter the query only through an actual `WorkspaceExportResult`, and its runtime evidence must identify the queried physical source Workspace. This prevents identical copies of a Workspace from accidentally borrowing each other's transient export evidence.
+
+The query boundary is read-only application orchestration. It does not compile, execute, classify, verify exports, scan arbitrary files, or synthesize missing facts.
 
 ### Export
 
