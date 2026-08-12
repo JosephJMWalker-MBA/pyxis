@@ -193,6 +193,26 @@ MeasuredBuildAndRunResult
 
 Measurement therefore adds observation without a shadow build, shadow runtime, filesystem scan, efficiency label, or waste score. The first boundary is transient and in-memory only. Persistence, UI, a full Execution Ledger, and broader journey instrumentation remain separate decisions.
 
+Milestone 11B adds a second pure boundary over already-produced measurement evidence:
+
+```text
+MeasuredBuildAndRunResult (before)
+    +
+MeasuredBuildAndRunResult (after)
+    ↓
+compare_build_and_run_measurements()
+    ↓
+BuildAndRunMeasurementComparisonEvidence
+    ├── StageDurationComparisonEvidence
+    └── BuildWorkComparisonEvidence
+```
+
+The comparison performs no build, runtime execution, clock access, filesystem access, or compiler/materializer classification. Stage names must match in the same order. Each stage comparison records only before seconds, after seconds, and the arithmetic delta `after - before`.
+
+Build-work comparison retains the exact immutable before/after `BuildWorkEvidence` and reports literal per-path compiler-status transitions, including cases such as `new → reused`. The original written/reused/removed path tuples remain the work facts being compared; the comparison does not infer those facts again.
+
+A negative timing delta beside increased reuse is an observed association between two measured cycles, not proof that reuse caused the timing difference and not an efficiency or waste judgment. Causal attribution, scoring, persistence, UI, and a full Execution Ledger remain outside this boundary.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
