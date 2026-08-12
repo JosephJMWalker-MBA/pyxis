@@ -257,6 +257,17 @@ Compiler/materialization work evidence is not recalculated. `BuildWorkEvidence` 
 
 Milestone 11A adds no metric persistence, UI, charting, full Execution Ledger, or Preview/Apply/Export instrumentation.
 
+## D097 — Measurement comparison reports observation deltas without causal interpretation
+Comparing measured cycles must remain a pure evidence transformation. A comparison may state what changed between two observations, but it may not infer why the change occurred, assign an efficiency/waste score, or turn correlation into causation.
+
+Milestone 11B adds `compare_build_and_run_measurements()`. It consumes two already-completed `MeasuredBuildAndRunResult` values and performs no execution, filesystem access, timing, compiler work, or reclassification. Compared stage names must match in the same order before duration evidence is paired.
+
+`StageDurationComparisonEvidence` records only the stage, before seconds, after seconds, and the arithmetic delta `after - before`. `BuildWorkComparisonEvidence` retains the exact immutable before/after `BuildWorkEvidence` values and adds literal artifact-path status transitions such as `new → reused`; written/reused/removed path tuples remain the exact evidence from their source measurements.
+
+The acceptance proof uses a real first build followed by an identical rebuild of the same Workspace. The first observation reports `new` compiler products and generated writes; the second reports `reused` products and no generated writes. Fake clocks also produce exact negative build/runtime duration deltas. Those facts are presented together, but Repository Zero does not claim that reuse caused the timing difference or that either observation is intrinsically efficient or wasteful.
+
+Milestone 11B adds no measurement persistence, UI, full Execution Ledger, causal model, score, or broader journey instrumentation.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
