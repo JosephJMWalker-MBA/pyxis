@@ -9,6 +9,14 @@ from pyxis.rir.model import build_repository_ir
 from pyxis.runtime import run_materialized_workspace
 
 
+def _file_snapshot(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+
+
 def test_author_compile_materialize_execute_vertical_slice(tmp_path: Path) -> None:
     spec = create_workspace_spec(
         "Text Lab",
@@ -37,13 +45,12 @@ def test_runtime_does_not_modify_materialized_repository(tmp_path: Path) -> None
     )
     repository = build_repository_ir(spec)
     artifacts = compile_repository(repository)
-    written = materialize_artifacts(artifacts, tmp_path)
-    before = {path: path.read_bytes() for path in written}
+    materialize_artifacts(artifacts, tmp_path)
+    before = _file_snapshot(tmp_path)
 
     run_materialized_workspace(repository, tmp_path, "hello world")
 
-    after = {path: path.read_bytes() for path in written}
-    assert after == before
+    assert _file_snapshot(tmp_path) == before
 
 
 def test_runtime_respects_rir_capability_composition(tmp_path: Path) -> None:
