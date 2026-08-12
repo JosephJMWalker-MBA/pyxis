@@ -121,6 +121,26 @@ Likewise, an export directory on disk does not imply `READY`. Export facts enter
 
 The query boundary is read-only application orchestration. It does not compile, execute, classify, verify exports, scan arbitrary files, or synthesize missing facts.
 
+### First local Workspace UI
+
+Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation boundary:
+
+```text
+WorkspacePresentation
+    ↓
+WorkspaceShell (Textual)
+    ↓
+local rendered evidence
+```
+
+`WorkspaceShell` receives an existing immutable `WorkspacePresentation`. It does not receive a Workspace root and therefore has no filesystem/query responsibility. It must not compile, execute runtime code, mutate revisions, export, or manufacture READY state.
+
+The Milestone 10C boot shell renders only a minimal evidence summary sufficient to prove the boundary: Workspace identity, repository identity, compiler/revision evidence counts, and either literal `READY` from supplied export evidence or the neutral statement that no READY evidence is present.
+
+Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
+
+D084 selects Textual for the first local evidence UI only. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` merely because another rendering technology becomes appropriate.
+
 ### Export
 
 Export is packaging, not compilation. It packages existing compiler products and verifies their identity and runtime behavior.
