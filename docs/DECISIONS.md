@@ -178,6 +178,17 @@ Creating or displaying the preview must not replace `WorkspaceShell.presentation
 
 Milestone 10H deliberately adds no rationale field and no Apply control. A visible preview is still only proposed intent. Mutation remains unavailable until a separately proven rationale-bearing application operation exists.
 
+## D090 — Architectural apply consumes the retained preview and invalidates pre-change READY
+The first application-owned architectural mutation operation must consume the exact typed `ArchitecturePreview` retained by the preview controller. It may not recreate a proposal from renderer fields or from a second preview call at Apply time.
+
+Milestone 10I adds `apply_workspace_remove_normalize_text()`. The operation requires a non-empty human rationale, preflights the caller's current `BuildAndRunResult` and optional current `WorkspaceExportResult`, confirms the pending preview still describes the current canonical Workspace, and then delegates mutation to the existing governed `apply_remove_normalize_text()` path. That governed path remains the owner of revision append, canonical mutation, compilation/materialization, generation status, and completion evidence.
+
+Because `BuildAndRunResult` does not persist the runtime input that produced it, the operation requires explicit runtime text rather than inferring input from rendered/runtime output. After governed apply succeeds, the operation executes the newly materialized Workspace once, creates a fresh `BuildAndRunResult`, and queries a fresh `WorkspacePresentation` from the new durable/transient evidence.
+
+Pre-change READY evidence is deliberately not carried into that post-apply presentation. The old portable directory may still exist, but its verification belongs to the pre-change RIR/compiler products and therefore is not current evidence after architecture changes.
+
+`WorkspaceArchitecturePreviewController` updates its retained run, clears its retained export evidence, and clears the consumed pending preview only after the application operation returns successfully. Validation or governed-apply failure leaves those retained controller values unchanged. Milestone 10I adds no Textual rationale or Apply control; mutation ownership is proven independently before rendering can invoke it.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
