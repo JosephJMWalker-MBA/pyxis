@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from pyxis.authoring.persistence import persist_workspace_spec
 from pyxis.authoring.workspace import WorkspaceSpec
@@ -24,6 +26,11 @@ from pyxis.compiler.status import (
 from pyxis.rir.model import RepositoryIR, build_repository_ir
 from pyxis.rir.persistence import persist_repository_ir
 from pyxis.runtime.loader import run_materialized_workspace
+
+
+_BuildAndRunStage = Literal["build", "runtime"]
+_StageBoundary = Literal["start", "end"]
+_StageObserver = Callable[[_BuildAndRunStage, _StageBoundary], None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,24 +108,42 @@ def build_workspace(
     )
 
 
+def _observe_stage(
+    observer: _StageObserver | None,
+    stage: _BuildAndRunStage,
+    boundary: _StageBoundary,
+) -> None:
+    if observer is not None:
+        observer(stage, boundary)
+
+
 def build_and_run_workspace(
     spec: WorkspaceSpec,
     destination_root: Path,
     text: str,
+    *,
+    _stage_observer: _StageObserver | None = None,
 ) -> BuildAndRunResult:
     """Build one Workspace, then execute the materialized generated entrypoint.
 
     This function deliberately composes the existing first-run build and runtime
     APIs. It contains no compiler, materialization, or runtime implementation of
-    its own.
+    its own. The private stage observer exists only so application-owned
+    measurement can time these established boundaries without duplicating the
+    orchestration path.
     """
 
+    _observe_stage(_stage_observer, "build", "start")
     build = build_workspace(spec, destination_root)
+    _observe_stage(_stage_observer, "build", "end")
+
+    _observe_stage(_stage_observer, "runtime", "start")
     runtime_result = run_materialized_workspace(
         build.repository,
         destination_root,
         text,
     )
+    _observe_stage(_stage_observer, "runtime", "end")
 
     return BuildAndRunResult(
         build=build,
