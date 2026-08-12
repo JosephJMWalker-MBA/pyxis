@@ -289,7 +289,7 @@ The specialized `WorkspaceRuntimeController` and `WorkspaceArchitecturePreviewCo
 
 Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation and operation boundaries.
 
-Milestone 10K establishes the current interactive shape:
+Milestone 10L establishes the current interactive shape:
 
 ```text
 current evidence:
@@ -311,18 +311,37 @@ fresh WorkspacePresentation
 WorkspaceDetail.replace_presentation()
 
 architecture preview interaction:
-Button.Pressed
+Preview Button.Pressed
     ↓
 WorkspaceController.preview_remove_normalize_text()
     ↓
+retained ArchitecturePreview
+    +
 ArchitecturePreviewPresentation
     ↓
 ArchitecturePreviewDetail
+    +
+mount rationale / Apply controls
+
+architecture apply interaction:
+Apply Button.Pressed
+    +
+visible rationale
+    +
+visible runtime text
+    ↓
+WorkspaceController.apply_pending_remove_normalize_text()
+    ↓
+fresh post-apply WorkspacePresentation
+    ↓
+WorkspaceDetail.replace_presentation()
+    +
+clear proposed surface
+    +
+remove rationale / Apply controls
 ```
 
-`WorkspaceShell` no longer accepts separate runtime and architecture-preview controllers. When interactive, the same `WorkspaceController` instance owns both event paths. A read-only shell may still be created with no controller.
-
-The renderer receives no Workspace root and no compiler/runtime/revision/export/persistence service. It receives current immutable presentation evidence and, when interactions are enabled, one application-owned live-state authority.
+`WorkspaceShell` accepts one optional `WorkspaceController` for all live interaction. A read-only shell may still be created with no controller. The renderer receives no Workspace root and no compiler/runtime/revision/export/persistence service.
 
 Milestone 10C proved the renderer boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable evidence surface that renders the complete current presentation contract:
 
@@ -335,23 +354,21 @@ Milestone 10C proved the renderer boundary with a minimal summary shell. Milesto
 
 Optional evidence remains explicitly absent when it was not supplied. `No READY evidence` means exactly that; the renderer does not convert absence into an inferred `NOT READY` state. Likewise a `removed` compiler artifact remains visible as `removed` while its current node/artifact hashes remain absent.
 
-Milestone 10E proves the application-owned runtime rerun seam independently before a control is connected.
-
-Milestone 10F introduces the first visible runtime interaction. Milestone 10K migrates that same `Input` to `WorkspaceController.rerun()`. The returned presentation replaces the fields in the existing `WorkspaceDetail`, while the controller retains the exact fresh `BuildAndRunResult` required by subsequent operations.
+Milestone 10E proves the application-owned runtime rerun seam independently before a control is connected. Milestones 10F and 10K establish and then unify the runtime `Input` path through `WorkspaceController.rerun()`.
 
 `WorkspaceDetail.replace_presentation()` is renderer-only. It updates existing `Static` widgets from a supplied immutable presentation and performs no evidence acquisition or domain work.
 
-Milestone 10G proves the architectural preview presentation/controller boundary independently before a visible architecture control is connected.
+Milestone 10G proves the architectural preview presentation/controller boundary independently before a visible architecture control is connected. Milestones 10H and 10K establish and then unify the visible Preview path through `WorkspaceController.preview_remove_normalize_text()`.
 
-Milestone 10H introduces the visible Preview button and separate `ArchitecturePreviewDetail` surface. Milestone 10K migrates that button to the same `WorkspaceController` already used by runtime submission.
+Preview remains a separate proposed-state surface. It does not replace current Workspace presentation. Only after a successful Preview does Textual mount one rationale input and one Apply button.
 
-The 10K headless sequence proves that after a runtime submission, the subsequent Preview operation consumes the exact fresh `BuildAndRunResult` retained by the unified controller. READY remains current because neither operation changes canonical/RIR/compiler identity. Preview still changes only the separate `PROPOSED — NOT APPLIED` surface; it does not replace current Workspace presentation.
+Milestone 10L wires that Apply button to the already-proven `WorkspaceController.apply_pending_remove_normalize_text()` method. Textual passes the rationale and the current visible runtime-input value explicitly; it does not derive runtime input from rendered runtime output or reconstruct the architecture proposal from preview text.
 
-Milestone 10I proves the rationale-bearing apply operation/controller seam, but Textual still exposes no rationale field or Apply action. Milestone 10J proves the shared live authority, and Milestone 10K proves the renderer now uses it for both existing interactions.
+Current and proposed evidence are not optimistically modified. If rationale validation or the governed application operation fails, the controller's live state and both evidence surfaces remain unchanged; Textual may show only a non-evidence failure status. On success, the returned fresh presentation becomes current, the proposed panel is cleared, the rationale/Apply controls are removed, the completed revision and `removed` compiler status become visible, and pre-change READY disappears because the returned presentation contains no current export evidence.
 
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. D091 requires combined interactive operations to share one live application state authority. D092 requires the combined Textual shell to route both existing interactions through that same authority. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. D091 requires combined interactive operations to share one live application state authority. D092 requires the combined Textual shell to route runtime and Preview through that authority. D093 requires visible Apply to advance current/proposed rendering only from successful controller evidence. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
