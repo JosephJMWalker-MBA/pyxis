@@ -10,6 +10,15 @@ from .build import (
     build_workspace,
 )
 from .export import WorkspaceExportResult, export_workspace
+from .presentation import (
+    CanonicalPresentation,
+    CompilerArtifactPresentation,
+    ExportPresentation,
+    RIRPresentation,
+    RevisionPresentation,
+    WorkspacePresentation,
+    create_workspace_presentation,
+)
 from .preview import (
     ArchitectureDelta,
     ArchitecturePreview,
@@ -23,11 +32,18 @@ __all__ = [
     "ArchitecturePreview",
     "BuildAndRunResult",
     "BuildResult",
+    "CanonicalPresentation",
+    "CompilerArtifactPresentation",
+    "ExportPresentation",
+    "RIRPresentation",
+    "RevisionPresentation",
     "WorkspaceExportResult",
+    "WorkspacePresentation",
     "apply_remove_normalize_text",
     "apply_restore_normalize_text",
     "build_and_run_workspace",
     "build_workspace",
+    "create_workspace_presentation",
     "export_workspace",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
