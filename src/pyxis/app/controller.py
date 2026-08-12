@@ -6,6 +6,7 @@ from .architecture_apply import apply_workspace_remove_normalize_text
 from .architecture_preview import preview_workspace_remove_normalize_text
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
+from .export_refresh import refresh_workspace_export
 from .operations import rerun_workspace
 from .presentation import WorkspacePresentation
 from .preview import ArchitecturePreview
@@ -17,8 +18,9 @@ class WorkspaceController:
 
     The controller owns exactly one current run, one optional current export
     result, and one optional pending architecture preview. It delegates runtime,
-    preview, and apply behavior to the already-proven application operations so
-    those operations remain the owners of coherence checks and domain effects.
+    preview, apply, and verified export behavior to the already-proven
+    application operations so those operations remain the owners of coherence
+    checks and domain effects.
     """
 
     def __init__(
@@ -97,6 +99,22 @@ class WorkspaceController:
         self._run = result.run
         self._export = None
         self._pending_preview = None
+        return result.presentation
+
+    def refresh_export(
+        self,
+        destination_root: Path,
+        text: str,
+    ) -> WorkspacePresentation:
+        """Verify a fresh export of the exact current build and retain READY evidence."""
+
+        result = refresh_workspace_export(
+            self._workspace_root,
+            self._run,
+            destination_root,
+            text,
+        )
+        self._export = result.export
         return result.presentation
 
 
