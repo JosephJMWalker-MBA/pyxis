@@ -158,6 +158,17 @@ fresh WorkspacePresentation returned to renderer
 WorkspaceDetail refresh
 ```
 
+## D088 — Architectural preview is proposed evidence, not current Workspace state
+A UI-facing architecture preview must be assembled through an application-owned preview boundary before any rationale/apply control is introduced.
+
+Milestone 10G adds `preview_workspace_remove_normalize_text()`. The operation first preflights the supplied current `BuildAndRunResult` and optional READY evidence through `query_workspace_presentation()`, then reloads authoritative canonical intent and invokes the already-proven in-memory `preview_remove_normalize_text()` path. Stale live evidence is therefore rejected before preview creation.
+
+`ArchitecturePreviewPresentation` exposes only immutable presentation-safe facts already owned by that preview: current/proposed canonical identity and hashes, capability additions/removals, predicted added/changed/removed compiler-product paths, and current/proposed observable runtime-key contracts. It does not compile generated implementation or execute a shadow runtime to enrich the preview.
+
+`WorkspaceArchitecturePreviewController` retains the typed pending `ArchitecturePreview` needed by a later rationale-bearing apply operation while returning only `ArchitecturePreviewPresentation` from its preview method. Creating a preview does not mutate canonical state, materialize artifacts, append revisions, execute runtime code, export, or invalidate the current run/READY evidence.
+
+A pending preview therefore means only **proposed intent exists in memory**. Current Workspace presentation and current READY evidence remain current until a later application-owned apply operation commits the proposal through the canonical → RIR → compiler → revision path.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
