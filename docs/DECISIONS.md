@@ -233,6 +233,17 @@ The operation returns both the genuine `WorkspaceExportResult` and a fresh `Work
 
 Milestone 10M adds no Textual export control, destination picker, overwrite/cleanup behavior, restoration, or second architectural edit.
 
+## D095 — Visible export refresh is evidence-gated and non-optimistic
+The first visible export action appears only when current `WorkspacePresentation` has no READY evidence. The renderer must not inspect destination contents or filesystem state to decide whether export is needed; absence of current export evidence is the only gate.
+
+Milestone 10N adds one explicit destination-path `Input` and one Export/Verify button. Textual passes that path plus the current visible runtime-input value to `WorkspaceController.refresh_export()`. It does not compile, plan export, verify output, infer READY, choose a destination, overwrite files, or clean failed destinations.
+
+The renderer waits for the controller operation to return a fresh `WorkspacePresentation` before changing current export evidence. On success, `WorkspaceDetail` is refreshed from genuine READY evidence and the export controls are removed. After a successful architectural Apply, those controls appear because READY was retired; after successful verified export, they disappear because READY is current again.
+
+If export fails—for example because the requested destination already exists—controller run/export/pending-preview state and current `WorkspacePresentation` remain unchanged. Textual may update only the non-evidence export status message.
+
+Milestone 10N closes the first local Workspace UI lifecycle without adding file pickers, overwrite/cleanup semantics, restoration, a second architectural edit, or generalized file-management UI.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
