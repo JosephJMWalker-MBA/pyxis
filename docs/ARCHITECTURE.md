@@ -130,16 +130,29 @@ WorkspacePresentation
     ↓
 WorkspaceShell (Textual)
     ↓
+WorkspaceDetail
+    ↓
 local rendered evidence
 ```
 
 `WorkspaceShell` receives an existing immutable `WorkspacePresentation`. It does not receive a Workspace root and therefore has no filesystem/query responsibility. It must not compile, execute runtime code, mutate revisions, export, or manufacture READY state.
 
-The Milestone 10C boot shell renders only a minimal evidence summary sufficient to prove the boundary: Workspace identity, repository identity, compiler/revision evidence counts, and either literal `READY` from supplied export evidence or the neutral statement that no READY evidence is present.
+Milestone 10C proved that boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable read-only evidence surface that renders the complete current presentation contract:
+
+- canonical Workspace ID, name, description, capabilities, and canonical SHA-256;
+- RIR schema version, Repository/Workspace IDs, entrypoint, capabilities, and RIR SHA-256;
+- every compiler artifact path, generation status, node SHA-256, and artifact SHA-256 where current evidence exists;
+- the complete immutable runtime result formatted as JSON for inspection;
+- every revision event with rationale, before/after canonical identity, parent relationship, completion state, and optional completion hashes; and
+- optional export READY evidence including export root, RIR/manifest/input hashes, and compiler-product count.
+
+Optional evidence remains explicitly absent when it was not supplied. `No READY evidence` means exactly that; the renderer does not convert absence into an inferred `NOT READY` state. Likewise a `removed` compiler artifact remains visible as `removed` while its current node/artifact hashes remain absent.
+
+Milestone 10D intentionally adds no buttons or mutation callbacks. The first genuine Workspace detail screen proves information architecture and inspectability before UI events are connected back to application operations. Formatting helpers are renderer-only transformations over immutable evidence and may not become application logic.
 
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` merely because another rendering technology becomes appropriate.
 
 ### Export
 
