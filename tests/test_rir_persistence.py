@@ -1,8 +1,14 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from pyxis.authoring.workspace import create_workspace_spec
-from pyxis.rir import build_repository_ir, persist_repository_ir
+from pyxis.rir import (
+    build_repository_ir,
+    load_repository_ir,
+    persist_repository_ir,
+)
 
 
 def test_persist_repository_ir_writes_deterministic_inspectable_json(
@@ -35,6 +41,28 @@ def test_persist_repository_ir_writes_deterministic_inspectable_json(
             "capabilities": ["inspect_text", "normalize_text"],
         },
     }
+
+
+def test_load_repository_ir_round_trips_persisted_rir(tmp_path: Path) -> None:
+    spec = create_workspace_spec(
+        "Text Lab",
+        "Persisted RIR loading proof.",
+    )
+    repository = build_repository_ir(spec)
+    persist_repository_ir(repository, tmp_path)
+
+    loaded = load_repository_ir(tmp_path)
+
+    assert loaded == repository
+
+
+def test_load_repository_ir_rejects_malformed_shape(tmp_path: Path) -> None:
+    rir_path = tmp_path / "generated/repository.rir.json"
+    rir_path.parent.mkdir(parents=True)
+    rir_path.write_text('{"schema_version":"0.1"}\n', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="top-level shape"):
+        load_repository_ir(tmp_path)
 
 
 def test_persist_repository_ir_does_not_mutate_or_compile(
