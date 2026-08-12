@@ -9,6 +9,8 @@ from .model import (
 from .persistence import (
     append_revision_completion,
     append_revision_event,
+    load_revision_completions,
+    load_revision_events,
     revision_head_id,
 )
 
@@ -21,5 +23,7 @@ __all__ = [
     "canonical_sha256",
     "create_revision_completion",
     "create_revision_event",
+    "load_revision_completions",
+    "load_revision_events",
     "revision_head_id",
 ]
