@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10A on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10B on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -129,6 +129,14 @@ A transparent compiler lets users learn Python and software architecture by obse
 A user interface should receive a read-only application contract assembled from canonical, compiler, runtime, revision, and verification evidence Pyxis already owns.
 
 Presentation may validate coherence between evidence streams. It must not scan files, infer compiler status, execute code, or manufacture READY state.
+
+### 2.14 Durable and transient evidence should remain distinct
+
+Reopening a Workspace does not make every prior fact reconstructible.
+
+Canonical state, persisted RIR, generation manifests, and revision logs have explicit persistence boundaries and may be reloaded. Runtime results, generation statuses, and export READY evidence are transient in Repository Zero unless the real application operation that produced them is still available.
+
+The existence of implementation files must not be used to reverse-engineer those transient facts.
 
 ---
 
@@ -336,6 +344,16 @@ The answer reinforced the architecture. Canonical identity must come from `Works
 
 That produced a pure `WorkspacePresentation` adapter instead of a UI-specific query layer.
 
+### 4.13 Reopening a Workspace exposed the durable/transient boundary
+
+Milestone 10B then asked how that presentation should be assembled for an existing Workspace.
+
+The answer was not “read more files.” Canonical state, persisted RIR, generation manifests, and revision logs are durable because they have explicit persistence owners. Runtime results, compiler generation statuses, and READY are not durable simply because related files happen to remain on disk.
+
+The permanent query therefore reloads only owned durable evidence, requires a supplied current `BuildAndRunResult`, and includes export READY evidence only when the actual `WorkspaceExportResult` is supplied. Persisted RIR/manifest identity must agree with the live run before the streams can be combined.
+
+This prevents a reopened UI from manufacturing certainty after process loss.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -426,6 +444,9 @@ Repository Zero resolved D078 in favor of the smallest proven product contract. 
 ### D082 — Workspace Presentation Is an Application-Owned Evidence Adapter
 Repository Zero established a framework-independent read-only presentation contract assembled only from authoritative canonical state and already-produced application evidence. The UI renders that contract rather than rediscovering state or reimplementing product logic.
 
+### D083 — Existing Workspace Queries Separate Durable and Transient Evidence
+Repository Zero established a read-only application query that reloads durable canonical/RIR/manifest/revision evidence through owning loaders while requiring current run evidence explicitly and accepting READY only through actual export verification evidence.
+
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
 ---
@@ -496,6 +517,8 @@ Filesystem discovery does not substitute for compiler evidence.
 
 Architectural change follows preview → rationale → append-only revision → canonical mutation → compiler completion. Removal and restoration of `normalize_text` both use the same current-intent path; restore is a forward revision, not rollback.
 
+Typed read-only loaders now recover revision events and completions through the revisions persistence boundary while preserving chain/completion validation.
+
 ### 7.6 Runtime
 
 `run_materialized_workspace()` executes generated implementation from the materialized tree and does not compile or write. Runtime suppresses bytecode-cache writes so the repository boundary remains read-only in observable filesystem terms.
@@ -552,20 +575,33 @@ The CLI remains a thin interface over application orchestration. `examples/text_
 
 ### 7.12 Read-only Workspace presentation contract
 
-`src/pyxis/app/presentation.py` now defines the smallest framework-independent presentation surface for Milestone 10.
+`src/pyxis/app/presentation.py` defines the smallest framework-independent presentation surface for Milestone 10.
 
-`create_workspace_presentation()` consumes:
-
-- authoritative `WorkspaceSpec`;
-- an existing `BuildAndRunResult`;
-- optional tuples of `RevisionEvent` and `RevisionCompletion`; and
-- optional existing `WorkspaceExportResult` carrying READY verification evidence.
+`create_workspace_presentation()` consumes authoritative `WorkspaceSpec`, an existing `BuildAndRunResult`, optional revision event/completion tuples, and optional existing `WorkspaceExportResult` carrying READY verification evidence.
 
 It returns frozen presentation objects for canonical identity, RIR identity, compiler artifact status, revision history, runtime output, and optional export READY evidence.
 
-The adapter performs no filesystem reads, no compilation, no runtime execution, and no export. Tests explicitly disable those paths after real evidence has been produced and still construct the presentation successfully.
+The adapter performs no filesystem reads, no compilation, no runtime execution, and no export. Runtime mappings/sequences are recursively frozen. Removed artifacts retain the compiler-owned `removed` classification but receive no fabricated current node/artifact hashes. Revision events without completion evidence remain visible as incomplete intent rather than being converted into success. Mismatched canonical or export evidence is rejected.
 
-Runtime mappings/sequences are recursively frozen. Removed artifacts retain the compiler-owned `removed` classification but receive no fabricated current node/artifact hashes. Revision events without completion evidence remain visible as incomplete intent rather than being converted into success. Mismatched canonical or export evidence is rejected.
+### 7.13 Existing Workspace presentation query
+
+`src/pyxis/app/query.py` now owns assembly of that presentation for an existing Workspace.
+
+`query_workspace_presentation()` loads only durable evidence through official boundaries:
+
+```text
+load_workspace_spec()
+load_repository_ir()
+load_generation_manifest()
+load_revision_events()
+load_revision_completions()
+```
+
+It requires a supplied current `BuildAndRunResult` because runtime output and generation statuses are transient. The supplied run's RIR and generation manifest must exactly match persisted state before presentation is assembled.
+
+`WorkspaceExportResult` remains optional. Merely finding a portable export tree does not produce READY. When export evidence is supplied, its runtime source root must identify the queried Workspace and its materialization/verification roots must remain coherent.
+
+Tests prove the query does not compile or execute, does not infer READY from export files, rejects stale run evidence after a Workspace change, rejects export evidence borrowed from another physical source root, and leaves the queried Workspace unchanged.
 
 ---
 
@@ -575,13 +611,15 @@ Repository Zero is exercised by GitHub Actions on Python 3.11. The development s
 
 The portability suite has executed real conventional wheel builds, independent source-layout runtime checks, fresh virtual-environment creation, network-blocked local-wheel installation, execution of the installed console command, and explicit offline source-build characterization.
 
-Milestone 10A additionally executes the presentation contract against real build/run/export/revision evidence and proves that presentation itself performs no new filesystem acquisition, compilation, or runtime execution.
+Milestone 10A executes the presentation contract against real build/run/export/revision evidence and proves that presentation itself performs no new filesystem acquisition, compilation, or runtime execution.
+
+Milestone 10B adds real existing-Workspace query tests and typed revision-loader tests. The query recovers only explicitly persisted evidence and refuses to reconstruct missing runtime/status/READY facts from repository shape.
 
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 follows that rule for portability. D082 applies the same discipline to UI work: presentation exposes proven facts without inventing a second source of product truth.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces: persistence determines what can be recovered; file existence does not enlarge the evidence contract.
 
 ---
 
@@ -629,18 +667,25 @@ The original milestone order proved useful:
 - Milestone 8 — evidence-backed incremental generation: complete.
 - Milestone 9 — verified export, conventional source, verified wheel, and offline installed execution: complete.
 - Milestone 10A — framework-independent read-only Workspace presentation contract: complete.
+- Milestone 10B — existing Workspace presentation query with durable/transient evidence separation: complete.
 
 ### Milestone 10 — First local Workspace UI
 
-The next major product step remains the first local Workspace UI, but Milestone 10A now gives it a strict evidence boundary before any framework choice.
+The next major product step remains the first local Workspace UI. Milestones 10A and 10B now provide both the renderer contract and the application-owned way to assemble it without giving the UI permission to rediscover state.
 
-A future renderer should not accept raw repository paths and reconstruct state. It should consume `WorkspacePresentation` or an application-level operation that produces that contract from owned evidence.
+### Next narrow step — Milestone 10C
 
-### Next narrow step — Milestone 10B
+Choose the first local UI technology against the constraints now proven, before implementing screens.
 
-Add the smallest application-owned presentation assembly/query path for the existing first-run Workspace journey. It should gather already-authoritative canonical/revision evidence through existing loaders and compose already-produced build/run/export evidence where available, then return `WorkspacePresentation`.
+The selection should favor the smallest framework that can:
 
-The key constraint is that 10B remains an application query boundary, not a UI and not a new source of truth. Do not choose a UI framework yet. Do not scan generated files. Do not infer generation status or READY from persisted file shape. Where evidence is inherently transient rather than persisted, leave that field unavailable until the corresponding real application operation has produced it rather than reconstructing it heuristically.
+- run locally with a Python-first application boundary;
+- render immutable `WorkspacePresentation` data without forcing domain logic into the UI layer;
+- support create/open/run/preview/revision/export interactions through existing application APIs;
+- keep the Repository Zero demonstrator understandable end to end; and
+- leave a credible path toward the later Chromium-centered product without requiring browser work now.
+
+10C should be a documented framework decision plus the smallest boot proof needed to validate that decision. It should not redesign the application APIs or begin broad UI feature work.
 
 ### Milestone 11 — Measurement
 
@@ -693,13 +738,17 @@ Do not reconstruct compiler state from timestamps, Git diffs, file existence, or
 
 A renderer should not read canonical/RIR/manifest/revision/generated files directly just because they are available. Evidence acquisition belongs to the existing domain/application boundaries; presentation consumes the resulting facts.
 
+### Reconstructing transient evidence from durable artifacts
+
+Do not infer a prior generation status from the current manifest, rerun generated code merely because runtime output is absent, or label an export READY because its files still exist. If the evidence was not persisted, it is unavailable until the real operation produces it again.
+
 ### Mutable presentation evidence
 
 Do not hand a UI mutable references to runtime or evidence objects that let presentation code alter the facts it is supposed to render.
 
 ### Shadow implementations
 
-Preview, export, CLI, UI, education, presentation, and packaging layers must not quietly reimplement capability logic.
+Preview, export, CLI, UI, education, presentation, query, and packaging layers must not quietly reimplement capability logic.
 
 ### Filesystem discovery becoming architecture
 
@@ -753,6 +802,7 @@ Before adding something, ask:
 12. Is a proposed workaround solving a demonstrated product requirement or merely removing an observed constraint?
 13. If a UI is involved, which application-owned evidence object supplies each displayed fact?
 14. Is presentation rendering existing evidence, or quietly acquiring/inferencing new state?
+15. Is each displayed fact durable or transient, and does the code recover it only through the boundary that actually owns it?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -766,7 +816,7 @@ That question has been explored enough for the minimum slice.
 
 Begin instead with:
 
-> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export → presentation` path more usable while preserving its boundaries?
+> What is the next smallest implementation that makes the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime → verified export → presentation → query` path more usable while preserving its boundaries?
 
 Read the current code before modifying it.
 
@@ -780,10 +830,12 @@ When a prototype lesson and current code disagree, reproduce the contradiction w
 
 For packaging, Milestone 9 is closed. The portable contract is conventional source plus a verified wheel, and the offline guarantee applies to installing/executing that wheel. Do not reopen offline source-build machinery unless a new real requirement explicitly demands it.
 
-For UI work, Milestone 10A is complete. `WorkspacePresentation` is now the read-only renderer contract. Do not let a future UI bypass it by reading files or recreating compiler/revision/export logic. The next narrow work should establish an application-owned way to assemble that contract for the first-run journey before selecting a framework.
+For UI work, Milestones 10A and 10B are complete. `WorkspacePresentation` is the immutable renderer contract, and `query_workspace_presentation()` is the application-owned existing-Workspace assembly path. A future UI must not bypass either boundary by reading files, recreating runtime/status evidence, or inferring READY.
+
+The next narrow work is Milestone 10C: deliberately select and minimally prove the first local UI framework against these constraints before building the actual Workspace screens.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 10A closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, and now a framework-independent immutable `WorkspacePresentation` contract for rendering canonical identity, RIR identity, compiler statuses, runtime results, revision evidence, and optional READY export evidence without rediscovering state. Milestone 9 is closed. Milestone 10A is complete; the next narrow step is an application-owned presentation assembly/query path, still before any UI framework is chosen.
+At the 2026-08-12 Milestone 10B closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, an immutable framework-independent `WorkspacePresentation`, and an application-owned existing-Workspace query that reloads only durable evidence while requiring transient run/READY evidence explicitly. Milestone 9 is closed. Milestones 10A and 10B are complete; the next narrow step is deliberate selection and minimal proof of the first local UI technology, still without moving product logic into the UI layer.
