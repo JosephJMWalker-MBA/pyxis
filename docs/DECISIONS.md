@@ -50,6 +50,15 @@ Portable output should resemble a normal Python repository rather than a special
 ## D078 — Self-contained portability proof
 The minimum exported repository can be installed and executed without network access or external build dependencies while preserving generated artifact identity.
 
+## D079 — Separate source-build and wheel-install portability proofs
+Repository Zero must treat source-to-wheel construction and wheel installation as separate evidence boundaries.
+
+The current permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
+
+That does **not** establish that the source package itself can build a wheel while offline. Offline source → wheel construction remains an explicit unproven criterion.
+
+D078 must therefore not be treated as fully resolved for the stronger source-build interpretation unless that requirement is chosen deliberately and proven. A bespoke local build backend should not be reintroduced merely because the prototype once needed one; reopen that design only if the stronger offline source-build proof is actually required.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
