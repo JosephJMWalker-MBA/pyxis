@@ -200,6 +200,15 @@ Controller state advances only after delegated operations return successfully. F
 
 The specialized `WorkspaceRuntimeController` and `WorkspaceArchitecturePreviewController` remain temporarily for compatibility with the already-proven Textual slices, but they must not be composed as independent live-state authorities in the eventual combined UI. Textual remains unchanged in 10J; the renderer should migrate to `WorkspaceController` before rationale/Apply controls are exposed.
 
+## D092 — Textual runtime and preview interactions share the unified Workspace controller
+A combined `WorkspaceShell` must receive at most one live application controller. Milestone 10K migrates the existing runtime `Input` and architectural Preview button to the same `WorkspaceController` instance and removes the renderer's separate runtime-controller and architecture-preview-controller inputs.
+
+The renderer still owns only Textual events and presentation refresh. Runtime submission calls `WorkspaceController.rerun(text)` and replaces current `WorkspacePresentation` from the returned evidence. Preview calls `WorkspaceController.preview_remove_normalize_text()` and renders only the separate `PROPOSED — NOT APPLIED` preview surface.
+
+The headless acceptance path must prove ordering, not merely matching values: the `BuildAndRunResult` produced by the runtime submission is the exact object later supplied by `WorkspaceController` to the architectural preview operation. READY remains current across that sequence because neither operation changes canonical/RIR/compiler identity. The pending preview remains proposed evidence and does not replace current Workspace presentation.
+
+Milestone 10K adds no rationale field and no Apply control. Visible mutation remains deferred until the renderer is already proven to use the single live-state authority that will own Apply.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
