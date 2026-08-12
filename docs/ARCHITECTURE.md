@@ -56,6 +56,37 @@ Generated files are compiler products. UI actions and export logic must not patc
 
 Architectural changes are append-only events carrying human rationale, before/after canonical hashes, and compiler completion evidence.
 
+### Presentation
+
+`WorkspacePresentation` is the framework-independent read-only application contract for a future user interface.
+
+It is composed only from evidence already produced by permanent product boundaries:
+
+```text
+WorkspaceSpec
+    +
+BuildAndRunResult
+    +
+RevisionEvent / RevisionCompletion evidence
+    +
+optional READY WorkspaceExportResult
+    ↓
+WorkspacePresentation
+```
+
+The presentation layer may validate coherence between those evidence streams, but it does not acquire new facts. It performs no filesystem reads or discovery, no compilation, no runtime execution, no export, and no readiness inference.
+
+The contract preserves the authority of each layer:
+
+- canonical identity, name, description, capabilities, and canonical hash come from authoritative `WorkspaceSpec`;
+- RIR structure and identity come from the existing build RIR and generation manifest;
+- artifact `new` / `reused` / `regenerated` / `removed` status comes directly from compiler-owned generation evidence;
+- runtime output comes from an already-completed run and is exposed recursively through immutable mappings/sequences;
+- revision intent remains distinct from optional compiler completion evidence; and
+- export presentation is absent until actual evidence-backed `READY` verification exists.
+
+A removed compiler product has no current manifest entry, so presentation must not fabricate current node or artifact hashes for it. A future UI renders these facts rather than scanning files or reconstructing product state itself.
+
 ### Export
 
 Export is packaging, not compilation. It packages existing compiler products and verifies their identity and runtime behavior.
