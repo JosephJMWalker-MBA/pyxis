@@ -38,6 +38,7 @@ class BuildResult:
     generation_statuses: tuple[ArtifactGenerationStatus, ...]
     manifest_path: Path
     written_paths: tuple[Path, ...]
+    reused_paths: tuple[Path, ...]
     removed_paths: tuple[Path, ...]
 
 
@@ -59,10 +60,8 @@ def build_workspace(
     existing layer: authoring persists canonical intent, RIR lowering supplies
     and persists the derived repository model, the compiler supplies immutable
     artifacts, manifest evidence, and generation statuses, and the materializer
-    reconciles only compiler-owned paths proven by the prior manifest.
-
-    Generation status is observational in this milestone: even artifacts
-    classified as reused are still written by the existing materializer.
+    consumes those statuses while reconciling only compiler-owned paths proven
+    by the prior manifest.
     """
 
     previous_manifest = load_generation_manifest(destination_root)
@@ -82,6 +81,7 @@ def build_workspace(
     )
     materialization = reconcile_materialized_artifacts(
         artifacts,
+        generation_statuses,
         previous_manifest,
         destination_root,
     )
@@ -96,6 +96,7 @@ def build_workspace(
         generation_statuses=generation_statuses,
         manifest_path=manifest_path,
         written_paths=materialization.written_paths,
+        reused_paths=materialization.reused_paths,
         removed_paths=materialization.removed_paths,
     )
 
