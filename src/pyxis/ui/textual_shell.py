@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import json
+from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
@@ -253,6 +254,32 @@ class ArchitectureApplyControls(Vertical):
         )
 
 
+class ExportRefreshControls(Vertical):
+    """Explicit verified-export controls shown only while READY evidence is absent."""
+
+    def __init__(self) -> None:
+        super().__init__(id="export-refresh-controls")
+
+    def compose(self) -> ComposeResult:
+        yield Static(
+            "Verified export destination",
+            id="export-destination-label",
+        )
+        yield Input(
+            placeholder="Enter a fresh export destination path",
+            id="export-destination",
+        )
+        yield Button(
+            "Export and verify",
+            id="refresh-export",
+        )
+        yield Static(
+            "",
+            id="export-refresh-status",
+            markup=False,
+        )
+
+
 class WorkspaceDetail(VerticalScroll):
     """Complete renderer for one immutable Workspace presentation."""
 
@@ -399,7 +426,8 @@ class WorkspaceShell(App[None]):
 
     #runtime-interaction,
     #architecture-preview-interaction,
-    #architecture-preview {
+    #architecture-preview,
+    #export-refresh-controls {
         width: 94%;
         height: auto;
         padding: 1 2;
@@ -413,18 +441,21 @@ class WorkspaceShell(App[None]):
 
     #runtime-input-label,
     #architecture-preview-action-label,
-    #architecture-rationale-label {
+    #architecture-rationale-label,
+    #export-destination-label {
         text-style: bold;
         margin-bottom: 1;
     }
 
-    #architecture-apply-controls {
+    #architecture-apply-controls,
+    #export-refresh-slot {
         width: 100%;
         height: auto;
         margin-top: 1;
     }
 
-    #architecture-apply-status {
+    #architecture-apply-status,
+    #export-refresh-status {
         margin-top: 1;
     }
 
@@ -486,6 +517,9 @@ class WorkspaceShell(App[None]):
                     id="preview-remove-normalize-text",
                 )
             yield ArchitecturePreviewDetail()
+            with Vertical(id="export-refresh-slot"):
+                if self.presentation.export is None:
+                    yield ExportRefreshControls()
         yield WorkspaceDetail(self.presentation)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -511,6 +545,26 @@ class WorkspaceShell(App[None]):
                 self.query_one("#architecture-apply-status", Static).update("")
             return
 
+        if event.button.id == "refresh-export":
+            destination_input = self.query_one("#export-destination", Input)
+            runtime_input = self.query_one("#runtime-input", Input)
+            status = self.query_one("#export-refresh-status", Static)
+
+            try:
+                presentation = self.controller.refresh_export(
+                    Path(destination_input.value),
+                    runtime_input.value,
+                )
+            except Exception as exc:
+                status.update(f"Export failed: {exc}")
+                return
+
+            self.presentation = presentation
+            self.query_one(WorkspaceDetail).replace_presentation(presentation)
+            controls = self.query_one("#export-refresh-controls", ExportRefreshControls)
+            await controls.remove()
+            return
+
         if event.button.id != "apply-remove-normalize-text":
             return
 
@@ -532,6 +586,10 @@ class WorkspaceShell(App[None]):
         self.query_one(ArchitecturePreviewDetail).clear_presentation()
         controls = self.query_one("#architecture-apply-controls", ArchitectureApplyControls)
         await controls.remove()
+
+        if len(self.query("#export-refresh-controls")) == 0:
+            slot = self.query_one("#export-refresh-slot", Vertical)
+            await slot.mount(ExportRefreshControls())
 
 
 def create_workspace_shell(
