@@ -316,9 +316,11 @@ The prototype was eventually made self-contained enough to prove a network-disab
 
 That proof is useful history, but Repository Zero should still prefer conventional tooling where it is available rather than making bespoke packaging infrastructure part of the core product prematurely.
 
-Repository Zero later clarified the original constraint instead of immediately importing the prototype backend. A conventional source package now builds a standard wheel using ordinary PEP 517 build isolation, and the verified wheel can be installed and executed in a fresh virtual environment while network access is actively blocked. Because installation consumes a prebuilt wheel, Setuptools is not needed during that installation proof.
+Repository Zero later clarified the original constraint instead of immediately importing the prototype backend. A conventional source package now builds a standard wheel using ordinary PEP 517 build isolation when build dependencies are obtainable, and the verified wheel can be installed and executed in a fresh virtual environment while network access is actively blocked. Because installation consumes a prebuilt wheel, Setuptools is not needed during that installation proof.
 
-The stronger statement remains deliberately unproven: Repository Zero has **not** yet shown that the source package can construct its wheel while offline. Successful offline wheel installation therefore does not, by itself, justify either claiming full offline source-build self-containment or reintroducing a bespoke local backend.
+Milestone 9M then tested the stronger source-build condition directly in the permanent implementation. The exact planned package bytes were copied into a disposable build context, normal PEP 517 build isolation was preserved, index/network access was disabled, and no vendored dependency, fallback backend, or other workaround was supplied. Under those conditions the build failed before producing a wheel because the isolated environment could not resolve the declared `setuptools>=77.0.3` build requirement.
+
+The prototype constraint is therefore reproduced in Repository Zero. The evidence proves that the **current conventional package does not satisfy offline source-to-wheel construction**. It does not decide whether that property is important enough to justify new packaging architecture.
 
 ---
 
@@ -424,7 +426,11 @@ The prototype successfully demonstrated clean, network-disabled installation whi
 
 ### D079 — Separate Source-Build and Wheel-Install Portability Proofs
 
-Repository Zero proved conventional source-to-wheel construction under ordinary PEP 517 build isolation and separately proved verified-wheel installation/execution with network access blocked. Offline source-to-wheel construction remains unproven and must not be inferred from the successful wheel-install proof.
+Repository Zero proved conventional source-to-wheel construction under ordinary PEP 517 build isolation when build dependencies are obtainable and separately proved verified-wheel installation/execution with network access blocked. Milestone 9M then demonstrated that the current conventional source package fails to construct a wheel offline because its isolated build environment cannot resolve `setuptools>=77.0.3`.
+
+### D080 — Reproduce a Portability Constraint Before Choosing Its Remedy
+
+The stronger offline source-build interpretation of D078 is now demonstrably unsatisfied by the current conventional package. That evidence does not select a solution. Do not reintroduce a local backend, vendor build tooling, or weaken build isolation until offline source-to-wheel construction is deliberately accepted as a required product property.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -531,9 +537,9 @@ The verified export can be projected into a conventional `src/` package layout. 
 
 The materialized `src/` package executes in a fresh subprocess with Pyxis unavailable and reproduces the already-verified Workspace behavior.
 
-### 7.9 Wheel construction and fresh offline installation
+### 7.9 Wheel construction, fresh offline installation, and source-build characterization
 
-The conventional package can build a standard wheel using ordinary PEP 517 tooling. Wheel inspection independently verifies that compiler-product bytes inside the archive still match their recorded artifact hashes and that no Pyxis package has leaked into the payload.
+The conventional package can build a standard wheel using ordinary PEP 517 tooling when its declared build dependencies are obtainable. Wheel inspection independently verifies that compiler-product bytes inside the archive still match their recorded artifact hashes and that no Pyxis package has leaked into the payload.
 
 That verified wheel can then be installed into a fresh virtual environment with:
 
@@ -545,7 +551,13 @@ That verified wheel can then be installed into a fresh virtual environment with:
 
 The installed console command reproduces the verified package behavior for the same input.
 
-This proves offline **wheel installation and execution**, not offline **source-to-wheel construction**.
+Milestone 9M separately attempted ordinary source-to-wheel construction with network/index access blocked while preserving PEP 517 build isolation. The attempt produces no wheel because the isolated build environment cannot resolve `setuptools>=77.0.3`.
+
+The permanent evidence therefore distinguishes three facts:
+
+1. conventional source → wheel succeeds when build dependencies are obtainable;
+2. a verified wheel installs and executes offline;
+3. the current conventional source package does **not** build its wheel offline without an available build dependency.
 
 ### 7.10 Application surfaces
 
@@ -557,7 +569,7 @@ The CLI remains a thin interface over application orchestration. `examples/text_
 
 The original warning against claiming unexecuted tests remains valid as a general rule, but Repository Zero is no longer in that unverified state.
 
-The permanent implementation is exercised by GitHub Actions on Python 3.11. Development through Milestone 9K repeatedly ran the complete pytest suite after each narrow step. The 9K final run additionally performed real conventional wheel builds, fresh virtual-environment creation, network-blocked local-wheel installation, and execution of the installed console command.
+The permanent implementation is exercised by GitHub Actions on Python 3.11. Development through Milestone 9M repeatedly ran the complete pytest suite after each narrow step. The portability suite has performed real conventional wheel builds, fresh virtual-environment creation, network-blocked local-wheel installation, execution of the installed console command, and the explicit offline source-build characterization that reproduces the build-dependency failure.
 
 Therefore the current portability statements in this archive are based on executed CI evidence, not design intent alone.
 
@@ -565,7 +577,7 @@ The rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-That rule is why successful offline wheel installation does not become a claim of successful offline source-to-wheel construction.
+That rule is why the reproduced offline source-build failure establishes a constraint without automatically selecting a packaging remedy.
 
 ---
 
@@ -575,7 +587,7 @@ Most gaps listed in the original 2026-08-11 snapshot—canonical persistence, RI
 
 The important current gaps are narrower.
 
-### 9.1 Offline source-to-wheel construction is unproven
+### 9.1 Offline source-to-wheel construction currently fails under the conventional package
 
 Repository Zero has proven:
 
@@ -585,7 +597,7 @@ source package
 standard wheel
 ```
 
-using ordinary PEP 517 build isolation, and separately:
+using ordinary PEP 517 build isolation when build dependencies are obtainable, and separately:
 
 ```text
 verified wheel
@@ -595,27 +607,31 @@ fresh network-disabled install
 installed execution
 ```
 
-It has **not** proven:
+Milestone 9M also tested:
 
 ```text
 source package
       ↓
-network-disabled wheel construction
+network-disabled PEP 517 build isolation
+      ↓
+wheel
 ```
 
-This is now an explicit decision point rather than an accidental packaging failure.
+The current conventional package fails at the build-dependency step because `setuptools>=77.0.3` cannot be resolved with index/network access disabled. No wheel is produced.
 
-### 9.2 D078 scope must be chosen before reopening packaging architecture
+This is now a reproduced implementation constraint, not an untested assumption.
+
+### 9.2 D078 scope must be chosen before solving the reproduced constraint
 
 If D078 is interpreted as requiring only portable output that can be installed and executed offline once built, Repository Zero already has strong evidence through the verified wheel path.
 
-If D078 is interpreted as requiring a raw exported source repository to build its wheel with zero network/build dependency availability, another proof is required.
+If D078 is interpreted as requiring a raw exported source repository to build its wheel with zero network/build dependency availability, the current conventional package demonstrably does not satisfy that criterion.
 
-Do not reintroduce the prototype's tiny local standard-library backend until that stronger requirement is deliberately chosen.
+Do not reintroduce the prototype's tiny local standard-library backend, vendor build dependencies, or weaken normal build isolation until that stronger requirement is deliberately chosen.
 
 ### 9.3 Packaging proofs are not yet the primary user journey
 
-The low-level package layout, package materialization, package runtime, wheel build, and offline install proofs are intentionally separate boundaries. They have not yet been collapsed into UI or broad orchestration that would hide their evidence model.
+The low-level package layout, package materialization, package runtime, wheel build, offline install, and source-build characterization proofs are intentionally separate boundaries. They have not yet been collapsed into UI or broad orchestration that would hide their evidence model.
 
 ### 9.4 First local Workspace UI remains downstream
 
@@ -639,19 +655,21 @@ The original milestone order proved useful and should remain visible as history:
 - Milestone 6 — preview-first architectural edit: complete.
 - Milestone 7 — rationale-bearing append-only revisions and restoration: complete.
 - Milestone 8 — evidence-backed incremental generation: complete.
-- Milestone 9 — export as packaging: implemented through verified export, conventional package projection, independent package runtime, wheel construction, and offline verified-wheel installation.
+- Milestone 9 — export as packaging: implemented through verified export, conventional package projection, independent package runtime, wheel construction, offline verified-wheel installation, and explicit offline source-build characterization.
 
-### Milestone 9 decision point — offline source build
+### Milestone 9 decision point — whether offline source build is a required property
 
-Before adding another packaging mechanism, choose the acceptance criterion explicitly.
+Milestone 9M has completed the characterization step. The conventional package does not build a wheel under the stronger no-network/no-build-dependency condition because PEP 517 isolation cannot resolve `setuptools>=77.0.3`.
+
+The next move is therefore a requirements decision, not another diagnostic experiment.
 
 **If offline source-to-wheel construction is not required:** preserve the conventional PEP 517 package shape, keep the successful offline-wheel installation proof, and continue toward the user-facing Workspace journey.
 
-**If offline source-to-wheel construction is required:** make that the next narrow proof. Test the conventional environment first under actual network denial. Only if the build dependency constraint reproduces should Repository Zero consider a local backend or another self-contained mechanism. Any solution must preserve exact compiler-product identity and must remain packaging, not compilation.
+**If offline source-to-wheel construction is required:** evaluate the smallest self-contained packaging remedy against the existing architecture. A local backend is one historical option, not an automatic answer. Any solution must preserve exact compiler-product identity and must remain packaging, not compilation.
 
 ### Milestone 10 — First local Workspace UI
 
-Only after the packaging decision is explicit should the UI become the primary first-run surface.
+Only after the packaging requirement is explicit should the UI become the primary first-run surface.
 
 The UI should orchestrate existing product APIs rather than absorb architecture.
 
@@ -733,6 +751,10 @@ Preserve the distinction between designed tests and executed tests.
 
 A package that installs offline from a verified wheel has not thereby proven that its source repository can build a wheel offline. Keep source-build evidence and wheel-install evidence separate.
 
+### Treating a reproduced constraint as a design decision
+
+The fact that the current source package cannot resolve its build backend offline does not, by itself, require a bespoke backend. Evidence identifies the constraint; product requirements determine whether it deserves a remedy.
+
 ---
 
 ## 13. A useful test for every new feature
@@ -775,10 +797,10 @@ Migrate only the behavior whose architectural value is still understood.
 
 When a prototype lesson and current code disagree, reproduce the contradiction with a test before redesigning the architecture.
 
-For packaging specifically, do not reopen the local-backend prototype merely because it once solved an environment constraint. First decide whether offline source-to-wheel construction is actually part of Repository Zero's acceptance criterion, then reproduce that constraint in the permanent implementation.
+For packaging specifically, the offline source-build constraint has now been reproduced in Repository Zero. Do not reopen the local-backend prototype merely because it once solved the same class of failure. First decide whether offline source-to-wheel construction is actually part of Repository Zero's acceptance criterion. If it is, evaluate remedies deliberately against the permanent evidence model.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Repository Zero update, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, and fresh network-disabled wheel installation with matching installed behavior. The unresolved portability question is now narrow and explicit: whether Repository Zero must also prove **offline source-to-wheel construction**. That requirement should be chosen before any new packaging architecture is introduced.
+At the 2026-08-12 Repository Zero update, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, and fresh network-disabled wheel installation with matching installed behavior. Milestone 9M has also reproduced the remaining conventional packaging limitation: under normal PEP 517 isolation with network/index access blocked, the source package cannot resolve `setuptools>=77.0.3` and therefore produces no wheel. The unresolved question is no longer whether the constraint is real; it is whether **offline source-to-wheel construction is important enough to require a packaging change**.
