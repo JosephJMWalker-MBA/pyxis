@@ -122,6 +122,17 @@ Renderer formatting may make immutable evidence legible—for example by formatt
 
 Milestone 10D deliberately contains no buttons or mutation callbacks. Information architecture and evidence visibility are proven before UI events are connected to application operations. Navigation/layout mechanisms may evolve later without weakening D082/D083 or changing the evidence contract.
 
+## D086 — UI actions cross an application-owned operation boundary
+A renderer must not invoke compiler, runtime, revision, export, or persistence services directly. A user action first crosses a named application operation whose inputs, coherence checks, side effects, and returned evidence can be tested without a UI framework.
+
+Milestone 10E proves the first such seam with `rerun_workspace()`, a non-architectural runtime-only operation. It accepts the Workspace root, the caller's current `BuildAndRunResult`, new runtime text, and optional existing `WorkspaceExportResult`.
+
+Before generated code executes, the operation uses `query_workspace_presentation()` to require that supplied live run/export evidence still belongs to the persisted Workspace. Stale evidence therefore fails before runtime. On success the operation executes the existing materialized entrypoint exactly once, reuses the exact same `BuildResult`, creates a fresh `BuildAndRunResult`, and queries a fresh immutable `WorkspacePresentation`.
+
+A runtime-only rerun does not compile, classify generation status, materialize artifacts, mutate revisions, export, or re-verify READY. Existing legitimate export evidence may remain visible because architecture and compiler products did not change; its recorded verification input hash remains the input that was actually verified and must not be relabeled as verification of the new runtime input.
+
+The application result carries both the fresh transient run evidence and the fresh presentation so a future UI controller can retain the former while rendering only the latter. Milestone 10E intentionally adds no Textual callback or button; the operation boundary is proven independently before the first control is wired.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
