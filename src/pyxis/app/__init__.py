@@ -25,6 +25,7 @@ from .preview import (
     preview_remove_normalize_text,
     preview_restore_normalize_text,
 )
+from .query import query_workspace_presentation
 
 __all__ = [
     "ApplyResult",
@@ -47,4 +48,5 @@ __all__ = [
     "export_workspace",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
+    "query_workspace_presentation",
 ]
