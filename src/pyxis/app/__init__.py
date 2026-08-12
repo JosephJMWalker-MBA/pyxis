@@ -19,6 +19,7 @@ from .build import (
 )
 from .controller import (
     WorkspaceArchitecturePreviewController,
+    WorkspaceController,
     WorkspaceRuntimeController,
 )
 from .export import WorkspaceExportResult, export_workspace
@@ -61,6 +62,7 @@ __all__ = [
     "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
     "WorkspaceArchitecturePreviewResult",
+    "WorkspaceController",
     "WorkspaceExportResult",
     "WorkspacePresentation",
     "WorkspaceRerunResult",
