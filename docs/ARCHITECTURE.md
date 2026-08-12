@@ -275,15 +275,61 @@ preview_workspace_remove_normalize_text()
 WorkspaceController.apply_pending_remove_normalize_text(rationale, text)
     ↓
 apply_workspace_remove_normalize_text()
+
+WorkspaceController.refresh_export(destination, text)
+    ↓
+refresh_workspace_export()
 ```
 
 No compiler, runtime, revision, export, preview, or presentation implementation moves into the controller. It owns only the live evidence required to sequence those operations coherently.
 
 A successful rerun replaces the controller's one current run and leaves current READY evidence valid because architecture did not change. A pending architectural preview may also remain retained across runtime-only reruns because its current canonical architecture is unchanged. Preview construction always consumes that same current run/export state. Successful Apply consumes the exact retained preview, replaces the same current run with post-apply evidence, clears pre-change READY, and clears the consumed preview. The next rerun therefore receives the post-apply `BuildResult` by construction.
 
-Controller fields advance only after delegated operations return successfully. Operation failure leaves the shared state unadvanced.
+A successful verified export refresh leaves the current run and pending preview unchanged while replacing only the controller's current export evidence. Controller fields advance only after delegated operations return successfully; operation failure leaves the shared state unadvanced.
 
 The specialized `WorkspaceRuntimeController` and `WorkspaceArchitecturePreviewController` remain as compatibility surfaces for earlier application-level proofs. They are no longer accepted as separate live-state inputs by the combined Textual shell.
+
+### Application-owned verified export refresh
+
+Milestone 10M introduces `refresh_workspace_export()` so READY can re-enter live state only through the same verified export path that originally established it.
+
+The operation path is:
+
+```text
+Workspace root
+    +
+current BuildAndRunResult
+    +
+fresh destination root
+    +
+explicit verification runtime text
+    ↓
+query_workspace_presentation(export=None) preflight
+    ↓
+export_workspace(current_run.build, ...)
+    ↓
+ExportPlan
+    ↓
+exact-byte materialization
+    ↓
+identity + runtime verification
+    ↓
+WorkspaceExportResult (READY)
+    ↓
+query_workspace_presentation(export=result)
+    ↓
+WorkspaceExportRefreshResult
+    ├── verified WorkspaceExportResult
+    └── fresh WorkspacePresentation
+```
+
+The preflight rejects stale live run evidence before export starts. The existing export/materialization boundaries continue to reject non-separate or already-existing destinations; the refresh operation introduces no overwrite or cleanup policy.
+
+The exact current `BuildResult` is passed to `export_workspace()`. No compilation, canonical mutation, revision append, architecture preview recreation, or generated-source reinterpretation occurs. READY is established only from the returned verification evidence, never from destination existence.
+
+`WorkspaceController.refresh_export()` retains the new `WorkspaceExportResult` only after the complete refresh operation returns successfully. A failed preflight, materialization, or verification attempt leaves the prior controller run/export/pending-preview state unchanged.
+
+Milestone 10M adds no Textual export control or destination picker.
 
 ### First local Workspace UI
 
@@ -366,9 +412,11 @@ Milestone 10L wires that Apply button to the already-proven `WorkspaceController
 
 Current and proposed evidence are not optimistically modified. If rationale validation or the governed application operation fails, the controller's live state and both evidence surfaces remain unchanged; Textual may show only a non-evidence failure status. On success, the returned fresh presentation becomes current, the proposed panel is cleared, the rationale/Apply controls are removed, the completed revision and `removed` compiler status become visible, and pre-change READY disappears because the returned presentation contains no current export evidence.
 
+Milestone 10M leaves Textual unchanged. The application/controller layer can now regain verified READY for the post-apply build, but no renderer action can request that export yet.
+
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. D091 requires combined interactive operations to share one live application state authority. D092 requires the combined Textual shell to route runtime and Preview through that authority. D093 requires visible Apply to advance current/proposed rendering only from successful controller evidence. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. D091 requires combined interactive operations to share one live application state authority. D092 requires the combined Textual shell to route runtime and Preview through that authority. D093 requires visible Apply to advance current/proposed rendering only from successful controller evidence. D094 requires READY to re-enter live state only from a successful verified export refresh of the exact current build. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
