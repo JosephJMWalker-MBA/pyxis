@@ -209,6 +209,19 @@ The headless acceptance path must prove ordering, not merely matching values: th
 
 Milestone 10K adds no rationale field and no Apply control. Visible mutation remains deferred until the renderer is already proven to use the single live-state authority that will own Apply.
 
+## D093 — Visible Apply advances only from successful application evidence
+The first visible architectural mutation must remain downstream of the retained preview and unified `WorkspaceController` rather than introducing renderer-owned mutation state.
+
+Milestone 10L mounts one rationale `Input` and one Apply button only after architectural Preview has succeeded and a typed pending preview is retained by the controller. The rationale input is not a second source of architectural intent; Apply still consumes the exact typed preview already held by `WorkspaceController`.
+
+When Apply is pressed, Textual passes the rationale value plus the current visible runtime-input value to `WorkspaceController.apply_pending_remove_normalize_text()`. The renderer performs no duplicate rationale validation, compilation, revision append, runtime execution, export invalidation, or proposal reconstruction. Those semantics remain owned by the existing application/governance path.
+
+Current `WorkspaceDetail` and `ArchitecturePreviewDetail` are not changed optimistically. Only after the controller returns a fresh `WorkspacePresentation` does Textual replace current evidence, clear the proposed-state surface, and remove the rationale/Apply controls. The resulting display therefore shows the completed revision, compiler `removed` evidence, fresh runtime result, and absence of pre-change READY because those facts came from the successful operation result.
+
+If rationale is empty or the application operation fails, controller state and both current/proposed evidence surfaces remain unchanged. Textual may surface the exception message only as non-evidence interaction status; that message is not treated as a Workspace fact.
+
+Milestone 10L does not regenerate export, add restoration, introduce a second architecture action, or generalize editing forms.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
