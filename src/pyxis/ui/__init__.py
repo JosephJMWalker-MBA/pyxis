@@ -1,6 +1,7 @@
-from .textual_shell import WorkspaceShell, create_workspace_shell
+from .textual_shell import WorkspaceDetail, WorkspaceShell, create_workspace_shell
 
 __all__ = [
+    "WorkspaceDetail",
     "WorkspaceShell",
     "create_workspace_shell",
 ]
