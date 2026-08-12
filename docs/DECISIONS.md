@@ -169,6 +169,15 @@ Milestone 10G adds `preview_workspace_remove_normalize_text()`. The operation fi
 
 A pending preview therefore means only **proposed intent exists in memory**. Current Workspace presentation and current READY evidence remain current until a later application-owned apply operation commits the proposal through the canonical → RIR → compiler → revision path.
 
+## D089 — Visible architectural preview remains visually separate from current evidence
+The first visible architectural action is preview-only. `WorkspaceShell` may receive a `WorkspaceArchitecturePreviewController` and expose exactly one button for previewing removal of `normalize_text`.
+
+Pressing that button calls only `WorkspaceArchitecturePreviewController.preview_remove_normalize_text()` and sends the returned immutable `ArchitecturePreviewPresentation` to a dedicated `ArchitecturePreviewDetail` renderer. The preview renderer is separate from `WorkspaceDetail` and labels its content `PROPOSED — NOT APPLIED` so proposed canonical hashes, capabilities, compiler-product paths, and runtime keys cannot be mistaken for current Workspace evidence.
+
+Creating or displaying the preview must not replace `WorkspaceShell.presentation`, mutate `WorkspaceDetail`, invalidate existing READY evidence, write files, compile, append a revision, or execute runtime code. The application controller retains the typed pending preview; Textual owns only the button event and proposed-evidence display state.
+
+Milestone 10H deliberately adds no rationale field and no Apply control. A visible preview is still only proposed intent. Mutation remains unavailable until a separately proven rationale-bearing application operation exists.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
