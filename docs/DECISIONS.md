@@ -50,6 +50,8 @@ Portable output should resemble a normal Python repository rather than a special
 ## D078 — Self-contained portability proof
 The minimum exported repository can be installed and executed without network access or external build dependencies while preserving generated artifact identity.
 
+D081 defines the permanent Repository Zero interpretation of this requirement: the offline guarantee applies to the verified wheel included with the portable deliverable, not to rebuilding that wheel from source while offline.
+
 ## D079 — Separate source-build and wheel-install portability proofs
 Repository Zero must treat source-to-wheel construction and wheel installation as separate evidence boundaries.
 
@@ -57,12 +59,28 @@ The permanent proof establishes that a conventional source package can build a s
 
 Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
-The successful offline wheel-install proof therefore remains distinct from the now-reproduced offline source-build failure.
+The successful offline wheel-install proof therefore remains distinct from the reproduced offline source-build failure.
 
 ## D080 — Reproduce a portability constraint before choosing its remedy
 The 9M failure establishes that the stronger interpretation of D078—raw exported source must construct its wheel with no network or externally available build dependency—is **not satisfied by the current conventional package**.
 
 That evidence does not select a solution. Repository Zero must not reintroduce the prototype's local build backend, vendor Setuptools, disable normal build isolation, or otherwise change packaging merely to make the test green. First decide whether offline source-to-wheel construction is actually a required product property. Only then should a remedy be evaluated against the existing constraints: exact compiler-product identity, conventional portable shape where possible, and export remaining packaging rather than compilation.
+
+## D081 — Portable deliverable is conventional source plus a verified wheel
+Repository Zero resolves the D078 scope question in favor of the smallest proven product contract.
+
+A portable Pyxis Workspace consists of:
+
+- the conventional source repository containing the exact compiler products and inspectable provenance evidence; and
+- a verified wheel built from that source projection whose compiler-product payload identity has been checked against the same evidence.
+
+The portability guarantee is that the **verified wheel can be installed and executed in a fresh environment without network access, external build dependencies, or Pyxis participation while preserving the proven Workspace behavior**.
+
+Rebuilding the wheel from raw source while offline is not a Repository Zero product requirement. Conventional source builds may use ordinary PEP 517 build isolation and may require their declared build dependencies to be obtainable.
+
+The Milestone 9M offline source-build failure remains valuable characterization evidence, but it is an accepted limitation of the source form under this contract rather than a defect requiring a bespoke backend. Repository Zero will not vendor build tooling, weaken normal build isolation, or reintroduce the prototype local backend solely to eliminate that limitation.
+
+This decision closes the Milestone 9 packaging requirement. Future packaging work must be driven by a new demonstrated product need rather than by the stronger D078 interpretation that D081 has now explicitly declined.
 
 ## Repository Zero rule
 
