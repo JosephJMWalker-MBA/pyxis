@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 
 from .artifacts import GeneratedArtifact
 from .manifest import GenerationManifest
+from .status import ExistingArtifactIntegrity
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +32,39 @@ def _resolve_artifact_target(path_value: str, root: Path) -> Path:
     return target
 
 
+def inspect_materialized_artifact_integrity(
+    previous_manifest: GenerationManifest | None,
+    destination_root: Path,
+) -> tuple[ExistingArtifactIntegrity, ...]:
+    """Read hashes only for paths previously declared as compiler products.
+
+    Missing or non-file paths are recorded with no hash. This function does not
+    scan the generated tree, infer ownership, compile, or mutate the filesystem.
+    """
+
+    if previous_manifest is None:
+        return ()
+
+    root = destination_root.resolve()
+    evidence: list[ExistingArtifactIntegrity] = []
+
+    for entry in previous_manifest.artifacts:
+        target = _resolve_artifact_target(entry.path, root)
+        artifact_sha256 = (
+            hashlib.sha256(target.read_bytes()).hexdigest()
+            if target.is_file()
+            else None
+        )
+        evidence.append(
+            ExistingArtifactIntegrity(
+                path=entry.path,
+                artifact_sha256=artifact_sha256,
+            )
+        )
+
+    return tuple(evidence)
+
+
 def materialize_artifacts(
     artifacts: tuple[GeneratedArtifact, ...],
     destination_root: Path,
@@ -37,7 +72,7 @@ def materialize_artifacts(
     """Write an already-compiled artifact set beneath one destination root.
 
     This function does not compile, interpret, or execute generated code. It
-    materializes the artifact paths and source exactly as provided by the
+    materializes the artifact paths and exact UTF-8 source bytes provided by the
     compiler result.
     """
 
@@ -47,7 +82,7 @@ def materialize_artifacts(
     for artifact in artifacts:
         target = _resolve_artifact_target(artifact.path, root)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(artifact.source, encoding="utf-8")
+        target.write_bytes(artifact.source.encode("utf-8"))
         written.append(target)
 
     return tuple(written)
