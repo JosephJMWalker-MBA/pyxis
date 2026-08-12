@@ -213,6 +213,25 @@ Build-work comparison retains the exact immutable before/after `BuildWorkEvidenc
 
 A negative timing delta beside increased reuse is an observed association between two measured cycles, not proof that reuse caused the timing difference and not an efficiency or waste judgment. Causal attribution, scoring, persistence, UI, and a full Execution Ledger remain outside this boundary.
 
+Milestone 11C makes measurement subject identity explicit without changing execution or comparison semantics:
+
+```text
+BuildResult
+    ├── RepositoryIR.repository_id
+    ├── RepositoryIR.workspace.workspace_id
+    └── GenerationManifest.rir_sha256
+    ↓
+coherence check against repository_ir_sha256(RepositoryIR)
+    ↓
+MeasurementSubjectEvidence
+```
+
+`MeasurementSubjectEvidence` distinguishes the logical subject (`repository_id` + `workspace_id`) from the exact measured architectural state (`rir_sha256`). Measurement verifies the generation manifest RIR identity against the returned RepositoryIR before recording that subject; it does not recover identity from paths or persisted files.
+
+Comparison revalidates each retained subject against its own `BuildResult` before constructing stage or work comparison evidence. Two cycles with the same Repository/Workspace identity may have different RIR hashes, allowing architectural revisions of one Workspace to remain comparable while both exact states are explicit. Different logical Workspace identities are rejected before any duration/work delta is produced. Subject metadata that has been replaced or forged to disagree with its build evidence is likewise rejected.
+
+Subject identity remains transient measurement evidence in Repository Zero. 11C adds no persistence, UI, ledger, scoring, causal model, or broader operation instrumentation.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
