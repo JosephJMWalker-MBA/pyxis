@@ -7,10 +7,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Button, Input, Static
 
-from pyxis.app.controller import (
-    WorkspaceArchitecturePreviewController,
-    WorkspaceRuntimeController,
-)
+from pyxis.app.controller import WorkspaceController
 from pyxis.app.presentation import (
     CompilerArtifactPresentation,
     ExportPresentation,
@@ -356,7 +353,7 @@ class WorkspaceDetail(VerticalScroll):
 
 
 class WorkspaceShell(App[None]):
-    """Textual shell over current evidence and application-owned controllers."""
+    """Textual shell over current evidence and one application live-state authority."""
 
     TITLE = "Pyxis"
     SUB_TITLE = "Workspace evidence"
@@ -419,23 +416,20 @@ class WorkspaceShell(App[None]):
         self,
         presentation: WorkspacePresentation,
         *,
-        runtime_controller: WorkspaceRuntimeController | None = None,
-        architecture_preview_controller: WorkspaceArchitecturePreviewController | None = None,
+        controller: WorkspaceController | None = None,
     ) -> None:
         super().__init__()
         self.presentation = presentation
-        self.runtime_controller = runtime_controller
-        self.architecture_preview_controller = architecture_preview_controller
+        self.controller = controller
 
     def compose(self) -> ComposeResult:
-        if self.runtime_controller is not None:
+        if self.controller is not None:
             with Vertical(id="runtime-interaction"):
                 yield Static("Runtime input", id="runtime-input-label")
                 yield Input(
                     placeholder="Enter text and press Enter to run",
                     id="runtime-input",
                 )
-        if self.architecture_preview_controller is not None:
             with Vertical(id="architecture-preview-interaction"):
                 yield Static(
                     "Propose architecture change",
@@ -449,36 +443,32 @@ class WorkspaceShell(App[None]):
         yield WorkspaceDetail(self.presentation)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.input.id != "runtime-input" or self.runtime_controller is None:
+        if event.input.id != "runtime-input" or self.controller is None:
             return
 
-        presentation = self.runtime_controller.rerun(event.value)
+        presentation = self.controller.rerun(event.value)
         self.presentation = presentation
         self.query_one(WorkspaceDetail).replace_presentation(presentation)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if (
             event.button.id != "preview-remove-normalize-text"
-            or self.architecture_preview_controller is None
+            or self.controller is None
         ):
             return
 
-        presentation = (
-            self.architecture_preview_controller.preview_remove_normalize_text()
-        )
+        presentation = self.controller.preview_remove_normalize_text()
         self.query_one(ArchitecturePreviewDetail).replace_presentation(presentation)
 
 
 def create_workspace_shell(
     presentation: WorkspacePresentation,
     *,
-    runtime_controller: WorkspaceRuntimeController | None = None,
-    architecture_preview_controller: WorkspaceArchitecturePreviewController | None = None,
+    controller: WorkspaceController | None = None,
 ) -> WorkspaceShell:
     """Create the local Workspace shell over application-owned evidence/state."""
 
     return WorkspaceShell(
         presentation,
-        runtime_controller=runtime_controller,
-        architecture_preview_controller=architecture_preview_controller,
+        controller=controller,
     )
