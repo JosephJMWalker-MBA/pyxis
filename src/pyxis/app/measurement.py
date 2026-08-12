@@ -7,7 +7,7 @@ import time
 from typing import Literal
 
 from pyxis.authoring.workspace import WorkspaceSpec
-from pyxis.compiler.status import ArtifactGenerationStatus
+from pyxis.compiler.status import ArtifactGenerationStatus, GenerationStatus
 
 from .build import BuildAndRunResult, build_and_run_workspace
 
@@ -52,6 +52,48 @@ class MeasuredBuildAndRunResult:
 
     result: BuildAndRunResult
     measurement: BuildAndRunMeasurementEvidence
+
+
+@dataclass(frozen=True, slots=True)
+class StageDurationComparisonEvidence:
+    """Literal before/after duration evidence for one matching stage."""
+
+    stage: MeasurementStage
+    before_seconds: float
+    after_seconds: float
+    delta_seconds: float
+
+    def __post_init__(self) -> None:
+        if self.before_seconds < 0 or self.after_seconds < 0:
+            raise ValueError("Compared stage durations cannot be negative.")
+        if self.delta_seconds != self.after_seconds - self.before_seconds:
+            raise ValueError("Stage duration delta must equal after minus before.")
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactGenerationStatusComparisonEvidence:
+    """Literal compiler-owned status transition for one artifact path."""
+
+    path: str
+    before_status: GenerationStatus | None
+    after_status: GenerationStatus | None
+
+
+@dataclass(frozen=True, slots=True)
+class BuildWorkComparisonEvidence:
+    """Before/after work facts plus path-level compiler status transitions."""
+
+    before: BuildWorkEvidence
+    after: BuildWorkEvidence
+    artifact_statuses: tuple[ArtifactGenerationStatusComparisonEvidence, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class BuildAndRunMeasurementComparisonEvidence:
+    """Pure factual comparison of two already-measured build-and-run cycles."""
+
+    stages: tuple[StageDurationComparisonEvidence, ...]
+    build_work: BuildWorkComparisonEvidence
 
 
 def measure_build_and_run_workspace(
@@ -114,4 +156,64 @@ def measure_build_and_run_workspace(
     return MeasuredBuildAndRunResult(
         result=result,
         measurement=measurement,
+    )
+
+
+def compare_build_and_run_measurements(
+    before: MeasuredBuildAndRunResult,
+    after: MeasuredBuildAndRunResult,
+) -> BuildAndRunMeasurementComparisonEvidence:
+    """Compare two measured cycles without inferring cause, quality, or waste.
+
+    This function performs no execution, filesystem access, reclassification, or
+    scoring. Duration deltas mean only ``after - before``. Work comparison carries
+    the exact immutable evidence already observed for each cycle and reports only
+    literal compiler-status transitions by artifact path.
+    """
+
+    before_stages = before.measurement.stages
+    after_stages = after.measurement.stages
+    before_stage_names = tuple(stage.stage for stage in before_stages)
+    after_stage_names = tuple(stage.stage for stage in after_stages)
+    if before_stage_names != after_stage_names:
+        raise ValueError("Measured cycles must contain the same ordered stages.")
+
+    stages = tuple(
+        StageDurationComparisonEvidence(
+            stage=before_stage.stage,
+            before_seconds=before_stage.duration_seconds,
+            after_seconds=after_stage.duration_seconds,
+            delta_seconds=after_stage.duration_seconds - before_stage.duration_seconds,
+        )
+        for before_stage, after_stage in zip(before_stages, after_stages, strict=True)
+    )
+
+    before_work = before.measurement.build_work
+    after_work = after.measurement.build_work
+    before_statuses = {entry.path: entry.status for entry in before_work.generation_statuses}
+    after_statuses = {entry.path: entry.status for entry in after_work.generation_statuses}
+    if len(before_statuses) != len(before_work.generation_statuses):
+        raise ValueError("Before measurement contains duplicate artifact status paths.")
+    if len(after_statuses) != len(after_work.generation_statuses):
+        raise ValueError("After measurement contains duplicate artifact status paths.")
+
+    ordered_paths = tuple(before_statuses) + tuple(
+        path for path in after_statuses if path not in before_statuses
+    )
+    artifact_statuses = tuple(
+        ArtifactGenerationStatusComparisonEvidence(
+            path=path,
+            before_status=before_statuses.get(path),
+            after_status=after_statuses.get(path),
+        )
+        for path in ordered_paths
+    )
+
+    return BuildAndRunMeasurementComparisonEvidence(
+        stages=stages,
+        build_work=BuildWorkComparisonEvidence(
+            before=before_work,
+            after=after_work,
+            artifact_statuses=artifact_statuses,
+        ),
     )
