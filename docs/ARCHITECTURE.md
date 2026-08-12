@@ -155,25 +155,40 @@ A successful rerun is runtime-only. It executes the already-materialized generat
 
 Optional existing READY evidence may remain part of the returned presentation because no architectural/compiler state changed. That evidence retains its original verification input hash; a rerun with different text does not transform the old READY proof into verification of the new input.
 
-`WorkspaceRerunResult` returns both fresh transient run evidence and the presentation derived from it. The future UI may retain the operation result/controller state, but the renderer still consumes only `WorkspacePresentation`.
+`WorkspaceRerunResult` returns both fresh transient run evidence and the presentation derived from it.
+
+Milestone 10F adds `WorkspaceRuntimeController` as the smallest application-owned live-state holder needed by the first interactive renderer. It retains the Workspace root, current `BuildAndRunResult`, and optional existing export evidence. Its only operation delegates to `rerun_workspace()`, replaces the retained run only after a successful rerun, and returns the fresh `WorkspacePresentation`.
+
+The controller is not a new runtime or session implementation. It exists so transient run evidence remains application-owned across repeated UI events rather than being reconstructed from rendered presentation fields.
 
 ### First local Workspace UI
 
-Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation boundary:
+Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation and operation boundaries.
+
+The proven interactive path is now:
 
 ```text
 WorkspacePresentation
+    +
+optional WorkspaceRuntimeController
     ↓
 WorkspaceShell (Textual)
     ↓
 WorkspaceDetail
+
+runtime interaction:
+Input.Submitted
     ↓
-local rendered evidence
+WorkspaceRuntimeController.rerun(text)
+    ↓
+fresh WorkspacePresentation
+    ↓
+WorkspaceDetail.replace_presentation()
 ```
 
-`WorkspaceShell` receives an existing immutable `WorkspacePresentation`. It does not receive a Workspace root and therefore has no filesystem/query responsibility. It must not compile, execute runtime code, mutate revisions, export, or manufacture READY state.
+`WorkspaceShell` still receives no Workspace root and no compiler/runtime/revision/export/persistence service. When runtime interaction is enabled it receives exactly one application-owned `WorkspaceRuntimeController` alongside the current immutable presentation.
 
-Milestone 10C proved that boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable read-only evidence surface that renders the complete current presentation contract:
+Milestone 10C proved the renderer boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable evidence surface that renders the complete current presentation contract:
 
 - canonical Workspace ID, name, description, capabilities, and canonical SHA-256;
 - RIR schema version, Repository/Workspace IDs, entrypoint, capabilities, and RIR SHA-256;
@@ -184,13 +199,17 @@ Milestone 10C proved that boundary with a minimal summary shell. Milestone 10D e
 
 Optional evidence remains explicitly absent when it was not supplied. `No READY evidence` means exactly that; the renderer does not convert absence into an inferred `NOT READY` state. Likewise a `removed` compiler artifact remains visible as `removed` while its current node/artifact hashes remain absent.
 
-Milestone 10D intentionally adds no buttons or mutation callbacks. The first genuine Workspace detail screen proves information architecture and inspectability before UI events are connected back to application operations. Formatting helpers are renderer-only transformations over immutable evidence and may not become application logic.
+Milestone 10E proves the application-owned runtime rerun seam independently before a control is connected.
 
-Milestone 10E likewise adds no Textual control. It proves the application-owned runtime rerun seam independently so the first future callback can invoke a tested operation rather than receive runtime services directly.
+Milestone 10F introduces the first visible runtime interaction: one Textual `Input` whose Enter submission calls only `WorkspaceRuntimeController.rerun()`. The returned presentation replaces the fields in the existing `WorkspaceDetail`; the shell also retains that presentation for rendering identity, while the controller retains the fresh `BuildAndRunResult` needed by the next operation.
+
+`WorkspaceDetail.replace_presentation()` is renderer-only. It updates existing `Static` widgets from a supplied immutable presentation and performs no evidence acquisition or domain work.
+
+The 10F interaction remains non-architectural. It adds no button, rationale flow, preview/apply action, export action, compiler invocation, or filesystem mutation. Headless tests prove that runtime evidence changes while canonical/RIR/compiler/revision/export display remains unchanged and the source/portable trees remain byte-identical.
 
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
