@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10F on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 10G on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -155,6 +155,12 @@ Before a visible control is connected, the intended action should exist as an in
 A rendered presentation is not enough to perform the next stateful operation. If an application action returns fresh transient evidence, the application/controller layer should retain it directly.
 
 The UI may retain the current presentation for rendering, but it should not reconstruct `BuildAndRunResult` or other live operation inputs from visible fields.
+
+### 2.18 Proposed architecture is not current Workspace state
+
+A preview may be retained as pending application state without changing what the Workspace currently is.
+
+Current runtime evidence, compiler evidence, revision history, and READY evidence remain current until a rationale-bearing apply operation actually commits new canonical intent. The UI must visually and semantically distinguish proposed preview evidence from current Workspace evidence.
 
 ---
 
@@ -404,6 +410,14 @@ The controller retains the current `BuildAndRunResult`; Textual retains only the
 
 That separation proves a complete event loop without giving the renderer ownership of transient application state or broader domain services.
 
+### 4.18 Preview state must remain visibly proposed until apply
+
+Milestone 10G carries the preview-first rule across the UI boundary without introducing any mutation control.
+
+`preview_workspace_remove_normalize_text()` first proves that the supplied live run/READY evidence still belongs to the persisted Workspace, then reloads canonical intent and uses the existing in-memory architectural preview. `ArchitecturePreviewPresentation` exposes only current/proposed canonical hashes, capability deltas, predicted artifact-path consequences, and predicted runtime-key consequences.
+
+The controller retains the typed `ArchitecturePreview` for a later rationale/apply operation, but the existing Workspace presentation remains current. That distinction prevents a preview from silently becoming a speculative replacement for canonical, runtime, revision, or READY evidence.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -508,6 +522,9 @@ Repository Zero proves the first action seam with a runtime-only `rerun_workspac
 
 ### D087 — Visible Runtime Interaction Retains Live Evidence Outside the Renderer
 Repository Zero wires one Textual runtime input through an application-owned `WorkspaceRuntimeController`, which retains fresh `BuildAndRunResult` evidence across submissions while the renderer consumes only fresh `WorkspacePresentation` values.
+
+### D088 — Architectural Preview Is Proposed Evidence, Not Current Workspace State
+Repository Zero adds an application-owned architectural preview operation/presentation/controller seam over the existing `normalize_text` removal preview. The controller retains the typed pending preview for later apply; the renderer-facing object is immutable proposed evidence only, and current run/READY evidence remains current until apply.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -683,13 +700,27 @@ A successful operation invokes `run_materialized_workspace()` exactly once, reus
 
 ### 7.16 First visible runtime interaction
 
-`src/pyxis/app/controller.py` now contains `WorkspaceRuntimeController`, the minimal application-owned holder for transient runtime interaction state. It retains the current `BuildAndRunResult`, Workspace root, and optional export evidence and delegates its only operation to `rerun_workspace()`.
+`src/pyxis/app/controller.py` contains `WorkspaceRuntimeController`, the minimal application-owned holder for transient runtime interaction state. It retains the current `BuildAndRunResult`, Workspace root, and optional export evidence and delegates its only operation to `rerun_workspace()`.
 
 `WorkspaceShell` may receive this controller alongside its current presentation. When present, the shell renders exactly one runtime `Input`. Pressing Enter posts Textual's `Input.Submitted` event; the shell sends the submitted text to `WorkspaceRuntimeController.rerun()` exactly once.
 
 The controller retains the returned fresh run evidence. The shell retains the returned presentation, and `WorkspaceDetail.replace_presentation()` updates the existing evidence widgets from that presentation. The renderer never reconstructs the run evidence from its fields.
 
 The 10F acceptance test starts from real governed revision evidence plus real READY export evidence. After one text submission, only runtime evidence changes. Canonical, RIR, compiler, revision, and export presentation remain unchanged; compilation remains unavailable; one Input and zero Buttons are present; and the Workspace/export trees remain byte-for-byte unchanged.
+
+### 7.17 Application-owned architectural preview presentation seam
+
+`src/pyxis/app/architecture_preview.py` owns the Workspace-aware `preview_workspace_remove_normalize_text()` operation.
+
+It first calls `query_workspace_presentation()` with current run/optional export evidence so stale live state fails before preview creation. It then loads authoritative canonical intent and delegates to the existing `preview_remove_normalize_text()` function. A canonical-hash cross-check prevents the operation from combining a preflighted presentation with canonical state that changed during assembly.
+
+`src/pyxis/app/preview_presentation.py` defines immutable `CanonicalPreviewPresentation` and `ArchitecturePreviewPresentation`. These expose current/proposed canonical hashes and capabilities, capability additions/removals, predicted added/changed/removed compiler artifact paths, and current/proposed/added/removed runtime result keys. The adapter validates that proposed RIR and delta evidence agree with the canonical proposal but does not compile or execute it.
+
+`WorkspaceArchitecturePreviewController` retains the typed pending `ArchitecturePreview` so a later rationale/apply operation can consume the exact proposal that was shown. Its preview method returns only `ArchitecturePreviewPresentation`.
+
+The 10G acceptance path proves that preview construction leaves both source and portable-export trees unchanged, current run/READY evidence remains queryable and identical afterward, compiler execution is unavailable, and stale live evidence is rejected before the underlying preview function runs.
+
+No Textual architectural control exists yet.
 
 ---
 
@@ -711,11 +742,13 @@ Milestone 10E proves the first application-owned UI operation independently of T
 
 Milestone 10F executes the first complete visible event loop headlessly: one Textual input submission crosses the application controller/operation seam, updates runtime evidence on screen, retains fresh run evidence outside the renderer, and leaves all non-runtime evidence and repository bytes unchanged.
 
+Milestone 10G proves the first application-owned architectural preview presentation seam independently of Textual. Preview facts remain immutable proposed evidence, the typed preview is retained outside presentation for later apply, and current run/READY evidence remains current because the Workspace is not mutated.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence.
 
 ---
 
@@ -768,20 +801,21 @@ The original milestone order proved useful:
 - Milestone 10D — complete read-only Workspace detail screen: complete.
 - Milestone 10E — first application-owned runtime-only UI operation seam: complete.
 - Milestone 10F — first visible runtime interaction and retained live controller evidence: complete.
+- Milestone 10G — application-owned architectural preview presentation/controller seam: complete.
 
 ### Milestone 10 — First local Workspace UI
 
-The first local UI now has a proven renderer, complete evidence surface, application-owned operation seam, and one complete non-architectural event loop. Textual still owns no product/domain logic.
+The first local UI now has a proven renderer, complete current-evidence surface, one non-architectural event loop, and a separate application-owned preview seam for proposed architecture. Textual still owns no product/domain logic and still cannot mutate canonical intent.
 
-### Next narrow step — Milestone 10G
+### Next narrow step — Milestone 10H
 
-Establish the first **application-owned architectural preview presentation seam** before adding any mutation control.
+Wire exactly one **visible architectural preview action** to `WorkspaceArchitecturePreviewController.preview_remove_normalize_text()`.
 
-Use the already-proven preview-first architecture path rather than inventing a UI-specific diff. Start with the existing `normalize_text` removal preview because it is the permanent Repository Zero change fixture.
+The action should only request and display the already-proven immutable `ArchitecturePreviewPresentation`. The preview surface must be visually and semantically distinct from the current `WorkspaceDetail` so proposed hashes/capabilities/artifact/runtime consequences cannot be mistaken for current Workspace evidence.
 
-The application layer should expose the preview facts the UI needs—current/proposed canonical identity, structural capability delta, predicted compiler consequences already owned by the preview, and predicted observable runtime contract—without writing canonical state, compiling, appending a revision, or invalidating the current run/export evidence.
+Do not add rationale input, Apply, canonical writes, compiler execution, revision append, or export invalidation yet. The controller retains the typed pending preview; Textual renders only the returned preview presentation.
 
-The controller may retain a typed preview result for a later rationale/apply step, but Textual should still receive only a presentation-safe immutable preview object. Prove this seam independently before adding a visible architectural control.
+Prove headlessly that requesting the preview changes only proposed-preview display state, leaves the current Workspace detail/READY evidence untouched, leaves source/export bytes unchanged, and performs no compilation.
 
 ### Milestone 11 — Measurement
 
@@ -854,6 +888,14 @@ A presentation is not a substitute for the `BuildAndRunResult` that produced it.
 
 Do not store the only authoritative current run state inside Textual widgets or derive it back from displayed JSON/status fields. The renderer displays presentation; the application controller retains transient operation evidence.
 
+### Preview presented as if already applied
+
+Do not merge `ArchitecturePreviewPresentation` fields into the current Workspace evidence surface in a way that makes proposed hashes, capabilities, artifact consequences, or runtime keys look current. Preview is proposed intent until rationale-bearing apply succeeds.
+
+### Preview enrichment through shadow compilation/runtime
+
+Do not compile proposed artifacts or execute a proposed shadow runtime merely to make the preview display richer. The preview may show only structural/compiler-path and observable runtime-contract facts already justified by canonical/RIR structure.
+
 ### Shadow implementations
 
 Preview, export, CLI, UI, education, presentation, query, operations, controllers, and packaging layers must not quietly reimplement capability logic.
@@ -914,6 +956,7 @@ Before adding something, ask:
 16. If the UI initiates an action, which named application operation owns that action, and what fresh evidence does it return?
 17. After an operation, which live evidence must be retained for the next operation rather than reconstructed from presentation?
 18. Does the renderer own only display state, or has transient application/domain state leaked into widgets?
+19. If architectural preview is involved, which facts are current and which are merely proposed, and can the user distinguish them before apply?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -941,12 +984,12 @@ When a prototype lesson and current code disagree, reproduce the contradiction w
 
 For packaging, Milestone 9 is closed. The portable contract is conventional source plus a verified wheel, and the offline guarantee applies to installing/executing that wheel. Do not reopen offline source-build machinery unless a new real requirement explicitly demands it.
 
-For UI work, Milestones 10A through 10F are complete. `WorkspacePresentation` is the immutable renderer contract, `query_workspace_presentation()` is the application-owned existing-Workspace assembly path, Textual is the selected first local renderer, `WorkspaceDetail` renders the complete evidence contract, `rerun_workspace()` is the first application-owned operation seam, and `WorkspaceRuntimeController` retains live run evidence while the single visible Textual runtime input refreshes only presentation.
+For UI work, Milestones 10A through 10G are complete. `WorkspacePresentation` is the immutable current-evidence renderer contract, `query_workspace_presentation()` is the application-owned existing-Workspace assembly path, Textual is the selected first local renderer, `WorkspaceDetail` renders the complete current evidence contract, `rerun_workspace()`/`WorkspaceRuntimeController` own the first live runtime operation, and `preview_workspace_remove_normalize_text()`/`WorkspaceArchitecturePreviewController` now own a separate immutable proposed-architecture preview path while retaining the typed pending preview outside the renderer.
 
-Do not jump directly from this runtime interaction to canonical mutation. The next narrow work is Milestone 10G: establish a presentation-safe, application-owned architectural preview seam over the already-proven preview path, with no mutation or new Textual control yet.
+Do not jump from the existence of a pending preview to canonical mutation. The next narrow work is Milestone 10H: add one visible architectural preview request and a clearly separate proposed-evidence surface. Do not add rationale or Apply yet.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 10F closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, an immutable framework-independent `WorkspacePresentation`, an application-owned existing-Workspace query that reloads only durable evidence while requiring transient run/READY evidence explicitly, a Textual local UI whose `WorkspaceDetail` renders the complete presentation contract, a tested runtime-only `rerun_workspace()` operation, and an application-owned `WorkspaceRuntimeController` wired to one visible Textual input submission that retains fresh `BuildAndRunResult` evidence and refreshes only runtime presentation without compilation or filesystem mutation. Milestone 9 is closed. Milestones 10A–10F are complete; the next narrow step is an application-owned architectural preview presentation seam before any canonical mutation control is introduced.
+At the 2026-08-12 Milestone 10G closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, an immutable framework-independent `WorkspacePresentation`, an application-owned existing-Workspace query that reloads only durable evidence while requiring transient run/READY evidence explicitly, a Textual local UI whose `WorkspaceDetail` renders the complete current presentation contract, a tested runtime-only `rerun_workspace()` operation and `WorkspaceRuntimeController` wired to one visible runtime input, plus a separate application-owned architectural preview operation/presentation/controller seam that preflights live evidence, retains the typed pending `ArchitecturePreview`, exposes immutable current/proposed canonical and predicted compiler/runtime-contract consequences, and leaves the current Workspace/run/READY evidence unchanged. Milestone 9 is closed. Milestones 10A–10G are complete; the next narrow step is one visible architectural preview action with no rationale/apply mutation yet.
