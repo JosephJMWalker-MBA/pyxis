@@ -195,6 +195,58 @@ The preflight requires the caller's live run/READY evidence to still match the p
 
 A pending preview is not current Workspace state. Preview creation performs no canonical write, compiler invocation, materialization, revision append, runtime execution, export, or READY verification. Therefore the current `BuildAndRunResult` and legitimate current READY evidence remain valid until an apply operation actually commits new canonical intent.
 
+### Application-owned architectural apply
+
+Milestone 10I proves the first rationale-bearing architectural mutation seam independently of Textual.
+
+The application path is:
+
+```text
+Workspace root
+    +
+exact retained ArchitecturePreview
+    +
+current BuildAndRunResult
+    +
+optional current WorkspaceExportResult
+    +
+non-empty human rationale
+    +
+explicit runtime text
+    ↓
+query_workspace_presentation() preflight
+    ↓
+confirm preview current canonical hash
+    ↓
+apply_remove_normalize_text()
+    ↓
+append revision intent
+    ↓
+build_workspace(proposed_spec)
+    ↓
+append revision completion
+    ↓
+run_materialized_workspace(new RepositoryIR)
+    ↓
+fresh BuildAndRunResult
+    ↓
+query_workspace_presentation(export=None)
+    ↓
+WorkspaceArchitectureApplyResult
+```
+
+The operation does not reconstruct the proposal from renderer fields and does not call preview again at Apply time. The exact typed `ArchitecturePreview` retained by the application controller is the object passed to the existing governed `apply_remove_normalize_text()` boundary.
+
+Rationale is required and normalized before any mutation. Current run/export evidence is preflighted before the governed apply path begins. The existing apply layer remains responsible for validating that the preview still matches canonical intent and the supported edit, appending the intent-bearing revision before canonical/compiler mutation, building through the permanent compiler/materializer path, and appending completion only after a successful build.
+
+`BuildAndRunResult` does not contain the runtime input that originally produced it. The apply operation therefore requires explicit runtime text rather than deriving or guessing input from runtime output. After the new build succeeds, the newly materialized Workspace is executed exactly once and its result becomes fresh transient run evidence.
+
+Architectural mutation invalidates pre-change READY as current evidence. The prior portable directory may remain physically present, but its `WorkspaceExportResult` is not passed into the post-apply query because it verified the old RIR/compiler products. A newly applied Workspace presents no READY evidence until a new export verification operation proves the new state.
+
+`WorkspaceArchitecturePreviewController` retains the resulting fresh `BuildAndRunResult`, clears its retained export evidence, and clears the consumed pending preview only after the application operation returns successfully. Validation or governed-apply failure leaves the controller's retained values unchanged.
+
+Milestone 10I still adds no Textual rationale input or Apply control. Renderer mutation remains unavailable until the UI can invoke this already-proven application boundary without creating a second live-state owner.
+
 ### First local Workspace UI
 
 Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation and operation boundaries.
@@ -257,11 +309,11 @@ Milestone 10H introduces exactly one visible architectural action: a button that
 
 The preview panel shows current/proposed canonical hashes and capabilities, predicted compiler-product path consequences, and current/proposed runtime-key contracts. Displaying it does not replace `WorkspaceShell.presentation`, update current Workspace evidence, invalidate READY, write files, compile, append revisions, or execute runtime code. The typed pending preview remains in the application controller.
 
-Milestone 10H still adds no rationale field and no Apply action. Preview visibility is not mutation permission.
+Milestone 10I proves the rationale-bearing apply operation/controller seam but deliberately leaves Textual unchanged. The renderer therefore still exposes Preview only; it has no rationale field or Apply action yet.
 
 Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
 
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
+D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
 
 ### Export
 
