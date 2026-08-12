@@ -21,6 +21,10 @@ def _status_pairs(result):
     return tuple((entry.path, entry.status) for entry in result.generation_statuses)
 
 
+def _relative_paths(paths, root: Path):
+    return tuple(path.relative_to(root).as_posix() for path in paths)
+
+
 def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
     spec = create_workspace_spec(
         "Text Lab",
@@ -45,6 +49,7 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
     )
     manual_materialization = reconcile_materialized_artifacts(
         manual_artifacts,
+        manual_statuses,
         manual_previous_manifest,
         manual_root,
     )
@@ -70,6 +75,10 @@ def test_build_workspace_matches_manual_pipeline(tmp_path: Path) -> None:
         path.relative_to(manual_root)
         for path in manual_materialization.written_paths
     )
+    assert tuple(path.relative_to(built_root) for path in result.reused_paths) == tuple(
+        path.relative_to(manual_root)
+        for path in manual_materialization.reused_paths
+    )
     assert result.removed_paths == manual_materialization.removed_paths == ()
 
 
@@ -90,6 +99,7 @@ def test_build_workspace_materializes_complete_repository(tmp_path: Path) -> Non
     assert tuple(path.read_bytes() for path in result.written_paths) == tuple(
         artifact.source.encode("utf-8") for artifact in result.artifacts
     )
+    assert result.reused_paths == ()
     assert result.removed_paths == ()
 
 
@@ -142,7 +152,7 @@ def test_build_workspace_persists_rir_separately_from_compiler_artifacts(
             "capabilities": list(result.repository.workspace.capabilities),
         },
     }
-    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == (
+    assert _relative_paths(result.written_paths, tmp_path) == (
         "generated/capabilities/inspect_text.py",
         "generated/capabilities/normalize_text.py",
         "generated/workspaces/text_lab/main.py",
@@ -174,14 +184,14 @@ def test_build_workspace_persists_manifest_separately_from_compiler_artifacts(
     assert tuple(entry.path for entry in result.manifest.artifacts) == tuple(
         artifact.path for artifact in result.artifacts
     )
-    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == (
+    assert _relative_paths(result.written_paths, tmp_path) == (
         "generated/capabilities/inspect_text.py",
         "generated/capabilities/normalize_text.py",
         "generated/workspaces/text_lab/main.py",
     )
 
 
-def test_first_build_reports_new_without_changing_full_write_behavior(
+def test_first_build_reports_new_and_writes_every_artifact(
     tmp_path: Path,
 ) -> None:
     spec = create_workspace_spec("Text Lab", "First-build status proof.")
@@ -193,16 +203,21 @@ def test_first_build_reports_new_without_changing_full_write_behavior(
         ("generated/capabilities/normalize_text.py", "new"),
         ("generated/workspaces/text_lab/main.py", "new"),
     )
-    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == tuple(
+    assert _relative_paths(result.written_paths, tmp_path) == tuple(
         artifact.path for artifact in result.artifacts
     )
+    assert result.reused_paths == ()
 
 
-def test_identical_rebuild_reports_reused_but_still_writes_every_artifact(
+def test_identical_rebuild_reuses_every_artifact_without_generated_writes(
     tmp_path: Path,
 ) -> None:
     spec = create_workspace_spec("Text Lab", "Identical rebuild status proof.")
-    build_workspace(spec, tmp_path)
+    baseline = build_workspace(spec, tmp_path)
+    before = {
+        artifact.path: (tmp_path / artifact.path).read_bytes()
+        for artifact in baseline.artifacts
+    }
 
     result = build_workspace(spec, tmp_path)
 
@@ -211,12 +226,17 @@ def test_identical_rebuild_reports_reused_but_still_writes_every_artifact(
         "reused",
         "reused",
     )
-    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.written_paths) == tuple(
+    assert result.written_paths == ()
+    assert _relative_paths(result.reused_paths, tmp_path) == tuple(
         artifact.path for artifact in result.artifacts
     )
+    assert {
+        artifact.path: (tmp_path / artifact.path).read_bytes()
+        for artifact in result.artifacts
+    } == before
 
 
-def test_tampered_generated_artifact_is_regenerated_not_reused(
+def test_tampered_generated_artifact_is_regenerated_while_clean_artifacts_reuse(
     tmp_path: Path,
 ) -> None:
     spec = create_workspace_spec("Text Lab", "Artifact integrity status proof.")
@@ -230,6 +250,13 @@ def test_tampered_generated_artifact_is_regenerated_not_reused(
         "regenerated",
         "reused",
         "reused",
+    )
+    assert _relative_paths(result.written_paths, tmp_path) == (
+        "generated/capabilities/inspect_text.py",
+    )
+    assert _relative_paths(result.reused_paths, tmp_path) == (
+        "generated/capabilities/normalize_text.py",
+        "generated/workspaces/text_lab/main.py",
     )
     assert inspect_path.read_bytes() == baseline.artifacts[0].source.encode("utf-8")
 
@@ -256,7 +283,13 @@ def test_build_workspace_reconciles_removed_compiler_artifact_from_prior_manifes
         ("generated/workspaces/text_lab/main.py", "regenerated"),
         ("generated/capabilities/normalize_text.py", "removed"),
     )
-    assert tuple(path.relative_to(tmp_path).as_posix() for path in result.removed_paths) == (
+    assert _relative_paths(result.written_paths, tmp_path) == (
+        "generated/workspaces/text_lab/main.py",
+    )
+    assert _relative_paths(result.reused_paths, tmp_path) == (
+        "generated/capabilities/inspect_text.py",
+    )
+    assert _relative_paths(result.removed_paths, tmp_path) == (
         "generated/capabilities/normalize_text.py",
     )
     assert not stale_path.exists()
