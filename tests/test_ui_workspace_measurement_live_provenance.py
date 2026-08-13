@@ -2,11 +2,12 @@ import importlib
 from pathlib import Path
 
 import pytest
-from textual.widgets import Button, Input
+from textual.widgets import Button, Input, Static
 
 from pyxis.app import WorkspaceController, build_and_run_workspace, create_workspace_presentation
 from pyxis.authoring import create_workspace_spec
 from pyxis.ui import MeasurementSummaryDetail, create_workspace_shell
+from pyxis.ui.workspace_shell import MEASUREMENT_SNAPSHOT_REMOVED_NOTICE
 from test_ui_workspace_measurement_mount import _measurement_presentation
 
 
@@ -89,10 +90,11 @@ async def test_same_rir_and_failed_actions_keep_measurement_snapshot(
         assert shell.measurement_presentation is measurement
         assert len(shell.query(MeasurementSummaryDetail)) == 1
         assert shell.presentation.rir.rir_sha256 == subject.rir_sha256
+        assert len(shell.query("#measurement-snapshot-notice")) == 0
 
 
 @pytest.mark.asyncio
-async def test_successful_apply_removes_measurement_after_rir_change(
+async def test_successful_apply_replaces_measurement_with_transient_non_evidence_notice(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -122,5 +124,30 @@ async def test_successful_apply_removes_measurement_after_rir_change(
 
         assert controller.pending_preview is None
         assert shell.presentation.rir.rir_sha256 != subject.rir_sha256
+        assert shell.measurement_presentation is None
+        assert len(shell.query(MeasurementSummaryDetail)) == 0
+
+        notice = shell.query_one("#measurement-snapshot-notice", Static)
+        assert MEASUREMENT_SNAPSHOT_REMOVED_NOTICE.startswith("Notice — not evidence:")
+        for forbidden in (
+            "sample count",
+            "minimum seconds",
+            "maximum seconds",
+            "median seconds",
+            "mean seconds",
+            "standard deviation",
+        ):
+            assert forbidden not in MEASUREMENT_SNAPSHOT_REMOVED_NOTICE.lower()
+        assert not hasattr(notice, "presentation")
+        assert len(notice.query(Button)) == 0
+        assert len(notice.query(Input)) == 0
+
+        runtime_input = shell.query_one("#runtime-input", Input)
+        runtime_input.value = "next operation clears the notice"
+        runtime_input.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert len(shell.query("#measurement-snapshot-notice")) == 0
         assert shell.measurement_presentation is None
         assert len(shell.query(MeasurementSummaryDetail)) == 0
