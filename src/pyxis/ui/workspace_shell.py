@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
+from textual.widgets import Button
 
 from pyxis.app.controller import WorkspaceController
 from pyxis.app.measurement_summary_presentation import (
@@ -10,6 +11,22 @@ from pyxis.app.presentation import WorkspacePresentation
 
 from .measurement_summary_textual import MeasurementSummaryDetail, MeasurementSummaryShell
 from .textual_shell import WorkspaceShell as _WorkspaceShell
+
+
+def _measurement_provenance_matches(
+    presentation: WorkspacePresentation,
+    measurement_presentation: BuildAndRunMeasurementSummaryPresentation | None,
+) -> bool:
+    if measurement_presentation is None:
+        return True
+
+    subject = measurement_presentation.source.envelope.partition.condition.subject
+    rir = presentation.rir
+    return (
+        subject.repository_id == rir.repository_id
+        and subject.workspace_id == rir.workspace_id
+        and subject.rir_sha256 == rir.rir_sha256
+    )
 
 
 def _require_measurement_provenance_coherence(
@@ -59,6 +76,20 @@ class WorkspaceShell(_WorkspaceShell):
         yield from super().compose()
         if self.measurement_presentation is not None:
             yield MeasurementSummaryDetail(self.measurement_presentation)
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Preserve co-display only while the supplied measurement still matches."""
+
+        await super().on_button_pressed(event)
+
+        if _measurement_provenance_matches(
+            self.presentation,
+            self.measurement_presentation,
+        ):
+            return
+
+        self.measurement_presentation = None
+        await self.query_one(MeasurementSummaryDetail).remove()
 
 
 def create_workspace_shell(
