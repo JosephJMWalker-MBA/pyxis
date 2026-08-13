@@ -47,6 +47,12 @@ from .measurement_cohort import (
     MeasurementCohortConditionEvidence,
     create_build_and_run_measurement_cohort,
 )
+from .measurement_samples import (
+    BuildAndRunMeasurementStageSamplesEvidence,
+    MeasurementStageSamplesEvidence,
+    StageSampleObservationEvidence,
+    project_build_and_run_measurement_stage_samples,
+)
 from .operations import WorkspaceRerunResult, rerun_workspace
 from .presentation import (
     CanonicalPresentation,
@@ -79,6 +85,7 @@ __all__ = [
     "BuildAndRunMeasurementCohortEvidence",
     "BuildAndRunMeasurementComparisonEvidence",
     "BuildAndRunMeasurementEvidence",
+    "BuildAndRunMeasurementStageSamplesEvidence",
     "BuildAndRunResult",
     "BuildResult",
     "BuildWorkComparisonEvidence",
@@ -91,6 +98,7 @@ __all__ = [
     "ExportPresentation",
     "MeasuredBuildAndRunResult",
     "MeasurementCohortConditionEvidence",
+    "MeasurementStageSamplesEvidence",
     "MeasurementSubjectComparisonEvidence",
     "MeasurementSubjectEvidence",
     "RIRPresentation",
@@ -99,6 +107,7 @@ __all__ = [
     "RuntimeInputEvidence",
     "StageDurationComparisonEvidence",
     "StageDurationEvidence",
+    "StageSampleObservationEvidence",
     "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
     "WorkspaceArchitecturePreviewResult",
@@ -122,6 +131,7 @@ __all__ = [
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
     "preview_workspace_remove_normalize_text",
+    "project_build_and_run_measurement_stage_samples",
     "query_workspace_presentation",
     "refresh_workspace_export",
     "rerun_workspace",
