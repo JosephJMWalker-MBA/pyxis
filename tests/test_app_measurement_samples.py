@@ -5,8 +5,12 @@ import pytest
 
 from pyxis.app import (
     BuildAndRunMeasurementStageSamplesEvidence,
+    BuildWorkEvidence,
     ExecutionEnvironmentEvidence,
+    MeasurementCohortConditionEvidence,
     MeasurementStageSamplesEvidence,
+    MeasurementSubjectEvidence,
+    RuntimeInputEvidence,
     StageSampleObservationEvidence,
     create_build_and_run_measurement_cohort,
     measure_build_and_run_workspace,
@@ -105,23 +109,18 @@ def test_stage_sample_projection_preserves_raw_order_and_exact_work_context(
 
 
 def test_stage_sample_evidence_rejects_incoherent_direct_construction() -> None:
+    work = BuildWorkEvidence(
+        generation_statuses=(),
+        written_paths=(),
+        reused_paths=(),
+        removed_paths=(),
+    )
     sample = StageSampleObservationEvidence(
         duration_seconds=1.0,
-        build_work=first_work := __import__("pyxis.app", fromlist=["BuildWorkEvidence"]).BuildWorkEvidence(
-            generation_statuses=(),
-            written_paths=(),
-            reused_paths=(),
-            removed_paths=(),
-        ),
+        build_work=work,
     )
     build = MeasurementStageSamplesEvidence(stage="build", observations=(sample, sample))
     runtime = MeasurementStageSamplesEvidence(stage="runtime", observations=(sample, sample))
-
-    from pyxis.app import (
-        MeasurementCohortConditionEvidence,
-        MeasurementSubjectEvidence,
-        RuntimeInputEvidence,
-    )
 
     condition = MeasurementCohortConditionEvidence(
         subject=MeasurementSubjectEvidence(
@@ -159,4 +158,4 @@ def test_stage_sample_evidence_rejects_incoherent_direct_construction() -> None:
             stages=(build, short_runtime),
         )
 
-    assert sample.build_work is first_work
+    assert sample.build_work is work
