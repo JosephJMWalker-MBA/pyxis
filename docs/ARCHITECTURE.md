@@ -248,6 +248,26 @@ Comparison retains the exact before/after `RuntimeInputEvidence` objects in `Run
 
 That mismatch is evidence about comparability, not an explanation for a timing delta. Repository Zero does not infer that workload size or content caused a runtime difference, and later interpretation must not treat runtime conditions as controlled when input identity differs. Raw-input persistence, measurement persistence, UI, scoring, causal models, a full Execution Ledger, and Preview/Apply/Export timing remain outside 11D.
 
+Milestone 11E adds stable execution-environment identity as another separate measurement-context axis:
+
+```text
+injectable environment provider
+    ↓ acquired once before timed stages
+Python implementation + Python version
+    +
+platform system + platform machine
+    ↓
+ExecutionEnvironmentEvidence
+```
+
+The default provider uses only coarse facts available from the running Python process. Missing system/machine values are represented as `unknown`. Hostnames, usernames, absolute paths, process IDs, load averages, memory pressure, and other host-specific or dynamic telemetry are not collected. The provider is injectable so acceptance tests can make the environment exact without relying on the machine running CI.
+
+Environment acquisition occurs before `build_and_run_workspace()` begins emitting timed stage boundaries, so discovering the context does not inflate either observed duration. `BuildAndRunMeasurementEvidence` retains the resulting immutable environment object beside subject, workload, stage, and work evidence.
+
+Comparison retains exact before/after environment objects in `ExecutionEnvironmentComparisonEvidence`; `matches` means only exact equality of those recorded facts. Different environments remain descriptively comparable when Workspace subject coherence succeeds, with `matches=False` exposing the execution-context confound rather than suppressing timing/work evidence. Matching or mismatching environment identity is not a causal explanation and does not imply that unrecorded dynamic conditions were controlled.
+
+11E adds no host-specific identity, dynamic system telemetry, repeated sampling, statistics, persistence, UI, scoring, causal model, full Execution Ledger, or Preview/Apply/Export timing.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
