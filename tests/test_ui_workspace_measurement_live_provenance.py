@@ -92,6 +92,7 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
             "Remove normalization and advance to a new architecture state."
         )
         apply_button.focus()
+        await pilot.pause()
         await pilot.press("enter")
         await pilot.pause()
 
