@@ -268,6 +268,30 @@ Comparison retains exact before/after environment objects in `ExecutionEnvironme
 
 11E adds no host-specific identity, dynamic system telemetry, repeated sampling, statistics, persistence, UI, scoring, causal model, full Execution Ledger, or Preview/Apply/Export timing.
 
+Milestone 11F adds a pure repeated-measurement cohort boundary over already-produced measurement objects:
+
+```text
+MeasuredBuildAndRunResult × 2+
+    ↓
+create_build_and_run_measurement_cohort()
+    ↓ require one exact condition
+Repository/Workspace identity
+    + exact RIR SHA-256
+    + exact RuntimeInputEvidence
+    + exact ExecutionEnvironmentEvidence
+    + ordered build → runtime stage contract
+    ↓
+BuildAndRunMeasurementCohortEvidence
+    ├── MeasurementCohortConditionEvidence
+    └── exact ordered observations
+```
+
+Cohort membership is intentionally stricter than pairwise comparison. Pairwise comparison may expose architecture, workload, or environment mismatches as descriptive evidence. A repeated-measurement cohort instead asserts that all retained observations belong to one exact measurement condition, so any mismatch in subject/RIR, workload, environment, or stage contract rejects the cohort before aggregation can exist.
+
+The cohort retains the exact original `MeasuredBuildAndRunResult` objects in caller-supplied order. Stage durations and build-work evidence are not condition fields: one repeated condition may still observe different timings, compiler statuses, or written/reused/removed paths. That variation remains evidence to be summarized only by a later separately proven boundary.
+
+11F performs no execution, timing, filesystem access, aggregation, statistics, outlier/warmup classification, scoring, persistence, UI, causal interpretation, full Execution Ledger work, or Preview/Apply/Export measurement.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
