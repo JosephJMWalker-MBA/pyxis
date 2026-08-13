@@ -57,7 +57,7 @@ Repository Zero must treat source-to-wheel construction and wheel installation a
 
 The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
 
-Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated environment cannot resolve its declared `setuptools>=77.0.3` requirement.
+Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
 The successful offline wheel-install proof therefore remains distinct from the reproduced offline source-build failure.
 
@@ -276,6 +276,17 @@ Milestone 11C adds immutable `MeasurementSubjectEvidence` containing `repository
 Comparison revalidates each stored subject against its own `BuildResult` before constructing timing or work deltas. Different RIR hashes are allowed when Repository/Workspace identity is unchanged, so one Workspace may be compared across architectural revisions while both exact states remain explicit. Different logical Workspace subjects are rejected before delta construction. Replaced or forged subject metadata that disagrees with the underlying build evidence is also rejected.
 
 Milestone 11C adds no persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
+
+## D099 — Runtime input identity exposes workload comparability without retaining raw text
+A measured runtime stage must identify the workload it received without making raw input text part of measurement evidence.
+
+Milestone 11D adds immutable `RuntimeInputEvidence` containing the SHA-256 of the exact UTF-8 input bytes, character count, and UTF-8 byte count. The raw text is still passed to the existing runtime operation because execution requires it, but measurement retains only the digest and size facts after the cycle.
+
+`RuntimeInputComparisonEvidence` retains the exact before/after input evidence and reports `matches=True` only when those immutable evidence objects are equal. Different inputs do not make two otherwise coherent Workspace measurements incomparable: comparison still returns stage and work deltas while exposing `matches=False` as an explicit workload confound.
+
+An input mismatch must not be converted into a performance explanation. It means only that the runtime workloads were not proven identical, so later causal, efficiency, or waste interpretation must not treat the runtime conditions as controlled merely because the Workspace subject matched.
+
+Milestone 11D adds no raw-input persistence, measurement persistence, UI, full Execution Ledger, causal interpretation, scoring, or Preview/Apply/Export measurement.
 
 ## Repository Zero rule
 
