@@ -1,10 +1,12 @@
 # Pyxis Architecture
 
+**Current through Milestone 11T / D115.**
+
+This is the canonical current architecture. The detailed pre-consolidation architecture remains preserved in Git history at commit `675f2b5e37b5edb32d17e9e480a4d16246826486`; the milestone records remain the narrow proof trail for 11K–11T.
+
 ## Product thesis
 
-Pyxis turns human architectural intent into executable, inspectable systems through a transparent compiler path.
-
-The minimum proven path is:
+Pyxis turns human architectural intent into executable, inspectable systems through a transparent compiler path:
 
 ```text
 human intent
@@ -20,707 +22,198 @@ generated implementation
 runtime
 ```
 
-Changes flow through the same path:
+Architectural change follows the same authority chain:
 
 ```text
 preview proposed canonical state
     ↓
-show predicted artifact/runtime consequences
+show predicted consequences
     ↓
-record rationale
-    ↓
-append revision
-    ↓
-write canonical state
-    ↓
-compile
-    ↓
-run changed Workspace
-```
-
-## Architectural boundaries
-
-### Canonical state
-
-Canonical authoring data is the authoritative expression of intended architecture.
-
-### RIR
-
-The Repository Intermediate Representation is the normalized compiler input derived from canonical state. It makes architectural relationships inspectable before code generation.
-
-### Generated implementation
-
-Generated files are compiler products. UI actions and export logic must not patch generated implementation directly.
-
-### Revisions
-
-Architectural changes are append-only events carrying human rationale, before/after canonical hashes, and compiler completion evidence.
-
-Revision event and completion logs have typed read-only loaders. Existing Workspace queries consume those loaders rather than parsing JSONL outside the revisions persistence layer.
-
-### Presentation
-
-`WorkspacePresentation` is the framework-independent read-only application contract for a future user interface.
-
-It is composed only from evidence already produced by permanent product boundaries:
-
-```text
-WorkspaceSpec
-    +
-BuildAndRunResult
-    +
-RevisionEvent / RevisionCompletion evidence
-    +
-optional READY WorkspaceExportResult
-    ↓
-WorkspacePresentation
-```
-
-The presentation layer may validate coherence between those evidence streams, but it does not acquire new facts. It performs no filesystem reads or discovery, no compilation, no runtime execution, no export, and no readiness inference.
-
-The contract preserves the authority of each layer:
-
-- canonical identity, name, description, capabilities, and canonical hash come from authoritative `WorkspaceSpec`;
-- RIR structure and identity come from the existing build RIR and generation manifest;
-- artifact `new` / `reused` / `regenerated` / `removed` status comes directly from compiler-owned generation evidence;
-- runtime output comes from an already-completed run and is exposed recursively through immutable mappings/sequences;
-- revision intent remains distinct from optional compiler completion evidence; and
-- export presentation is absent until actual evidence-backed `READY` verification exists.
-
-A removed compiler product has no current manifest entry, so presentation must not fabricate current node or artifact hashes for it. A future UI renders these facts rather than scanning files or reconstructing product state itself.
-
-### Existing Workspace query
-
-`query_workspace_presentation()` is the application-owned assembly boundary for reopening an existing Workspace while preserving the distinction between durable and transient evidence.
-
-It reloads durable evidence only through owning persistence APIs:
-
-```text
-Workspace root
-    ↓
-load_workspace_spec()
-load_repository_ir()
-load_generation_manifest()
-load_revision_events()
-load_revision_completions()
-    +
-supplied current BuildAndRunResult
-    +
-optional supplied WorkspaceExportResult
-    ↓
-coherence checks
-    ↓
-create_workspace_presentation()
-```
-
-Persisted RIR and generation-manifest evidence must exactly agree with the supplied run before the presentation can be assembled. Revision history is loaded because it is durable. Runtime output and generation statuses are not loaded because Repository Zero does not persist them.
-
-The presence of generated Python files, RIR JSON, or a generation manifest must never be treated as permission to infer generation status or rerun the Workspace automatically. If no current `BuildAndRunResult` is available, the full `WorkspacePresentation` is unavailable until the Workspace is run again or a future explicit persistence design is introduced.
-
-Likewise, an export directory on disk does not imply `READY`. Export facts enter the query only through an actual `WorkspaceExportResult`, and its runtime evidence must identify the queried physical source Workspace. This prevents identical copies of a Workspace from accidentally borrowing each other's transient export evidence.
-
-The query boundary is read-only application orchestration. It does not compile, execute, classify, verify exports, scan arbitrary files, or synthesize missing facts.
-
-### Application-owned Workspace operations
-
-A UI event may not jump from Textual directly into compiler/runtime/revision/export/persistence layers. Named application operations own action semantics and return fresh evidence that the renderer can consume.
-
-Milestone 10E establishes the first operation with `rerun_workspace()`:
-
-```text
-Workspace root
-    +
-current BuildAndRunResult
-    +
-new runtime text
-    +
-optional existing WorkspaceExportResult
-    ↓
-query_workspace_presentation() preflight
-    ↓
-run_materialized_workspace()
-    ↓
-new BuildAndRunResult using the same BuildResult
-    ↓
-query_workspace_presentation()
-    ↓
-WorkspaceRerunResult
-    ├── fresh BuildAndRunResult
-    └── fresh WorkspacePresentation
-```
-
-The preflight deliberately happens before runtime execution. It rejects stale run evidence or mismatched export evidence against the persisted Workspace before generated code can run.
-
-A successful rerun is runtime-only. It executes the already-materialized generated entrypoint exactly once and reuses the exact existing `BuildResult`. It does not compile, classify generation status, materialize artifacts, mutate revisions, export, or verify an export.
-
-Optional existing READY evidence may remain part of the returned presentation because no architectural/compiler state changed. That evidence retains its original verification input hash; a rerun with different text does not transform the old READY proof into verification of the new input.
-
-`WorkspaceRerunResult` returns both fresh transient run evidence and the presentation derived from it.
-
-Milestone 10F adds `WorkspaceRuntimeController` as the smallest application-owned live-state holder needed by the first interactive renderer. It retains the Workspace root, current `BuildAndRunResult`, and optional existing export evidence. Its only operation delegates to `rerun_workspace()`, replaces the retained run only after a successful rerun, and returns the fresh `WorkspacePresentation`.
-
-The controller is not a new runtime or session implementation. It exists so transient run evidence remains application-owned across repeated UI events rather than being reconstructed from rendered presentation fields.
-
-### Application-owned measurement
-
-Milestone 11A introduces measurement only after the build/run and local UI paths are stable enough to observe without redesigning them.
-
-The first measurement path is:
-
-```text
-WorkspaceSpec + destination + runtime text
-    +
-injectable monotonic clock
-    ↓
-measure_build_and_run_workspace()
-    ↓ calls exactly once
-build_and_run_workspace()
-    ├── build start/end observation
-    └── runtime start/end observation
-    ↓
-existing BuildAndRunResult
-    +
-immutable BuildAndRunMeasurementEvidence
-    ↓
-MeasuredBuildAndRunResult
-```
-
-`build_and_run_workspace()` remains the execution owner. Its private stage observer exposes only the already-existing `build` and `runtime` boundaries so the measurement wrapper can timestamp them without copying the orchestration into another function. Ordinary callers supply no observer and retain the existing behavior.
-
-`StageDurationEvidence` records ordered elapsed seconds for the two observed stages. The clock is injectable so tests can prove exact durations without depending on wall-clock timing.
-
-`BuildWorkEvidence` does not discover or classify work. It carries the exact `generation_statuses`, `written_paths`, `reused_paths`, and `removed_paths` tuples already returned by `BuildResult`. Compiler status remains compiler evidence; materialization paths remain materializer evidence.
-
-Measurement therefore adds observation without a shadow build, shadow runtime, filesystem scan, efficiency label, or waste score. The first boundary is transient and in-memory only. Persistence, UI, a full Execution Ledger, and broader journey instrumentation remain separate decisions.
-
-Milestone 11B adds a second pure boundary over already-produced measurement evidence:
-
-```text
-MeasuredBuildAndRunResult (before)
-    +
-MeasuredBuildAndRunResult (after)
-    ↓
-compare_build_and_run_measurements()
-    ↓
-BuildAndRunMeasurementComparisonEvidence
-    ├── StageDurationComparisonEvidence
-    └── BuildWorkComparisonEvidence
-```
-
-The comparison performs no build, runtime execution, clock access, filesystem access, or compiler/materializer classification. Stage names must match in the same order. Each stage comparison records only before seconds, after seconds, and the arithmetic delta `after - before`.
-
-Build-work comparison retains the exact immutable before/after `BuildWorkEvidence` and reports literal per-path compiler-status transitions, including cases such as `new → reused`. The original written/reused/removed path tuples remain the work facts being compared; the comparison does not infer those facts again.
-
-A negative timing delta beside increased reuse is an observed association between two measured cycles, not proof that reuse caused the timing difference and not an efficiency or waste judgment. Causal attribution, scoring, persistence, UI, and a full Execution Ledger remain outside this boundary.
-
-Milestone 11C makes measurement subject identity explicit without changing execution or comparison semantics:
-
-```text
-BuildResult
-    ├── RepositoryIR.repository_id
-    ├── RepositoryIR.workspace.workspace_id
-    └── GenerationManifest.rir_sha256
-    ↓
-coherence check against repository_ir_sha256(RepositoryIR)
-    ↓
-MeasurementSubjectEvidence
-```
-
-`MeasurementSubjectEvidence` distinguishes the logical subject (`repository_id` + `workspace_id`) from the exact measured architectural state (`rir_sha256`). Measurement verifies the generation manifest RIR identity against the returned RepositoryIR before recording that subject; it does not recover identity from paths or persisted files.
-
-Comparison revalidates each retained subject against its own `BuildResult` before constructing stage or work comparison evidence. Two cycles with the same Repository/Workspace identity may have different RIR hashes, allowing architectural revisions of one Workspace to remain comparable while both exact states are explicit. Different logical Workspace identities are rejected before any duration/work delta is produced. Subject metadata that has been replaced or forged to disagree with its build evidence is likewise rejected.
-
-Subject identity remains transient measurement evidence in Repository Zero. 11C adds no persistence, UI, ledger, scoring, causal model, or broader operation instrumentation.
-
-Milestone 11D adds privacy-preserving runtime workload identity as a separate axis from Workspace subject identity:
-
-```text
-runtime text
-    ↓ UTF-8 encode once for evidence
-SHA-256 + character count + UTF-8 byte count
-    ↓
-RuntimeInputEvidence
-```
-
-The raw text continues to flow only to the established `build_and_run_workspace()` operation because runtime execution requires it. Measurement retains no raw-input field. `RuntimeInputEvidence` records a deterministic lowercase SHA-256 digest of the exact UTF-8 bytes, Unicode character count, and UTF-8 byte count; Unicode inputs therefore preserve the distinction between logical text length and encoded workload size.
-
-Comparison retains the exact before/after `RuntimeInputEvidence` objects in `RuntimeInputComparisonEvidence`. Its `matches` flag is true only when the complete immutable evidence values are equal. Input mismatch is deliberately non-blocking: if Workspace subject coherence succeeds, stage and work comparison still proceeds while `matches=False` exposes that the two runtime workloads were not identical.
-
-That mismatch is evidence about comparability, not an explanation for a timing delta. Repository Zero does not infer that workload size or content caused a runtime difference, and later interpretation must not treat runtime conditions as controlled when input identity differs. Raw-input persistence, measurement persistence, UI, scoring, causal models, a full Execution Ledger, and Preview/Apply/Export timing remain outside 11D.
-
-Milestone 11E adds stable execution-environment identity as another separate measurement-context axis:
-
-```text
-injectable environment provider
-    ↓ acquired once before timed stages
-Python implementation + Python version
-    +
-platform system + platform machine
-    ↓
-ExecutionEnvironmentEvidence
-```
-
-The default provider uses only coarse facts available from the running Python process. Missing system/machine values are represented as `unknown`. Hostnames, usernames, absolute paths, process IDs, load averages, memory pressure, and other host-specific or dynamic telemetry are not collected. The provider is injectable so acceptance tests can make the environment exact without relying on the machine running CI.
-
-Environment acquisition occurs before `build_and_run_workspace()` begins emitting timed stage boundaries, so discovering the context does not inflate either observed duration. `BuildAndRunMeasurementEvidence` retains the resulting immutable environment object beside subject, workload, stage, and work evidence.
-
-Comparison retains exact before/after environment objects in `ExecutionEnvironmentComparisonEvidence`; `matches` means only exact equality of those recorded facts. Different environments remain descriptively comparable when Workspace subject coherence succeeds, with `matches=False` exposing the execution-context confound rather than suppressing timing/work evidence. Matching or mismatching environment identity is not a causal explanation and does not imply that unrecorded dynamic conditions were controlled.
-
-11E adds no host-specific identity, dynamic system telemetry, repeated sampling, statistics, persistence, UI, scoring, causal model, full Execution Ledger, or Preview/Apply/Export timing.
-
-Milestone 11F adds a pure repeated-measurement cohort boundary over already-produced measurement objects:
-
-```text
-MeasuredBuildAndRunResult × 2+
-    ↓
-create_build_and_run_measurement_cohort()
-    ↓ require one exact condition
-Repository/Workspace identity
-    + exact RIR SHA-256
-    + exact RuntimeInputEvidence
-    + exact ExecutionEnvironmentEvidence
-    + ordered build → runtime stage contract
-    ↓
-BuildAndRunMeasurementCohortEvidence
-    ├── MeasurementCohortConditionEvidence
-    └── exact ordered observations
-```
-
-Cohort membership is intentionally stricter than pairwise comparison. Pairwise comparison may expose architecture, workload, or environment mismatches as descriptive evidence. A repeated-measurement cohort instead asserts that all retained observations belong to one exact measurement condition, so any mismatch in subject/RIR, workload, environment, or stage contract rejects the cohort before aggregation can exist.
-
-The cohort retains the exact original `MeasuredBuildAndRunResult` objects in caller-supplied order. Stage durations and build-work evidence are not condition fields: one repeated condition may still observe different timings, compiler statuses, or written/reused/removed paths. That variation remains evidence to be summarized only by a later separately proven boundary.
-
-11F performs no execution, timing, filesystem access, aggregation, statistics, outlier/warmup classification, scoring, persistence, UI, causal interpretation, full Execution Ledger work, or Preview/Apply/Export measurement.
-
-Milestone 11G adds a pure stage-oriented projection over one already-coherent cohort:
-
-```text
-BuildAndRunMeasurementCohortEvidence
-    ↓
-project_build_and_run_measurement_stage_samples()
-    ↓
-BuildAndRunMeasurementStageSamplesEvidence
-    ├── exact cohort condition
-    ├── build samples in cohort order
-    └── runtime samples in cohort order
-```
-
-Each `StageSampleObservationEvidence` contains only the raw stage duration and the exact `BuildWorkEvidence` object from that same measured cycle. Both stage views therefore preserve observation order and retain compiler/materializer context such as first-cycle `new`/written artifacts versus later `reused`/no-write cycles.
-
-`MeasurementStageSamplesEvidence` remains a raw observation container. `BuildAndRunMeasurementStageSamplesEvidence` requires its stage sequence to equal the cohort condition and requires the same observation count for every stage, including direct construction. The projection performs no execution, timing, filesystem access, work reclassification, aggregation, sorting, filtering, or interpretation.
-
-11G adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, outlier/warmup/cache-effect label, scoring, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
-
-Milestone 11H adds a pure exact-work partition over those raw stage samples:
-
-```text
-BuildAndRunMeasurementStageSamplesEvidence
-    ↓
-partition_build_and_run_measurement_stage_samples()
-    ↓
-BuildAndRunMeasurementWorkPartitionEvidence
-    ├── exact cohort condition
-    ├── build work-context groups
-    └── runtime work-context groups
-```
-
-Each `StageWorkContextGroupEvidence` is keyed only by exact `BuildWorkEvidence` equality. Group order follows first occurrence of a work-evidence value in the source stage stream, and observation order within each group remains source order. The group key retains the exact `BuildWorkEvidence` object from the first sample in its equality class, while group members retain the exact original `StageSampleObservationEvidence` objects.
-
-`MeasurementStageWorkPartitionEvidence` rejects empty groups, fewer than two total stage observations, and duplicate equal group keys. `BuildAndRunMeasurementWorkPartitionEvidence` preserves the cohort stage contract and equal total observation counts across stages. The partition performs no execution, filesystem access, sorting by duration, aggregation, scoring, or interpretation.
-
-The partition does not infer operational states from work evidence. A group is not called cold, warm, cached, first-run, steady-state, normal, or outlier. Those labels would add semantics not established by exact compiler/materializer evidence equality.
-
-11H adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
-
-Milestone 11I adds the first intentionally weak numeric compression over that exact-work partition:
-
-```text
-BuildAndRunMeasurementWorkPartitionEvidence
-    ↓
-create_build_and_run_measurement_duration_envelope()
-    ↓
-BuildAndRunMeasurementDurationEnvelopeEvidence
-    ├── exact source partition
-    ├── build group envelopes
-    └── runtime group envelopes
-```
-
-Each `StageWorkContextDurationEnvelopeEvidence` retains the exact source `StageWorkContextGroupEvidence` object and records only `sample_count`, `minimum_seconds`, and `maximum_seconds` from that group's raw durations. Singleton groups are valid, so their observed minimum and maximum are equal.
-
-`BuildAndRunMeasurementDurationEnvelopeEvidence` retains the exact 11H partition and requires stage order, group count, group order, and source-group object identity to remain aligned with that partition. Direct group-envelope construction revalidates count/minimum/maximum against the retained raw observations. The summary therefore stays inspectable back to the evidence it compresses rather than becoming a detached numeric vector.
-
-11I does not combine work contexts, assign semantic work-state labels, or infer why one group differs from another. It adds no mean, median, variance, standard deviation, confidence interval, quantile, percentile, trend, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
-
-Milestone 11J adds median as a separate central-tendency layer over the already-frozen 11I envelope rather than modifying that earlier evidence contract:
-
-```text
-BuildAndRunMeasurementDurationEnvelopeEvidence
-    ↓
-create_build_and_run_measurement_median()
-    ↓
-BuildAndRunMeasurementMedianEvidence
-    ├── exact source 11I envelope
-    ├── build work-context medians
-    └── runtime work-context medians
-```
-
-Each `StageWorkContextMedianEvidence` retains the exact source `StageWorkContextDurationEnvelopeEvidence` object and derives `median_seconds` only from the raw observations reachable through that envelope. Singleton groups return their one observed duration; odd-sized groups return the central ordered observation; even-sized groups use the arithmetic midpoint of the two central ordered observations.
-
-`BuildAndRunMeasurementMedianEvidence` preserves stage/group order and requires every median group to refer by identity to the corresponding 11I envelope group. Direct construction revalidates the median and rejects detached but numerically equivalent envelope objects. The median therefore remains auditable back through the exact envelope, partition, work evidence, and raw samples.
-
-11J adds no mean, variance, standard deviation, confidence interval, additional quantile or percentile, trend, semantic work-state label, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
-
-### Application-owned architectural preview
-
-Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
-
-The application path is:
-
-```text
-Workspace root
-    +
-current BuildAndRunResult
-    +
-optional existing WorkspaceExportResult
-    ↓
-query_workspace_presentation() preflight
-    ↓
-load_workspace_spec()
-    ↓
-preview_remove_normalize_text()
-    ↓
-ArchitecturePreview
-    ↓
-create_architecture_preview_presentation()
-    ↓
-ArchitecturePreviewPresentation
-```
-
-The preflight requires the caller's live run/READY evidence to still match the persisted Workspace before the proposed architecture is created. The canonical state is then reloaded through its owning persistence boundary rather than reconstructed from presentation fields.
-
-`ArchitecturePreviewPresentation` is immutable and contains only preview facts already justified by current/proposed canonical intent and the existing `ArchitecturePreview`: current/proposed canonical identity and SHA-256, capability additions/removals, predicted added/changed/removed artifact paths, and the current/proposed observable runtime-key contract. It does not compile proposed artifacts or execute proposed generated code.
-
-`WorkspaceArchitecturePreviewController` retains the typed pending `ArchitecturePreview` for a later rationale/apply operation while returning only presentation-safe preview evidence from its preview method.
-
-A pending preview is not current Workspace state. Preview creation performs no canonical write, compiler invocation, materialization, revision append, runtime execution, export, or READY verification. Therefore the current `BuildAndRunResult` and legitimate current READY evidence remain valid until an apply operation actually commits new canonical intent.
-
-### Application-owned architectural apply
-
-Milestone 10I proves the first rationale-bearing architectural mutation seam independently of Textual.
-
-The application path is:
-
-```text
-Workspace root
-    +
-exact retained ArchitecturePreview
-    +
-current BuildAndRunResult
-    +
-optional current WorkspaceExportResult
-    +
-non-empty human rationale
-    +
-explicit runtime text
-    ↓
-query_workspace_presentation() preflight
-    ↓
-confirm preview current canonical hash
-    ↓
-apply_remove_normalize_text()
+record human rationale
     ↓
 append revision intent
     ↓
-build_workspace(proposed_spec)
+write canonical state
     ↓
-append revision completion
+compile + materialize
     ↓
-run_materialized_workspace(new RepositoryIR)
+append completion evidence
     ↓
-fresh BuildAndRunResult
-    ↓
-query_workspace_presentation(export=None)
-    ↓
-WorkspaceArchitectureApplyResult
+run the changed Workspace
 ```
 
-The operation does not reconstruct the proposal from renderer fields and does not call preview again at Apply time. The exact typed `ArchitecturePreview` retained by the application controller is the object passed to the existing governed `apply_remove_normalize_text()` boundary.
+Generated code is never a second source of truth.
 
-Rationale is required and normalized before any mutation. Current run/export evidence is preflighted before the governed apply path begins. The existing apply layer remains responsible for validating that the preview still matches canonical intent and the supported edit, appending the intent-bearing revision before canonical/compiler mutation, building through the permanent compiler/materializer path, and appending completion only after a successful build.
+## Permanent authority boundaries
 
-`BuildAndRunResult` does not contain the runtime input that originally produced it. The apply operation therefore requires explicit runtime text rather than deriving or guessing input from runtime output. After the new build succeeds, the newly materialized Workspace is executed exactly once and its result becomes fresh transient run evidence.
+### Canonical authoring state
 
-Architectural mutation invalidates pre-change READY as current evidence. The prior portable directory may remain physically present, but its `WorkspaceExportResult` is not passed into the post-apply query because it verified the old RIR/compiler products. A newly applied Workspace presents no READY evidence until a new export verification operation proves the new state.
+`WorkspaceSpec` is the authoritative expression of intended architecture. UI, restore, export, and runtime paths may not patch generated files to simulate an architectural change.
 
-`WorkspaceArchitecturePreviewController` retains the resulting fresh `BuildAndRunResult`, clears its retained export evidence, and clears the consumed pending preview only after the application operation returns successfully. Validation or governed-apply failure leaves the controller's retained values unchanged.
+### Repository Intermediate Representation
 
-Milestone 10I still adds no Textual rationale input or Apply control. Renderer mutation remains unavailable until the UI can invoke this already-proven application boundary without creating a second live-state owner.
+RIR is normalized compiler input derived from canonical state. It makes Repository/Workspace/capability relationships and exact RIR identity inspectable before code generation.
 
-### Shared live Workspace controller
+### Compiler and incremental generation
 
-Milestone 10J introduces `WorkspaceController` as the one application-owned transient state authority for a combined interactive Workspace session.
+The compiler is deterministic and returns explicit compiler products plus generation evidence. Artifact status is one of `new`, `reused`, `regenerated`, or `removed`.
 
-It owns:
+Reuse is justified only when semantic node identity is unchanged, the current compiler output still matches the prior manifest identity, and the already-materialized artifact still matches that identity. Classification itself is pure and does not scan the filesystem. Materialization separately writes new/regenerated products, preserves proven reused products, and removes only paths previously owned by the manifest.
 
-```text
-one current BuildAndRunResult
-    +
-one optional current WorkspaceExportResult
-    +
-one optional pending ArchitecturePreview
-```
+Compiler output remains separate from filesystem materialization; runtime never compiles.
 
-and delegates behavior to the existing application operations:
+### Revisions
 
-```text
-WorkspaceController.rerun(text)
-    ↓
-rerun_workspace()
+Architectural mutation is append-only provenance. A revision records human rationale and before/after canonical identity before the governed compiler path mutates current architecture. Completion evidence is appended only after compilation/materialization succeeds. Restore/reapply creates a new revision; history is not rewritten.
 
-WorkspaceController.preview_remove_normalize_text()
-    ↓
-preview_workspace_remove_normalize_text()
+### Runtime
 
-WorkspaceController.apply_pending_remove_normalize_text(rationale, text)
-    ↓
-apply_workspace_remove_normalize_text()
+Runtime executes already-materialized generated code. Runtime-only reruns reuse the exact current `BuildResult`; they do not compile, reclassify generation status, mutate revisions, or re-establish READY.
 
-WorkspaceController.refresh_export(destination, text)
-    ↓
-refresh_workspace_export()
-```
+### Export and READY
 
-No compiler, runtime, revision, export, preview, or presentation implementation moves into the controller. It owns only the live evidence required to sequence those operations coherently.
+Export is packaging, not compilation. It packages the exact existing compiler products, projects them into a conventional Python source repository, verifies identity and runtime behavior, and may include a verified wheel.
 
-A successful rerun replaces the controller's one current run and leaves current READY evidence valid because architecture did not change. A pending architectural preview may also remain retained across runtime-only reruns because its current canonical architecture is unchanged. Preview construction always consumes that same current run/export state. Successful Apply consumes the exact retained preview, replaces the same current run with post-apply evidence, clears pre-change READY, and clears the consumed preview. The next rerun therefore receives the post-apply `BuildResult` by construction.
+READY exists only when actual verification evidence exists. Destination presence is never sufficient. An architectural Apply invalidates pre-change READY as current evidence; READY can re-enter live state only through a fresh verified export of the exact current build.
 
-A successful verified export refresh leaves the current run and pending preview unchanged while replacing only the controller's current export evidence. Controller fields advance only after delegated operations return successfully; operation failure leaves the shared state unadvanced.
+The portable deliverable remains `conventional source repository + verified wheel`. Offline installation/execution is guaranteed for the verified wheel, not for rebuilding that wheel from raw source without access to declared build dependencies.
 
-The specialized `WorkspaceRuntimeController` and `WorkspaceArchitecturePreviewController` remain as compatibility surfaces for earlier application-level proofs. They are no longer accepted as separate live-state inputs by the combined Textual shell.
+## Application and presentation boundaries
 
-### Application-owned verified export refresh
+### WorkspacePresentation
 
-Milestone 10M introduces `refresh_workspace_export()` so READY can re-enter live state only through the same verified export path that originally established it.
+`WorkspacePresentation` is the framework-independent read-only adapter for evidence Pyxis already owns. It may validate coherence but may not discover files, compile, execute runtime code, export, classify generation status, or infer readiness.
 
-The operation path is:
+Canonical identity comes from `WorkspaceSpec`; RIR/compiler facts come from existing build/manifest evidence; runtime output comes from an already-completed run; revision history comes from the revisions persistence layer; READY appears only from supplied verified export evidence.
+
+### Existing Workspace query
+
+`query_workspace_presentation()` reloads only durable evidence through owning persistence APIs and requires callers to supply transient run/export evidence. Persisted files never authorize inference of transient generation status, runtime output, or READY.
+
+### Named application operations
+
+Renderer events cross named application operations rather than compiler/runtime/revision/export services directly. Repository Zero proves runtime rerun, architecture preview, rationale-bearing Apply, and verified export refresh as application-owned seams.
+
+### One live Workspace controller
+
+`WorkspaceController` is the single application-owned transient-state authority for a live session:
 
 ```text
-Workspace root
-    +
 current BuildAndRunResult
-    +
-fresh destination root
-    +
-explicit verification runtime text
-    ↓
-query_workspace_presentation(export=None) preflight
-    ↓
-export_workspace(current_run.build, ...)
-    ↓
-ExportPlan
-    ↓
-exact-byte materialization
-    ↓
-identity + runtime verification
-    ↓
-WorkspaceExportResult (READY)
-    ↓
-query_workspace_presentation(export=result)
-    ↓
-WorkspaceExportRefreshResult
-    ├── verified WorkspaceExportResult
-    └── fresh WorkspacePresentation
++ optional current WorkspaceExportResult
++ optional pending ArchitecturePreview
 ```
 
-The preflight rejects stale live run evidence before export starts. The existing export/materialization boundaries continue to reject non-separate or already-existing destinations; the refresh operation introduces no overwrite or cleanup policy.
+Its methods delegate to the established application operations and advance retained state only after successful operation results.
 
-The exact current `BuildResult` is passed to `export_workspace()`. No compilation, canonical mutation, revision append, architecture preview recreation, or generated-source reinterpretation occurs. READY is established only from the returned verification evidence, never from destination existence.
+## First local Workspace UI
 
-`WorkspaceController.refresh_export()` retains the new `WorkspaceExportResult` only after the complete refresh operation returns successfully. A failed preflight, materialization, or verification attempt leaves the prior controller run/export/pending-preview state unchanged.
+Textual is an optional renderer dependency, not a compiler/runtime dependency. The live shell receives immutable presentation evidence plus the optional `WorkspaceController`; it receives no Workspace root or lower-level services.
 
-Milestone 10M adds no Textual export control or destination picker.
+The completed local lifecycle can:
 
-### First local Workspace UI
+- render canonical, RIR, compiler, runtime, revision, and optional READY evidence;
+- rerun the current materialized Workspace;
+- preview one controlled architectural change separately from current evidence;
+- require visible human rationale before Apply;
+- advance current evidence only after successful governed Apply;
+- retire pre-change READY after architecture changes; and
+- restore READY only through verified export refresh.
 
-Textual is the selected framework for the first local Workspace UI. It is introduced as an optional renderer dependency and remains strictly downstream of the application-owned presentation and operation boundaries.
+Renderer status/error messages are explicitly non-evidence.
 
-Milestone 10N establishes the completed first interactive shape:
+## Application-owned measurement
+
+Measurement was added only after the build/run and UI boundaries were stable. It observes the established `build_and_run_workspace()` path rather than duplicating it.
+
+The current measurement evidence pipeline is:
 
 ```text
-current evidence:
-WorkspacePresentation
-    +
-optional WorkspaceController
-    ↓
-WorkspaceShell (Textual)
-    ↓
-WorkspaceDetail
-
-runtime interaction:
-Input.Submitted
-    ↓
-WorkspaceController.rerun(text)
-    ↓
-fresh WorkspacePresentation
-    ↓
-WorkspaceDetail.replace_presentation()
-
-architecture preview interaction:
-Preview Button.Pressed
-    ↓
-WorkspaceController.preview_remove_normalize_text()
-    ↓
-retained ArchitecturePreview
-    +
-ArchitecturePreviewPresentation
-    ↓
-ArchitecturePreviewDetail
-    +
-mount rationale / Apply controls
-
-architecture apply interaction:
-Apply Button.Pressed
-    +
-visible rationale
-    +
-visible runtime text
-    ↓
-WorkspaceController.apply_pending_remove_normalize_text()
-    ↓
-fresh post-apply WorkspacePresentation
-    ↓
-WorkspaceDetail.replace_presentation()
-    +
-clear proposed surface
-    +
-remove rationale / Apply controls
-    +
-show export-refresh controls because READY is absent
-
-verified export interaction:
-explicit destination path
-    +
-visible runtime text
-    +
-Export/Verify Button.Pressed
-    ↓
-WorkspaceController.refresh_export(destination, text)
-    ↓
-fresh WorkspacePresentation with verified READY
-    ↓
-WorkspaceDetail.replace_presentation()
-    +
-remove export-refresh controls
+11A  measured build/run
+     exact build + runtime durations
+     exact compiler/materializer work evidence
+      ↓
+11B  pairwise descriptive comparison
+      ↓
+11C  Repository / Workspace / exact RIR subject identity
+      ↓
+11D  privacy-preserving runtime-input identity
+      ↓
+11E  coarse execution-environment identity
+      ↓
+11F  exact-condition repeated-measurement cohort
+      ↓
+11G  raw stage samples retaining exact work evidence
+      ↓
+11H  partition by exact BuildWorkEvidence equality
+      ↓
+11I  count / minimum / maximum envelope
+      ↓
+11J  median
+      ↓
+11K  arithmetic mean, independently recomputed from raw durations
+      ↓
+11L  population standard deviation using the complete group denominator
+      ↓
+11M  provenance-checked descriptive summary bundle
+      ↓
+11N  read-only measurement summary presentation
+      ↓
+11O  presentation-only Textual renderer
+      ↓
+11P  optional supplied snapshot in the normal Workspace shell
+      ↓
+11Q  Repository / Workspace / exact RIR co-display gate
+      ↓
+11R  live invalidation after successful RIR-changing Apply
+      ↓
+11S  transient non-evidence invalidation notice
+      ↓
+11T  caller-supplied current-RIR presentation may re-enter through the same gate
 ```
 
-`WorkspaceShell` accepts one optional `WorkspaceController` for all live interaction. A read-only shell may still be created with no controller. The renderer receives no Workspace root and no compiler/runtime/revision/export/persistence service.
+### Measurement invariants
 
-Milestone 10C proved the renderer boundary with a minimal summary shell. Milestone 10D extends the same shell with `WorkspaceDetail`, a vertically scrollable evidence surface that renders the complete current presentation contract:
+Measurement evidence remains descriptive and inspectable back to its source objects.
 
-- canonical Workspace ID, name, description, capabilities, and canonical SHA-256;
-- RIR schema version, Repository/Workspace IDs, entrypoint, capabilities, and RIR SHA-256;
-- every compiler artifact path, generation status, node SHA-256, and artifact SHA-256 where current evidence exists;
-- the complete immutable runtime result formatted as JSON for inspection;
-- every revision event with rationale, before/after canonical identity, parent relationship, completion state, and optional completion hashes; and
-- optional export READY evidence including export root, RIR/manifest/input hashes, and compiler-product count.
+- Work facts come from `BuildResult`; measurement does not rediscover them.
+- Cohorts require exact subject/RIR, workload, environment, and stage-contract equality.
+- Raw duration observations retain exact work context before summary.
+- Work-context groups are equality classes of `BuildWorkEvidence`, not inferred semantic states.
+- Count/min/max, median, mean, and population standard deviation remain separate immutable evidence layers with exact source provenance.
+- Mean is recomputed from raw observations; it is not derived from median.
+- Population standard deviation describes the complete recorded group and makes no inferential population claim beyond that group.
+- The summary bundle validates links and introduces no new value.
+- Presentation/rendering introduces no new statistic, score, label, acquisition, persistence, or causal interpretation.
 
-Optional evidence remains explicitly absent when it was not supplied. `No READY evidence` means exactly that; the renderer does not convert absence into an inferred `NOT READY` state. Likewise a `removed` compiler artifact remains visible as `removed` while its current node/artifact hashes remain absent.
+No current measurement layer calls a group warm, cached, cold, first-run, steady-state, normal, or outlier. Timing differences are not converted into efficiency, waste, performance quality, or causal claims.
 
-Milestone 10E proves the application-owned runtime rerun seam independently before a control is connected. Milestones 10F and 10K establish and then unify the runtime `Input` path through `WorkspaceController.rerun()`.
+## Live measurement provenance
 
-`WorkspaceDetail.replace_presentation()` is renderer-only. It updates existing `Static` widgets from a supplied immutable presentation and performs no evidence acquisition or domain work.
-
-Milestone 10G proves the architectural preview presentation/controller boundary independently before a visible architecture control is connected. Milestones 10H and 10K establish and then unify the visible Preview path through `WorkspaceController.preview_remove_normalize_text()`.
-
-Preview remains a separate proposed-state surface. It does not replace current Workspace presentation. Only after a successful Preview does Textual mount one rationale input and one Apply button.
-
-Milestone 10L wires that Apply button to the already-proven `WorkspaceController.apply_pending_remove_normalize_text()` method. Textual passes the rationale and the current visible runtime-input value explicitly; it does not derive runtime input from rendered runtime output or reconstruct the architecture proposal from preview text.
-
-Current and proposed evidence are not optimistically modified. If rationale validation or the governed application operation fails, the controller's live state and both evidence surfaces remain unchanged; Textual may show only a non-evidence failure status. On success, the returned fresh presentation becomes current, the proposed panel is cleared, the rationale/Apply controls are removed, the completed revision and `removed` compiler status become visible, and pre-change READY disappears because the returned presentation contains no current export evidence.
-
-Milestone 10N exposes verified export refresh only when current presentation has no READY evidence. One explicit destination-path input and one Export/Verify button call `WorkspaceController.refresh_export()` with the current visible runtime text. Textual does not inspect the destination, choose paths, infer readiness, overwrite existing output, or clean failed destinations.
-
-Export rendering is also non-optimistic. Failure leaves the current presentation and controller export state unchanged while a non-evidence status may explain the error. Success replaces `WorkspaceDetail` only from the fresh presentation returned by the verified export operation, then removes the export controls because current READY evidence now exists.
-
-This closes the first local Workspace UI lifecycle for Repository Zero: current evidence can be inspected, runtime can be rerun, a structural change can be previewed and rationalized before governed Apply, READY is retired by that architecture change, and a fresh verified export can restore READY without the renderer owning product logic.
-
-Textual belongs to the optional `ui` dependency group; the compiler/runtime core retains no required UI dependency. Headless Textual tests belong in the ordinary Repository Zero pytest suite so UI behavior remains subject to the same evidence discipline as other product boundaries.
-
-D084 selects Textual for the first local evidence UI only. D085 requires complete evidence visibility before mutation controls. D086 requires UI actions to cross named application-owned operation boundaries. D087 keeps transient run evidence in the application controller rather than the renderer. D088 keeps proposed architecture distinct from current Workspace/READY evidence until apply. D089 requires visible proposed architecture to remain visibly separate from current evidence. D090 requires apply to consume that retained preview and invalidates pre-change READY as current evidence. D091 requires combined interactive operations to share one live application state authority. D092 requires the combined Textual shell to route runtime and Preview through that authority. D093 requires visible Apply to advance current/proposed rendering only from successful controller evidence. D094 requires READY to re-enter live state only from a successful verified export refresh of the exact current build. D095 requires the visible export interaction to remain evidence-gated and non-optimistic. Future browser/research surfaces remain independent product decisions and must not bypass `WorkspacePresentation` or application operations merely because another rendering technology becomes appropriate.
-
-### Export
-
-Export is packaging, not compilation. It packages existing compiler products and verifies their identity and runtime behavior.
-
-Portable packaging keeps two forms deliberately distinct:
-
-- `generated/` remains the original compiler-product/evidence surface.
-- the conventional `src/` package layout is an exact-byte projection of those compiler products plus packaging-only support files.
-
-The Repository Zero portability chain is:
+A supplied measurement presentation can be co-displayed only when its subject matches the current Workspace presentation on:
 
 ```text
-exact compiler products
-      ↓
-verified portable source repository
-      ↓
-conventional src/ projection
-      ↓
-standalone package runtime without Pyxis
-      ↓
-standard wheel built with ordinary PEP 517 tooling
-      ↓
-wheel payload identity verification
-      ↓
-fresh network-disabled wheel installation
-      ↓
-installed console execution with matching behavior
+Repository ID
+Workspace ID
+exact RIR SHA-256
 ```
 
-The **portable deliverable** is the pair:
+The gate reads existing evidence only.
 
-```text
-conventional source repository + verified wheel
-```
+Runtime reruns, export refresh, preview, and failed operations that leave the exact RIR unchanged preserve a coherent supplied snapshot. After a successful RIR-changing Apply, the stale snapshot is removed only after Apply succeeds. A fixed notice may then explain that the prior snapshot described the previous RIR; that notice is UI status, carries no measurement object/statistics, adds no controls, and expires on the next user operation.
 
-The two forms serve different purposes. The source repository preserves inspectability, provenance, conventional Python structure, and the exact relationship back to compiler products. The verified wheel is the offline-installable execution artifact whose payload identity and behavior have already been proven.
-
-The permanent portability guarantee is therefore:
-
-- the conventional source repository can build a standard wheel when its declared PEP 517 build dependencies are obtainable;
-- the included verified wheel preserves compiler-product identity;
-- that verified wheel can be installed and executed in a fresh environment with network access blocked, no external build dependencies, and no Pyxis participation; and
-- installed behavior matches the already-verified Workspace behavior.
-
-Offline source-to-wheel construction is **not** a Repository Zero requirement. Milestone 9M deliberately characterized that stronger condition and reproduced its failure: with network/index access blocked and normal PEP 517 build isolation preserved, the isolated environment cannot resolve `setuptools>=77.0.3`, so no wheel is produced.
-
-That observation remains useful evidence about the source form, but D081 accepts it as a conventional build-time dependency boundary rather than introducing bespoke packaging machinery. A future requirement may reopen that decision only if an actual product need demands raw-source offline rebuilding.
-
-### Milestone 9 closure
-
-Repository Zero considers export/portability proven when the exact compiler products can be exported with provenance, verified for identity and runtime behavior, projected into a conventional Python source repository, built into an identity-verified wheel, and that verified wheel can be installed and executed offline with matching behavior.
-
-Milestone 9 does not require a second build backend or self-contained offline reconstruction of the wheel from raw source.
+Milestone 11T adds one narrow re-entry seam: while no measurement snapshot is mounted, a caller may supply an already-produced `BuildAndRunMeasurementSummaryPresentation`. The shell applies the same Repository/Workspace/RIR gate before UI mutation, mounts the exact object on success, and clears the old invalidation notice only after successful mount. Mismatch fails without changing shell evidence. Re-entry is not replacement, refresh, acquisition, re-projection, or recomputation.
 
 ## Minimum permanent demonstrator
 
-`examples/text_lab/` should remain the executable architectural specification for the first vertical slice.
+`examples/text_lab/` remains the executable architectural specification. `inspect_text` and `normalize_text` are controlled test weights, not the long-term product domain.
 
-Its two initial capabilities are deliberately simple:
-
-- `inspect_text`
-- `normalize_text`
-
-They exist to prove the compiler and revision model, not because text utilities are the long-term product domain.
+The first architecture operation remains demonstrator-specific. Do not generalize it merely for aesthetic symmetry; a second genuine architecture edit should supply the evidence for a more general operation model.
 
 ## Deferred concerns
 
-The following remain important but should not expand Repository Zero until the vertical slice is stable:
+Repository Zero should not expand merely because a possible feature exists. Deferred concerns include broader capability catalogs, browser/research integration, generalized permission/security models, full Execution Ledger persistence or generalized waste interpretation, broader operation timing, deployment integrations, and additional measurement statistics absent a concrete product need.
 
-- browser integration
-- broader capability catalog
-- provider-neutral AI services
-- full Execution Ledger persistence and generalized waste interpretation
-- security permission models
-- educational overlays beyond compiler inspection
-- deployment integrations
+## Historical detail
+
+For the exact detailed architecture before this consolidation, read the version of this file at commit `675f2b5e37b5edb32d17e9e480a4d16246826486`. For later measurement evolution, read `MILESTONE_11K_CONTINUITY.md` and `MILESTONE_11L.md` through `MILESTONE_11T.md`. Those milestone records remain the narrow proof trail; this document is the current architectural map.
