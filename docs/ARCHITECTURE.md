@@ -332,6 +332,25 @@ The partition does not infer operational states from work evidence. A group is n
 
 11H adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
 
+Milestone 11I adds the first intentionally weak numeric compression over that exact-work partition:
+
+```text
+BuildAndRunMeasurementWorkPartitionEvidence
+    ↓
+create_build_and_run_measurement_duration_envelope()
+    ↓
+BuildAndRunMeasurementDurationEnvelopeEvidence
+    ├── exact source partition
+    ├── build group envelopes
+    └── runtime group envelopes
+```
+
+Each `StageWorkContextDurationEnvelopeEvidence` retains the exact source `StageWorkContextGroupEvidence` object and records only `sample_count`, `minimum_seconds`, and `maximum_seconds` from that group's raw durations. Singleton groups are valid, so their observed minimum and maximum are equal.
+
+`BuildAndRunMeasurementDurationEnvelopeEvidence` retains the exact 11H partition and requires stage order, group count, group order, and source-group object identity to remain aligned with that partition. Direct group-envelope construction revalidates count/minimum/maximum against the retained raw observations. The summary therefore stays inspectable back to the evidence it compresses rather than becoming a detached numeric vector.
+
+11I does not combine work contexts, assign semantic work-state labels, or infer why one group differs from another. It adds no mean, median, variance, standard deviation, confidence interval, quantile, percentile, trend, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
