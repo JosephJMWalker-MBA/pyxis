@@ -301,6 +301,17 @@ Environment equality or mismatch must not be converted into a performance explan
 
 Milestone 11E adds no host-specific identity, system-load telemetry, repeated sampling, statistics, persistence, UI, full Execution Ledger, causal interpretation, scoring, or Preview/Apply/Export measurement.
 
+## D101 — Repeated-measurement cohorts require one exact measurement condition
+A repeated-measurement cohort makes a stronger claim than pairwise comparison. Pairwise comparison may intentionally expose RIR, workload, or environment mismatches; a cohort exists only when every retained observation was produced under one explicit repeated condition.
+
+Milestone 11F adds immutable `MeasurementCohortConditionEvidence` containing the exact validated measurement subject, runtime-input evidence, execution-environment evidence, and ordered `build → runtime` stage contract. `BuildAndRunMeasurementCohortEvidence` retains at least two exact `MeasuredBuildAndRunResult` objects in caller-supplied order.
+
+Cohort construction revalidates each observation's subject against its own `BuildResult` and requires exact equality of logical Repository/Workspace identity, RIR SHA-256, runtime-input evidence, execution-environment evidence, and stage contract. Mixed conditions fail before a cohort exists, and direct dataclass construction enforces the same invariant.
+
+Stage durations and compiler/materializer work evidence are deliberately not membership criteria. Repeated observations may therefore contain different timings or `new`/`reused` work facts without those observations being discarded or interpreted. The cohort boundary establishes comparability only; it computes no aggregate or performance conclusion.
+
+Milestone 11F adds no mean, median, min/max, variance, standard deviation, confidence interval, outlier/warmup label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
