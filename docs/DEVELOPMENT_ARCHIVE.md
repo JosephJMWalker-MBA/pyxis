@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11E on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11F on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -235,6 +235,12 @@ A deterministic digest plus size evidence is enough to state whether the exact o
 Two observations can share Workspace, RIR, and runtime workload identity while being produced by different Python/platform environments. Measurement should expose that execution-context difference without collecting host identity or dynamic machine telemetry.
 
 The environment record should be coarse, immutable, and acquired outside the stages being timed. A mismatch remains a descriptive confound rather than a comparison rejection or causal explanation, and a match does not prove that unrecorded dynamic conditions were controlled.
+
+### 2.31 Cohort membership is stricter than pairwise comparability
+
+Pairwise comparison and repeated sampling answer different questions. Two coherent Workspace observations may be compared even when architecture, workload, or environment differs, because the mismatch itself is useful evidence. A repeated-measurement cohort instead claims that multiple observations belong to one exact measurement condition.
+
+Before any future aggregation, cohort membership must therefore require the same logical Workspace, exact RIR identity, runtime-input evidence, execution-environment evidence, and ordered stage contract. Timing and build-work differences remain observations inside that condition rather than being used to decide membership.
 
 ---
 
@@ -590,6 +596,14 @@ Milestone 11E adds execution context without contaminating the durations it is s
 
 The retained `ExecutionEnvironmentEvidence` is deliberately coarse: Python implementation/version and platform system/machine only. Comparison carries exact before/after environment objects and a literal `matches` flag; mismatch remains descriptively comparable, while neither match nor mismatch is treated as a cause of duration change.
 
+### 4.31 Repeated observations need a condition boundary before they need statistics
+
+Milestone 11F introduces `create_build_and_run_measurement_cohort()` rather than jumping directly from pairwise comparison to averages.
+
+The cohort validates each retained observation's subject against its own `BuildResult`, then requires exact equality of logical Workspace identity, RIR SHA-256, runtime-input evidence, execution-environment evidence, and the ordered `build → runtime` stage contract. The exact `MeasuredBuildAndRunResult` objects are retained in caller order.
+
+The acceptance path deliberately includes a first `new` build followed by `reused` builds. Those work differences do not invalidate the cohort because they are observed consequences, not condition identity. This leaves the next summary layer with the responsibility to preserve work context instead of silently averaging different work states together.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -733,6 +747,9 @@ Repository Zero adds immutable runtime-input evidence containing SHA-256 over ex
 
 ### D100 — Execution Environment Identity Exposes Context Comparability Without Host-Specific Telemetry
 Repository Zero adds immutable execution-environment evidence containing Python implementation/version and platform system/machine. Acquisition is injectable and occurs once before timed stages begin. Comparison retains exact before/after environment evidence and reports whether it matches while still allowing descriptive comparison of different environments. Environment mismatch is a confound to expose, not a rejection rule or causal explanation.
+
+### D101 — Repeated-Measurement Cohorts Require One Exact Measurement Condition
+Repository Zero adds a pure immutable cohort boundary over two or more already-measured cycles. Cohort membership requires exact validated Repository/Workspace/RIR identity, runtime-input evidence, execution-environment evidence, and ordered stage contract. The exact observations remain ordered and untouched; timing/work differences remain observations rather than membership criteria or aggregate conclusions.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -1042,6 +1059,16 @@ Environment acquisition occurs once before any stage clock read. `compare_build_
 
 The 11E acceptance fixture proves the injected environment object is retained by identity, acquisition precedes all four clock reads, the dataclass contains only the four approved fields, and environment mismatch remains descriptively comparable while runtime input remains identical.
 
+### 7.30 Repeated-measurement cohort coherence
+
+`src/pyxis/app/measurement_cohort.py` owns the first repeated-observation boundary.
+
+`create_build_and_run_measurement_cohort()` consumes an ordered iterable of at least two existing `MeasuredBuildAndRunResult` values and performs no execution or aggregation. It derives `MeasurementCohortConditionEvidence` from the first observation, reusing that observation's validated subject, exact runtime-input evidence, exact execution-environment evidence, and ordered `build → runtime` stage names.
+
+Every retained observation is then revalidated against its own `BuildResult` and required to match that condition exactly, including the exact RIR SHA-256. The returned `BuildAndRunMeasurementCohortEvidence` preserves the exact measured objects in caller order. Its direct dataclass constructor enforces the same invariant, so callers cannot bypass cohort coherence by manually constructing the object.
+
+The 11F acceptance fixture proves a first `new` build and later `reused` builds remain valid members of the same condition, while changed workload, changed environment, changed RIR, unrelated Workspace, reversed stage order, and fewer than two observations are rejected before a cohort exists. The cohort shape contains no aggregate fields.
+
 ---
 
 ## 8. Proof status
@@ -1088,11 +1115,13 @@ Milestone 11D measures Unicode runtime input without retaining its raw text, pro
 
 Milestone 11E injects exact execution-environment evidence and proves it is acquired once before any stage clock read. Identical environment facts report `matches=True`; changed Python/platform facts report `matches=False` while the same Workspace and workload still produce complete descriptive comparison evidence. No host-specific identity or dynamic telemetry is collected.
 
+Milestone 11F forms a real three-observation cohort containing one fresh `new` build followed by two `reused` builds under the same exact Workspace/RIR/workload/environment/stage condition. The cohort retains those exact objects in order and exposes no aggregate fields. Separate rejection cases prove workload, environment, RIR, logical Workspace, stage contract, minimum-observation count, and direct-construction coherence are enforced before a cohort exists.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims. D098 applies it to measurement coherence: subject identity comes from owned build/RIR evidence, architectural state stays explicit, and unrelated subjects fail before comparison. D099 applies it to workload comparability: input identity is privacy-preserving evidence, mismatches remain visible and non-blocking, and neither match nor mismatch is itself a causal performance claim. D100 applies the same discipline to execution context: environment identity is coarse non-identifying evidence acquired outside timed stages, mismatches remain visible and non-blocking, and neither match nor mismatch explains duration.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims. D098 applies it to measurement coherence: subject identity comes from owned build/RIR evidence, architectural state stays explicit, and unrelated subjects fail before comparison. D099 applies it to workload comparability: input identity is privacy-preserving evidence, mismatches remain visible and non-blocking, and neither match nor mismatch is itself a causal performance claim. D100 applies the same discipline to execution context: environment identity is coarse non-identifying evidence acquired outside timed stages, mismatches remain visible and non-blocking, and neither match nor mismatch explains duration. D101 applies it to repeated sampling: a cohort exists only for one exact recorded condition, while timing/work variation remains unaggregated observation evidence.
 
 ---
 
@@ -1158,6 +1187,7 @@ The original milestone order proved useful:
 - Milestone 11C — measurement subject identity and comparison coherence: complete.
 - Milestone 11D — privacy-preserving runtime-input identity and workload-match evidence: complete.
 - Milestone 11E — non-identifying execution-environment identity and context-match evidence: complete.
+- Milestone 11F — exact repeated-measurement cohort coherence before aggregation: complete.
 
 ### Milestone 10 — First local Workspace UI
 
@@ -1169,19 +1199,17 @@ This closes the minimum local Workspace lifecycle without adding generalized arc
 
 ### Milestone 11 — Measurement
 
-Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves. Milestone 11C makes the logical Workspace and exact RIR state of each observation explicit and enforces subject coherence before comparison. Milestone 11D makes runtime workload identity explicit without retaining raw input and preserves descriptive comparison when workloads differ. Milestone 11E adds coarse non-identifying execution-environment identity outside the timed stages and preserves descriptive comparison when environments differ.
+Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves. Milestone 11C makes the logical Workspace and exact RIR state of each observation explicit and enforces subject coherence before comparison. Milestone 11D makes runtime workload identity explicit without retaining raw input and preserves descriptive comparison when workloads differ. Milestone 11E adds coarse non-identifying execution-environment identity outside the timed stages and preserves descriptive comparison when environments differ. Milestone 11F establishes a strict repeated-observation cohort boundary before any aggregation exists.
 
 The Execution Ledger should continue to evolve from these proven observations rather than imagined fields.
 
-### Next narrow step — Milestone 11F
+### Next narrow step — Milestone 11G
 
-Add one pure immutable **repeated-measurement cohort boundary** before computing any sampling statistics.
+Add one pure immutable **stage-sample projection** over an existing coherent `BuildAndRunMeasurementCohortEvidence` before introducing any aggregate statistic.
 
-A cohort intended to represent repeated observations of one measurement condition should require exact agreement on logical Repository/Workspace identity, exact RIR SHA-256, runtime-input evidence, execution-environment evidence, and ordered stage contract. It should retain the exact `MeasuredBuildAndRunResult` objects in observation order and reject a mixed condition before any aggregation is possible.
+For each ordered stage, retain the raw duration from every cohort observation in observation order and retain the exact per-observation `BuildWorkEvidence` beside that duration. The purpose is to make the sample set explicit while preserving the fact that a first `new` build and later `reused` builds may belong to the same measurement condition but represent different observed work.
 
-This stricter cohort rule does not replace pairwise comparison: pairwise comparison should continue to describe architectural, workload, or environment mismatches explicitly. The cohort exists only to establish which repeated observations are coherent enough to be summarized later.
-
-Do not compute mean/median/min/max, variance, standard deviation, confidence intervals, outlier labels, warmup classifications, performance scores, causal interpretations, persistence, UI, or a full Execution Ledger in 11F.
+The projection should perform no execution and should not mutate or filter the cohort. It should not compute mean, median, min/max, variance, standard deviation, confidence intervals, quantiles, outlier/warmup labels, cache-effect labels, performance scores, or causal interpretation. Do not persist or render the samples yet. First prove that later summary code will receive raw durations with their work context intact rather than a context-free numeric vector.
 
 ### Milestone 12 — Browser/research capabilities
 
@@ -1319,6 +1347,14 @@ Matching `ExecutionEnvironmentEvidence` means only that the recorded Python/plat
 
 Do not add hostnames, usernames, absolute paths, process IDs, machine IDs, network addresses, or other identifying details merely to make environment identity more specific. Broader telemetry requires its own demonstrated measurement need and privacy analysis.
 
+### Aggregating mixed measurement conditions
+
+Do not compute repeated-sample summaries from observations that merely share a logical Workspace. A cohort intended for aggregation must already prove exact RIR, workload, environment, and stage-contract agreement. Use pairwise comparison when the mismatch itself is the subject of analysis.
+
+### Treating cohort coherence as complete experimental control
+
+A coherent cohort means only that the recorded condition axes match. It does not prove equal unrecorded scheduler/load/thermal state, and it does not erase observed build-work differences such as `new` versus `reused`. Preserve those facts into any future summary layer.
+
 ### Shadow implementations
 
 Preview, export, CLI, UI, education, presentation, query, operations, controllers, packaging, and measurement layers must not quietly reimplement capability logic.
@@ -1394,6 +1430,7 @@ Before adding something, ask:
 31. If runtime durations are compared, does the evidence say whether the runtime inputs were actually the same without retaining raw payload unnecessarily?
 32. If workload identity matches or differs, is that fact being treated as a comparability condition rather than a causal explanation?
 33. If execution environments are compared, does the evidence expose only coarse non-identifying context, acquire it outside timed stages, and treat match/mismatch as comparability evidence rather than causal explanation?
+34. If repeated observations are grouped, does the cohort prove one exact recorded condition before aggregation, while preserving timing and build-work variation as observations rather than silently normalizing them away?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -1423,12 +1460,12 @@ For packaging, Milestone 9 is closed. The portable contract is conventional sour
 
 For UI work, Milestones 10A through 10N are complete and Milestone 10 is closed for Repository Zero. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply/export-refresh behavior and one unified `WorkspaceController`; and Textual performs runtime, Preview, rationale-bearing Apply, and evidence-gated verified export through that one authority. The real headless lifecycle proves READY → Preview/Apply → no READY → verified export → READY, including non-optimistic failure behavior.
 
-For measurement, Milestones 11A through 11E are complete. `measure_build_and_run_workspace()` observes the permanent build/run operation once, records exact stage timing, carries compiler/materializer work facts directly, attaches coherent Repository/Workspace/RIR subject identity, records privacy-preserving runtime-input identity/size evidence, and acquires coarse non-identifying Python/platform environment evidence once before timed stages. `compare_build_and_run_measurements()` revalidates Workspace subject coherence, preserves exact workload/environment evidence, exposes whether each matches, and remains pure and non-causal when either differs.
+For measurement, Milestones 11A through 11F are complete. `measure_build_and_run_workspace()` observes the permanent build/run operation once, records exact stage timing, carries compiler/materializer work facts directly, attaches coherent Repository/Workspace/RIR subject identity, records privacy-preserving runtime-input identity/size evidence, and acquires coarse non-identifying Python/platform environment evidence once before timed stages. `compare_build_and_run_measurements()` remains the pure descriptive boundary for differing observations. `create_build_and_run_measurement_cohort()` is the stricter repeated-condition boundary: at least two observations, exact RIR/workload/environment/stage agreement, exact objects retained in order, and no aggregation.
 
-The next pressure is repeated-observation coherence rather than statistics. Milestone 11F should establish one immutable in-memory cohort of exact repeated measurement conditions—same logical subject, same RIR, same runtime-input evidence, same execution-environment evidence, same stage contract—while retaining the exact observations in order. Do not compute sampling statistics, persist the cohort, add UI, or interpret performance in the same step.
+The next pressure is preserving raw sample context before statistics. Milestone 11G should project a coherent cohort into ordered per-stage sample evidence where every raw duration remains paired with that observation's exact `BuildWorkEvidence`. Do not summarize, filter, label warmups/outliers, persist, or render those samples in the same step.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 11E closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement/comparison with explicit subject, workload, and execution-environment context. Measurement records exact ordered build/runtime durations, carries compiler/materializer work evidence directly from `BuildResult`, identifies the logical Repository/Workspace plus exact RIR state, records SHA-256 plus character/UTF-8 byte counts for runtime input without retaining raw text, and records coarse Python/platform environment identity before stage timing begins. Comparison revalidates subject coherence, reports literal timing/work deltas, preserves before/after workload and environment evidence, and exposes match/mismatch without rejecting different contexts or claiming causation. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A–11E are complete; the next narrow step is 11F: an exact repeated-measurement cohort boundary before statistics, persistence, UI, causal interpretation, or a full Execution Ledger.
+At the 2026-08-12 Milestone 11F closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement/comparison with explicit subject, workload, and execution-environment context plus an exact repeated-measurement cohort boundary. Measurement records exact ordered build/runtime durations, carries compiler/materializer work evidence directly from `BuildResult`, identifies the logical Repository/Workspace plus exact RIR state, records SHA-256 plus character/UTF-8 byte counts for runtime input without retaining raw text, and records coarse Python/platform environment identity before stage timing begins. Pairwise comparison remains descriptive across mismatches; cohort construction instead requires one exact recorded condition and retains at least two exact measured observations in order while allowing timing/work variation such as `new` followed by `reused`. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A–11F are complete; the next narrow step is 11G: raw per-stage sample projection with exact build-work context before statistics, persistence, UI, causal interpretation, or a full Execution Ledger.
