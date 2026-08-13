@@ -42,6 +42,11 @@ from .measurement import (
     compare_build_and_run_measurements,
     measure_build_and_run_workspace,
 )
+from .measurement_cohort import (
+    BuildAndRunMeasurementCohortEvidence,
+    MeasurementCohortConditionEvidence,
+    create_build_and_run_measurement_cohort,
+)
 from .operations import WorkspaceRerunResult, rerun_workspace
 from .presentation import (
     CanonicalPresentation,
@@ -71,6 +76,7 @@ __all__ = [
     "ArchitecturePreview",
     "ArchitecturePreviewPresentation",
     "ArtifactGenerationStatusComparisonEvidence",
+    "BuildAndRunMeasurementCohortEvidence",
     "BuildAndRunMeasurementComparisonEvidence",
     "BuildAndRunMeasurementEvidence",
     "BuildAndRunResult",
@@ -84,6 +90,7 @@ __all__ = [
     "ExecutionEnvironmentEvidence",
     "ExportPresentation",
     "MeasuredBuildAndRunResult",
+    "MeasurementCohortConditionEvidence",
     "MeasurementSubjectComparisonEvidence",
     "MeasurementSubjectEvidence",
     "RIRPresentation",
@@ -108,6 +115,7 @@ __all__ = [
     "build_workspace",
     "compare_build_and_run_measurements",
     "create_architecture_preview_presentation",
+    "create_build_and_run_measurement_cohort",
     "create_workspace_presentation",
     "export_workspace",
     "measure_build_and_run_workspace",
