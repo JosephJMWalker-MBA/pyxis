@@ -6,6 +6,8 @@ from .measurement_summary_textual import (
 from .textual_shell import (
     ArchitecturePreviewDetail,
     WorkspaceDetail,
+)
+from .workspace_shell import (
     WorkspaceShell,
     create_workspace_shell,
 )
