@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import hashlib
 from pathlib import Path
+import platform
 import time
 from typing import Literal
 
@@ -33,6 +34,29 @@ class MeasurementSubjectEvidence:
             raise ValueError("Measurement subject workspace_id is required.")
         if not self.rir_sha256:
             raise ValueError("Measurement subject rir_sha256 is required.")
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionEnvironmentEvidence:
+    """Stable non-identifying execution-environment identity for one measured cycle."""
+
+    python_implementation: str
+    python_version: str
+    platform_system: str
+    platform_machine: str
+
+    def __post_init__(self) -> None:
+        if not self.python_implementation:
+            raise ValueError("Execution environment python_implementation is required.")
+        if not self.python_version:
+            raise ValueError("Execution environment python_version is required.")
+        if not self.platform_system:
+            raise ValueError("Execution environment platform_system is required.")
+        if not self.platform_machine:
+            raise ValueError("Execution environment platform_machine is required.")
+
+
+ExecutionEnvironmentProvider = Callable[[], ExecutionEnvironmentEvidence]
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +105,7 @@ class BuildAndRunMeasurementEvidence:
     """Immutable measurement evidence for one build-and-run cycle."""
 
     subject: MeasurementSubjectEvidence
+    environment: ExecutionEnvironmentEvidence
     runtime_input: RuntimeInputEvidence
     stages: tuple[StageDurationEvidence, ...]
     build_work: BuildWorkEvidence
@@ -100,6 +125,21 @@ class MeasurementSubjectComparisonEvidence:
 
     before: MeasurementSubjectEvidence
     after: MeasurementSubjectEvidence
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionEnvironmentComparisonEvidence:
+    """Before/after environment identity for descriptively comparable cycles."""
+
+    before: ExecutionEnvironmentEvidence
+    after: ExecutionEnvironmentEvidence
+    matches: bool
+
+    def __post_init__(self) -> None:
+        if self.matches != (self.before == self.after):
+            raise ValueError(
+                "Execution environment matches must reflect exact environment evidence equality."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,6 +194,7 @@ class BuildAndRunMeasurementComparisonEvidence:
     """Pure factual comparison of two already-measured build-and-run cycles."""
 
     subject: MeasurementSubjectComparisonEvidence
+    environment: ExecutionEnvironmentComparisonEvidence
     runtime_input: RuntimeInputComparisonEvidence
     stages: tuple[StageDurationComparisonEvidence, ...]
     build_work: BuildWorkComparisonEvidence
@@ -172,6 +213,15 @@ def _measurement_subject_from_build(build: BuildResult) -> MeasurementSubjectEvi
         repository_id=repository.repository_id,
         workspace_id=repository.workspace.workspace_id,
         rir_sha256=rir_sha256,
+    )
+
+
+def _current_execution_environment() -> ExecutionEnvironmentEvidence:
+    return ExecutionEnvironmentEvidence(
+        python_implementation=platform.python_implementation(),
+        python_version=platform.python_version(),
+        platform_system=platform.system() or "unknown",
+        platform_machine=platform.machine() or "unknown",
     )
 
 
@@ -202,17 +252,25 @@ def measure_build_and_run_workspace(
     text: str,
     *,
     clock: MeasurementClock = time.monotonic,
+    environment_provider: ExecutionEnvironmentProvider = _current_execution_environment,
 ) -> MeasuredBuildAndRunResult:
     """Measure the existing build-and-run operation without replacing it.
 
     Timing observes only the established build and runtime boundaries exposed by
     ``build_and_run_workspace``. Subject identity comes from the returned
-    RepositoryIR plus generation manifest. Runtime input evidence records only a
-    deterministic SHA-256 and size facts; raw text is not retained by measurement.
-    Compiler/materialization work evidence is copied directly from the returned
-    ``BuildResult``; this layer performs no filesystem discovery and makes no
-    independent work or waste classification.
+    RepositoryIR plus generation manifest. Stable, non-identifying execution
+    environment evidence is acquired once before timed stages begin. Runtime input
+    evidence records only a deterministic SHA-256 and size facts; raw text is not
+    retained by measurement. Compiler/materialization work evidence is copied
+    directly from the returned ``BuildResult``; this layer performs no filesystem
+    discovery and makes no independent work or waste classification.
     """
+
+    environment = environment_provider()
+    if not isinstance(environment, ExecutionEnvironmentEvidence):
+        raise TypeError(
+            "Execution environment provider must return ExecutionEnvironmentEvidence."
+        )
 
     started_at: dict[MeasurementStage, float] = {}
     stages: list[StageDurationEvidence] = []
@@ -249,6 +307,7 @@ def measure_build_and_run_workspace(
     build = result.build
     measurement = BuildAndRunMeasurementEvidence(
         subject=_measurement_subject_from_build(build),
+        environment=environment,
         runtime_input=_runtime_input_evidence(text),
         stages=tuple(stages),
         build_work=BuildWorkEvidence(
@@ -275,9 +334,9 @@ def compare_build_and_run_measurements(
     comparison is constructed. RIR identity may differ, making architectural-state
     changes explicit while still permitting comparison within one Workspace.
 
-    Runtime input evidence is retained exactly for both observations and states
-    whether the privacy-preserving workload identities match. Different inputs do
-    not invalidate descriptive comparison; they remain an explicit confound for
+    Execution environment and runtime input evidence are retained exactly for both
+    observations and report whether their respective identities match. Mismatches
+    do not invalidate descriptive comparison; they remain explicit confounds for
     any later interpretation.
 
     This function performs no execution, filesystem access, reclassification, or
@@ -297,6 +356,11 @@ def compare_build_and_run_measurements(
     subject = MeasurementSubjectComparisonEvidence(
         before=before_subject,
         after=after_subject,
+    )
+    environment = ExecutionEnvironmentComparisonEvidence(
+        before=before.measurement.environment,
+        after=after.measurement.environment,
+        matches=before.measurement.environment == after.measurement.environment,
     )
     runtime_input = RuntimeInputComparisonEvidence(
         before=before.measurement.runtime_input,
@@ -344,6 +408,7 @@ def compare_build_and_run_measurements(
 
     return BuildAndRunMeasurementComparisonEvidence(
         subject=subject,
+        environment=environment,
         runtime_input=runtime_input,
         stages=stages,
         build_work=BuildWorkComparisonEvidence(
