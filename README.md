@@ -36,6 +36,8 @@ Verified wheel
 Fresh offline installation + execution
 ```
 
+The first local Textual Workspace UI now consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T.
+
 The first demonstrator remains intentionally small so the entire transformation can be inspected end to end.
 
 ## Core principles
@@ -47,6 +49,8 @@ The first demonstrator remains intentionally small so the entire transformation 
 - Incremental generation is based on compiler evidence, not filesystem inference.
 - Export packages existing compiler output rather than regenerating it.
 - READY is derived from verification evidence.
+- Presentation and UI render application-owned evidence rather than rediscovering product state.
+- Measurement observes established operations and remains descriptive rather than causal.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
 - Pyxis should leave users better Python programmers by making the transformation from architecture to code inspectable.
@@ -84,14 +88,18 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-The repository keeps three complementary records so future development does not depend on chat history:
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 11T / D115.
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — current architectural boundaries
-- [`docs/DECISIONS.md`](docs/DECISIONS.md) — compact normative decision record
+The repository also keeps three complementary detailed records so future development does not depend on chat history:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and detailed evolution
+- [`docs/DECISIONS.md`](docs/DECISIONS.md) — normative implementation decisions
 - [`docs/DEVELOPMENT_ARCHIVE.md`](docs/DEVELOPMENT_ARCHIVE.md) — development history, learned logic, prototype lessons, current gaps, and foreseeable implementation path
+
+Later milestone documents remain the narrow proof trail for changes not safely foldable into the large central files through the current GitHub connector.
 
 ## Status
 
-Repository Zero Milestone 9 is complete: the permanent `WorkspaceSpec → RIR → compiler → materializer → runtime` path now extends through append-only revision provenance, evidence-backed incremental generation, exact-byte verified export, conventional package projection, standard wheel construction, and fresh offline installation/execution of the verified wheel.
+Repository Zero is proven through Milestone 11T: the compiler/runtime/revision/export lifecycle, first interactive evidence UI, descriptive measurement pipeline, and live measurement provenance/invalidation/re-entry path all remain inside the permanent vertical slice.
 
-The next product milestone is the first local Workspace UI, which should consume the existing application boundaries rather than recreate them.
+The next implementation milestone should answer a concrete Pyxis product question. Do not add another statistic or generalized abstraction merely because the current architecture makes one possible.
