@@ -96,6 +96,30 @@ class WorkspaceShell(_WorkspaceShell):
         if self.measurement_presentation is not None:
             yield MeasurementSummaryDetail(self.measurement_presentation)
 
+    async def supply_measurement_presentation(
+        self,
+        measurement_presentation: BuildAndRunMeasurementSummaryPresentation,
+    ) -> None:
+        """Mount one already-produced coherent measurement snapshot.
+
+        The caller remains responsible for producing the measurement presentation.
+        This boundary only checks provenance against current Workspace evidence and
+        mounts the supplied read-only presentation when no snapshot is currently
+        present. It performs no measurement acquisition, re-projection, or refresh.
+        """
+
+        _require_measurement_provenance_coherence(
+            self.presentation,
+            measurement_presentation,
+        )
+        if self.measurement_presentation is not None:
+            raise ValueError("A measurement presentation is already mounted.")
+
+        detail = MeasurementSummaryDetail(measurement_presentation)
+        await self.mount(detail)
+        self.measurement_presentation = measurement_presentation
+        await self._clear_measurement_notice()
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Expire the transient removal notice on the next runtime operation."""
 
