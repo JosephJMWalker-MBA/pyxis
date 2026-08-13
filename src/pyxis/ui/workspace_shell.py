@@ -12,6 +12,30 @@ from .measurement_summary_textual import MeasurementSummaryDetail, MeasurementSu
 from .textual_shell import WorkspaceShell as _WorkspaceShell
 
 
+def _require_measurement_provenance_coherence(
+    presentation: WorkspacePresentation,
+    measurement_presentation: BuildAndRunMeasurementSummaryPresentation | None,
+) -> None:
+    if measurement_presentation is None:
+        return
+
+    subject = measurement_presentation.source.envelope.partition.condition.subject
+    rir = presentation.rir
+
+    if subject.repository_id != rir.repository_id:
+        raise ValueError(
+            "Measurement presentation Repository ID does not match the Workspace presentation."
+        )
+    if subject.workspace_id != rir.workspace_id:
+        raise ValueError(
+            "Measurement presentation Workspace ID does not match the Workspace presentation."
+        )
+    if subject.rir_sha256 != rir.rir_sha256:
+        raise ValueError(
+            "Measurement presentation RIR SHA-256 does not match the Workspace presentation."
+        )
+
+
 class WorkspaceShell(_WorkspaceShell):
     """Normal Workspace shell with one optional supplied measurement snapshot."""
 
@@ -24,6 +48,10 @@ class WorkspaceShell(_WorkspaceShell):
         controller: WorkspaceController | None = None,
         measurement_presentation: BuildAndRunMeasurementSummaryPresentation | None = None,
     ) -> None:
+        _require_measurement_provenance_coherence(
+            presentation,
+            measurement_presentation,
+        )
         super().__init__(presentation, controller=controller)
         self.measurement_presentation = measurement_presentation
 
@@ -39,7 +67,7 @@ def create_workspace_shell(
     controller: WorkspaceController | None = None,
     measurement_presentation: BuildAndRunMeasurementSummaryPresentation | None = None,
 ) -> WorkspaceShell:
-    """Create the normal shell and optionally mount existing measurement evidence."""
+    """Create the normal shell and optionally mount coherent measurement evidence."""
 
     return WorkspaceShell(
         presentation,
