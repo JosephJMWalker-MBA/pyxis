@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11I on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11J on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -259,6 +259,12 @@ A group created from equal evidence is not automatically a warm, cold, cached, f
 The first summary of repeated durations should be intentionally weak and should retain the exact evidence object it compresses.
 
 Count, observed minimum, and observed maximum can describe one exact work-context group without claiming a distribution, central tendency, steady state, outlier rule, or cause. A compressed value should never become detached from the raw group that justifies it.
+
+### 2.35 Central tendency should extend evidence, not replace it
+
+Adding a median should not mutate the meaning or shape of the descriptive envelope that preceded it.
+
+A central-tendency value should live in a new immutable layer that retains the exact prior envelope and remains reproducible from the raw observations reachable through that evidence chain. The statistic describes one exact recorded work context; it does not become a claim about typical system performance, steady state, or cause.
 
 ---
 
@@ -646,6 +652,14 @@ The result keeps the exact 11H partition, and each group summary keeps the exact
 
 The lesson is that summary evidence can become smaller without becoming less inspectable. Compression becomes dangerous when the source group disappears, when unequal work contexts are recombined, or when descriptive bounds are turned into claims about typical performance, steady state, outliers, or cause.
 
+### 4.35 Median is a source-linked descriptor, not a claim of typical system behavior
+
+Milestone 11J introduces `create_build_and_run_measurement_median()` without changing the 11I envelope contract.
+
+The top-level median evidence retains the exact 11I envelope, and every work-context median retains the exact corresponding envelope-group object. The acceptance fixture uses five real measurements so the repeated-work groups contain four samples: singleton groups retain their observed values while even-sized groups demonstrate the conventional two-middle midpoint calculation.
+
+The lesson is that a valid statistic can still become misleading if its scope is forgotten. Here the median describes only the recorded durations in one exact work-evidence group under one coherent cohort condition. It does not establish steady state, normal performance, an outlier policy, efficiency, or cause.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -801,6 +815,9 @@ Repository Zero adds a pure work-context partition over raw stage samples. Sampl
 
 ### D104 — First Duration Compression Is an Exact-Work Descriptive Envelope
 Repository Zero adds the first numeric compression of repeated timing evidence: count, observed minimum, and observed maximum computed independently inside each exact 11H work-context group. Every envelope retains the exact source group and the top-level result retains the exact source partition, keeping compressed values inspectable back to raw observations without central tendency, dispersion, labels, scores, or causal interpretation.
+
+### D105 — Median Remains Attached to the Exact Descriptive Envelope
+Repository Zero adds median as a separate immutable layer over the exact 11I duration envelope. Each median retains the exact source envelope-group object and is revalidated against its raw observations; the top-level result retains the exact 11I envelope. Median remains a descriptive central-tendency fact for one exact work context, not a performance, steady-state, outlier, efficiency, or causal claim.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -1152,6 +1169,16 @@ For each source `StageWorkContextGroupEvidence`, `StageWorkContextDurationEnvelo
 
 The 11I acceptance fixture uses the four-observation 11H shape. The first build group is a singleton and therefore reports `(1, 4.0, 4.0)`; the three reused-build samples report `(3, 0.75, 1.5)`. The first runtime group reports `(1, 2.0, 2.0)` and the three reused-runtime samples report `(3, 0.5, 1.0)`. No mean, median, dispersion, quantile, semantic label, or score exists in the evidence shape.
 
+### 7.34 Exact-work median central tendency
+
+`src/pyxis/app/measurement_median.py` owns the first central-tendency layer without modifying the 11I evidence contract.
+
+`create_build_and_run_measurement_median()` consumes one `BuildAndRunMeasurementDurationEnvelopeEvidence`, retains that exact top-level envelope, preserves its stage/work-context order, and performs no execution or filesystem access.
+
+Each `StageWorkContextMedianEvidence` retains the exact `StageWorkContextDurationEnvelopeEvidence` object and derives `median_seconds` from the raw durations reachable through that source envelope. Direct construction recomputes the median and the top-level object requires source-envelope identity for every group, rejecting detached but numerically equal replacements.
+
+The 11J acceptance fixture uses five real measurements. The first-work build/runtime groups are singletons with medians `4.0` and `2.0`. The four-sample reused groups have build durations `1.5, 1.0, 0.75, 0.5` and runtime durations `1.0, 0.75, 0.5, 0.25`, producing conventional medians `0.875` and `0.625`. No mean, dispersion, additional quantile, semantic label, or score exists in the new evidence shape.
+
 ---
 
 ## 8. Proof status
@@ -1206,11 +1233,13 @@ Milestone 11H partitions a real four-observation sample projection by exact `Bui
 
 Milestone 11I compresses each of those exact groups only to count and observed bounds. The exact source partition and group objects remain attached by identity. Singleton groups retain equal min/max instead of being omitted, repeated groups preserve only their literal observed envelope, and direct-construction tests reject incorrect counts/bounds or detached equal-but-not-identical source groups. No central tendency, dispersion, semantic label, score, persistence, UI, or causal claim is introduced.
 
+Milestone 11J adds median only as a separate immutable layer over 11I. Five real measurements prove singleton and even-sample behavior, exact source-envelope identity is retained through every stage/group, incorrect medians are rejected, and a numerically equal but detached envelope group cannot be substituted. No mean, dispersion, additional quantile, semantic label, score, persistence, UI, or causal claim is introduced.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims. D098 applies it to measurement coherence: subject identity comes from owned build/RIR evidence, architectural state stays explicit, and unrelated subjects fail before comparison. D099 applies it to workload comparability: input identity is privacy-preserving evidence, mismatches remain visible and non-blocking, and neither match nor mismatch is itself a causal performance claim. D100 applies the same discipline to execution context: environment identity is coarse non-identifying evidence acquired outside timed stages, mismatches remain visible and non-blocking, and neither match nor mismatch explains duration. D101 applies it to repeated sampling: a cohort exists only for one exact recorded condition, while timing/work variation remains unaggregated observation evidence. D102 applies it to stage samples: raw duration evidence keeps exact per-cycle work context before any summary can compress it. D103 applies it to work-context grouping: equal compiler/materializer evidence may define a partition, but the partition itself carries no inferred operational or causal label. D104 applies it to the first numeric compression: count and observed bounds remain attached to the exact group and partition that justify them, without implying typical performance or distribution shape.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims. D098 applies it to measurement coherence: subject identity comes from owned build/RIR evidence, architectural state stays explicit, and unrelated subjects fail before comparison. D099 applies it to workload comparability: input identity is privacy-preserving evidence, mismatches remain visible and non-blocking, and neither match nor mismatch is itself a causal performance claim. D100 applies the same discipline to execution context: environment identity is coarse non-identifying evidence acquired outside timed stages, mismatches remain visible and non-blocking, and neither match nor mismatch explains duration. D101 applies it to repeated sampling: a cohort exists only for one exact recorded condition, while timing/work variation remains unaggregated observation evidence. D102 applies it to stage samples: raw duration evidence keeps exact per-cycle work context before any summary can compress it. D103 applies it to work-context grouping: equal compiler/materializer evidence may define a partition, but the partition itself carries no inferred operational or causal label. D104 applies it to the first numeric compression: count and observed bounds remain attached to the exact group and partition that justify them, without implying typical performance or distribution shape. D105 applies it to central tendency: median extends the evidence chain without replacing the descriptive envelope and remains scoped to one exact work context rather than becoming a system-wide performance claim.
 
 ---
 
@@ -1280,6 +1309,7 @@ The original milestone order proved useful:
 - Milestone 11G — raw per-stage samples with exact build-work context: complete.
 - Milestone 11H — exact work-context partition without semantic labels: complete.
 - Milestone 11I — exact-work count/minimum/maximum duration envelopes: complete.
+- Milestone 11J — exact-work median central tendency over retained envelopes: complete.
 
 ### Milestone 10 — First local Workspace UI
 
@@ -1291,17 +1321,17 @@ This closes the minimum local Workspace lifecycle without adding generalized arc
 
 ### Milestone 11 — Measurement
 
-Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves. Milestone 11C makes the logical Workspace and exact RIR state of each observation explicit and enforces subject coherence before comparison. Milestone 11D makes runtime workload identity explicit without retaining raw input and preserves descriptive comparison when workloads differ. Milestone 11E adds coarse non-identifying execution-environment identity outside the timed stages and preserves descriptive comparison when environments differ. Milestone 11F establishes a strict repeated-observation cohort boundary before any aggregation exists. Milestone 11G exposes raw stage-oriented samples while preserving exact per-cycle build-work context. Milestone 11H partitions those samples by exact work-evidence equality without adding semantic work-state labels. Milestone 11I adds the first deliberately weak numeric compression—count plus observed bounds—while retaining exact source groups and partition identity.
+Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves. Milestone 11C makes the logical Workspace and exact RIR state of each observation explicit and enforces subject coherence before comparison. Milestone 11D makes runtime workload identity explicit without retaining raw input and preserves descriptive comparison when workloads differ. Milestone 11E adds coarse non-identifying execution-environment identity outside the timed stages and preserves descriptive comparison when environments differ. Milestone 11F establishes a strict repeated-observation cohort boundary before any aggregation exists. Milestone 11G exposes raw stage-oriented samples while preserving exact per-cycle build-work context. Milestone 11H partitions those samples by exact work-evidence equality without adding semantic work-state labels. Milestone 11I adds the first deliberately weak numeric compression—count plus observed bounds—while retaining exact source groups and partition identity. Milestone 11J adds median as a separate source-linked central-tendency layer without changing the 11I contract or introducing broader statistical interpretation.
 
 The Execution Ledger should continue to evolve from these proven observations rather than imagined fields.
 
-### Next narrow step — Milestone 11J
+### Next narrow step — Milestone 11K
 
-Add one pure immutable **median duration** value to each exact work-context envelope, while retaining the exact 11I `StageWorkContextDurationEnvelopeEvidence` as the source of that central-tendency evidence.
+Add **arithmetic mean only** for each exact work-context group, as another immutable statistic that remains auditable through the existing 11J/11I evidence chain.
 
-Compute the conventional median only from the raw durations in the retained source group. Singleton groups are valid. For an even number of samples, use the arithmetic midpoint of the two central ordered values. Preserve stage and work-context group order from 11I, and require direct construction to revalidate the median against the exact source envelope/group.
+Retain the exact `StageWorkContextMedianEvidence` (and therefore its exact 11I envelope) as the source context, but compute `mean_seconds` directly from the raw durations reachable through that retained envelope rather than deriving it from the median. Preserve stage and work-context group order and revalidate direct construction against the exact source observations.
 
-Median is the only new statistic in 11J. Do not add arithmetic mean, variance, standard deviation, confidence intervals, quantiles beyond the median, percentiles, trend, outlier/warmup labels, performance scores, semantic work-state labels, persistence, UI, or causal interpretation. Do not combine different work-context groups.
+Mean is the only new statistic in 11K. Do not add variance, standard deviation, confidence intervals, additional quantiles or percentiles, trend, outlier/warmup labels, performance scores, semantic work-state labels, persistence, UI, causal interpretation, or cross-work-context aggregation.
 
 ### Milestone 12 — Browser/research capabilities
 
@@ -1467,9 +1497,13 @@ A statistic should not become a free-floating number. The summary boundary shoul
 
 Count, observed minimum, and observed maximum do not establish typical performance, steady state, a distribution, or an outlier policy. Do not reinterpret 11I bounds as those stronger claims merely because they are numerical.
 
-### Central tendency ahead of source identity
+### Median becoming a performance model
 
-Any later central-tendency statistic must remain attached to the exact 11I envelope/source group and must be reproducible from its retained raw observations. Do not create a detached stage-wide median or mean that recombines unequal work contexts.
+The median of one exact work-context group describes only the center of those recorded observations. Do not present it as steady-state, expected, normal, guaranteed, or system-wide performance merely because it is a central-tendency statistic.
+
+### Central tendency detached from source identity
+
+Median and any later mean must remain attached to the exact preceding evidence chain and reproducible from retained raw observations. Do not create detached stage-wide central-tendency values that recombine unequal work contexts.
 
 ### Shadow implementations
 
@@ -1579,12 +1613,12 @@ For packaging, Milestone 9 is closed. The portable contract is conventional sour
 
 For UI work, Milestones 10A through 10N are complete and Milestone 10 is closed for Repository Zero. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply/export-refresh behavior and one unified `WorkspaceController`; and Textual performs runtime, Preview, rationale-bearing Apply, and evidence-gated verified export through that one authority. The real headless lifecycle proves READY → Preview/Apply → no READY → verified export → READY, including non-optimistic failure behavior.
 
-For measurement, Milestones 11A through 11I are complete. `measure_build_and_run_workspace()` observes the permanent build/run operation once, records exact stage timing, carries compiler/materializer work facts directly, attaches coherent Repository/Workspace/RIR subject identity, records privacy-preserving runtime-input identity/size evidence, and acquires coarse non-identifying Python/platform environment evidence once before timed stages. `compare_build_and_run_measurements()` remains the pure descriptive boundary for differing observations. `create_build_and_run_measurement_cohort()` is the stricter repeated-condition boundary. `project_build_and_run_measurement_stage_samples()` exposes ordered raw `build`/`runtime` samples with exact per-cycle work evidence. `partition_build_and_run_measurement_stage_samples()` separates exact work-evidence equality classes without semantic labels while retaining original samples. `create_build_and_run_measurement_duration_envelope()` is the first numeric compression and keeps the exact partition/group identity while recording only count and observed bounds.
+For measurement, Milestones 11A through 11J are complete. `measure_build_and_run_workspace()` observes the permanent build/run operation once, records exact stage timing, carries compiler/materializer work facts directly, attaches coherent Repository/Workspace/RIR subject identity, records privacy-preserving runtime-input identity/size evidence, and acquires coarse non-identifying Python/platform environment evidence once before timed stages. `compare_build_and_run_measurements()` remains the pure descriptive boundary for differing observations. `create_build_and_run_measurement_cohort()` is the stricter repeated-condition boundary. `project_build_and_run_measurement_stage_samples()` exposes ordered raw `build`/`runtime` samples with exact per-cycle work evidence. `partition_build_and_run_measurement_stage_samples()` separates exact work-evidence equality classes without semantic labels while retaining original samples. `create_build_and_run_measurement_duration_envelope()` keeps exact partition/group identity while recording only count and observed bounds. `create_build_and_run_measurement_median()` adds median as a separate layer that retains the exact 11I envelope and recomputes its value from the raw source observations.
 
-The next pressure is a first central-tendency value without expanding the statistical claim. Milestone 11J should add median only, independently inside each exact work-context group, retaining the exact 11I envelope as source evidence. Do not add mean, dispersion, quantiles beyond median, scores, persistence, UI, labels, or causal interpretation in the same step.
+The next pressure is to add arithmetic mean without bundling in dispersion or interpretation. Milestone 11K should add mean only, independently inside each exact work-context group and auditable through the retained 11J/11I evidence chain. Do not add variance, standard deviation, confidence intervals, extra quantiles, scores, persistence, UI, labels, or causal interpretation in the same step.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 11I closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement/comparison with explicit subject, workload, and execution-environment context plus exact repeated-measurement cohorts, raw per-stage samples, evidence-defined work-context partitions, and exact-work descriptive duration envelopes. Measurement records exact ordered build/runtime durations and compiler/materializer work evidence; pairwise comparison remains descriptive across mismatches; cohort construction requires one exact recorded condition; stage projection preserves every raw duration beside its exact per-cycle `BuildWorkEvidence`; work partitioning groups only exact equal work evidence; and the first numeric compression retains exact source partition/group identity while adding only sample count plus observed minimum/maximum. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A–11I are complete; the next narrow step is 11J: median-only central tendency per exact work-context envelope before mean, dispersion, persistence, UI, causal interpretation, or a full Execution Ledger.
+At the 2026-08-12 Milestone 11J closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement/comparison with explicit subject, workload, and execution-environment context plus exact repeated-measurement cohorts, raw per-stage samples, evidence-defined work-context partitions, exact-work descriptive duration envelopes, and source-linked per-group medians. Measurement records exact ordered build/runtime durations and compiler/materializer work evidence; pairwise comparison remains descriptive across mismatches; cohort construction requires one exact recorded condition; stage projection preserves every raw duration beside its exact per-cycle `BuildWorkEvidence`; work partitioning groups only exact equal work evidence; count/min/max remain attached to exact source groups; and median extends that same evidence chain without becoming a system-wide performance claim. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A–11J are complete; the next narrow step is 11K: arithmetic mean only per exact work-context evidence chain before dispersion, persistence, UI, causal interpretation, or a full Execution Ledger.
