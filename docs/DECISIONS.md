@@ -55,7 +55,7 @@ D081 defines the permanent Repository Zero interpretation of this requirement: t
 ## D079 — Separate source-build and wheel-install portability proofs
 Repository Zero must treat source-to-wheel construction and wheel installation as separate evidence boundaries.
 
-The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 build isolation when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
+The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
 
 Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
@@ -333,6 +333,17 @@ Group order follows the first occurrence of each work-evidence value in the stag
 The partition states only that grouped samples carried equal recorded compiler/materializer work evidence. It does not call a group cold, warm, cached, first-run, steady-state, normal, outlier, or any other semantic or causal category.
 
 Milestone 11H adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
+
+## D104 — First duration compression is an exact-work descriptive envelope
+The first numeric compression of repeated timing evidence must stay inside one exact 11H work-context group and remain auditable back to the raw samples it summarizes.
+
+Milestone 11I adds immutable `StageWorkContextDurationEnvelopeEvidence`, `MeasurementStageDurationEnvelopeEvidence`, and `BuildAndRunMeasurementDurationEnvelopeEvidence`. `create_build_and_run_measurement_duration_envelope()` consumes an existing `BuildAndRunMeasurementWorkPartitionEvidence` and preserves its stage/group ordering.
+
+Each group envelope retains the exact source `StageWorkContextGroupEvidence` object and computes only three literal facts from its raw durations: `sample_count`, `minimum_seconds`, and `maximum_seconds`. Singleton groups are valid and therefore report equal minimum and maximum. Direct construction revalidates all three values against the source group and the top-level envelope rejects summaries detached from the exact partition group objects.
+
+The envelope does not combine different work contexts and does not infer what any work context means. Count/min/max describe only the observations present in that exact evidence group; they are not a performance score, steady-state claim, outlier rule, or causal explanation.
+
+Milestone 11I adds no mean, median, variance, standard deviation, confidence interval, quantile, percentile, trend, semantic work-state label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
 
 ## Repository Zero rule
 
