@@ -53,6 +53,12 @@ from .measurement_envelope import (
     StageWorkContextDurationEnvelopeEvidence,
     create_build_and_run_measurement_duration_envelope,
 )
+from .measurement_mean import (
+    BuildAndRunMeasurementMeanEvidence,
+    MeasurementStageMeanEvidence,
+    StageWorkContextMeanEvidence,
+    create_build_and_run_measurement_mean,
+)
 from .measurement_median import (
     BuildAndRunMeasurementMedianEvidence,
     MeasurementStageMedianEvidence,
@@ -104,6 +110,7 @@ __all__ = [
     "BuildAndRunMeasurementComparisonEvidence",
     "BuildAndRunMeasurementDurationEnvelopeEvidence",
     "BuildAndRunMeasurementEvidence",
+    "BuildAndRunMeasurementMeanEvidence",
     "BuildAndRunMeasurementMedianEvidence",
     "BuildAndRunMeasurementStageSamplesEvidence",
     "BuildAndRunMeasurementWorkPartitionEvidence",
@@ -120,6 +127,7 @@ __all__ = [
     "MeasuredBuildAndRunResult",
     "MeasurementCohortConditionEvidence",
     "MeasurementStageDurationEnvelopeEvidence",
+    "MeasurementStageMeanEvidence",
     "MeasurementStageMedianEvidence",
     "MeasurementStageSamplesEvidence",
     "MeasurementStageWorkPartitionEvidence",
@@ -134,6 +142,7 @@ __all__ = [
     "StageSampleObservationEvidence",
     "StageWorkContextDurationEnvelopeEvidence",
     "StageWorkContextGroupEvidence",
+    "StageWorkContextMeanEvidence",
     "StageWorkContextMedianEvidence",
     "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
@@ -153,6 +162,7 @@ __all__ = [
     "create_architecture_preview_presentation",
     "create_build_and_run_measurement_cohort",
     "create_build_and_run_measurement_duration_envelope",
+    "create_build_and_run_measurement_mean",
     "create_build_and_run_measurement_median",
     "create_workspace_presentation",
     "export_workspace",
