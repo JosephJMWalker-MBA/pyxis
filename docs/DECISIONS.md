@@ -55,9 +55,9 @@ D081 defines the permanent Repository Zero interpretation of this requirement: t
 ## D079 — Separate source-build and wheel-install portability proofs
 Repository Zero must treat source-to-wheel construction and wheel installation as separate evidence boundaries.
 
-The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
+The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 build isolation when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
 
-Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
+Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
 The successful offline wheel-install proof therefore remains distinct from the reproduced offline source-build failure.
 
@@ -344,6 +344,17 @@ Each group envelope retains the exact source `StageWorkContextGroupEvidence` obj
 The envelope does not combine different work contexts and does not infer what any work context means. Count/min/max describe only the observations present in that exact evidence group; they are not a performance score, steady-state claim, outlier rule, or causal explanation.
 
 Milestone 11I adds no mean, median, variance, standard deviation, confidence interval, quantile, percentile, trend, semantic work-state label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
+
+## D105 — Median remains attached to the exact descriptive envelope
+The first central-tendency statistic may be added only as a new immutable layer over the already-proven 11I envelope; the earlier count/min/max evidence is not retroactively widened or replaced.
+
+Milestone 11J adds immutable `StageWorkContextMedianEvidence`, `MeasurementStageMedianEvidence`, and `BuildAndRunMeasurementMedianEvidence`. `create_build_and_run_measurement_median()` consumes an existing `BuildAndRunMeasurementDurationEnvelopeEvidence`, preserves stage/group order, retains that exact top-level envelope, and requires every median evidence object to retain the exact source `StageWorkContextDurationEnvelopeEvidence` object.
+
+`median_seconds` is derived only from the raw durations reachable through that exact source envelope. Singleton groups therefore return the observed duration, odd-sized groups return their central ordered observation, and even-sized groups use the arithmetic midpoint of their two central ordered observations. Direct construction revalidates the median and rejects numerically equivalent but detached envelope-group objects.
+
+Median is a descriptive central-tendency fact for one exact recorded work context. It is not a mean, performance score, steady-state estimate, outlier rule, efficiency claim, or causal explanation.
+
+Milestone 11J adds no mean, variance, standard deviation, confidence interval, additional quantile/percentile, trend, semantic work-state label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
 
 ## Repository Zero rule
 
