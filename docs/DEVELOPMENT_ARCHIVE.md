@@ -1,6 +1,6 @@
 # Pyxis Development Archive
 
-**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11C on 2026-08-12**
+**Continuity snapshot — 2026-08-11; Repository Zero status updated through Milestone 11D on 2026-08-12**
 
 This document preserves the reasoning that produced Pyxis, not just the current code. It exists so a future development session can continue from the accumulated lessons instead of rediscovering them or flattening the project into a generic code generator.
 
@@ -223,6 +223,12 @@ A duration delta is only `after - before`. A path status transition such as `new
 A measurement should carry the logical Workspace it belongs to and the exact architectural state that produced it rather than relying on caller memory.
 
 Repository/Workspace identity and RIR identity already exist in `BuildResult` evidence. Measurement should reuse and cross-check those facts. Comparisons may span architectural revisions of one logical Workspace, but unrelated Workspace subjects must be rejected before timing or work deltas are constructed.
+
+### 2.29 Runtime workload identity is separate from Workspace identity
+
+Two observations can belong to the same logical Workspace and RIR while exercising different runtime inputs. Measurement should make that workload difference explicit without retaining raw user text unnecessarily.
+
+A deterministic digest plus size evidence is enough to state whether the exact observed inputs match. Input mismatch should remain a descriptive confound rather than becoming either a comparison rejection or a performance explanation.
 
 ---
 
@@ -562,6 +568,14 @@ Milestone 11C exposes a distinction the pairwise comparison previously relied on
 
 The resulting rule is narrow but important: same Repository/Workspace identity permits comparison across different RIR hashes; different logical subjects fail before comparison evidence is constructed; and replacing subject metadata cannot override the build evidence beneath it.
 
+### 4.29 Runtime input identity reveals a comparability confound without storing payload
+
+Milestone 11D makes the explicit runtime text measurable without turning measurement into payload storage.
+
+`RuntimeInputEvidence` records SHA-256 over the exact UTF-8 bytes plus Unicode character count and UTF-8 byte count. The raw text still reaches the established runtime operation, but no raw-input field is retained in measurement evidence. A Unicode acceptance fixture proves character count and encoded byte count remain distinct facts.
+
+Comparison carries the exact before/after input evidence and a literal `matches` flag. Matching input evidence does not prove timing comparability by itself; differing input evidence does not invalidate the comparison. It exposes that workload identity changed so later analysis cannot quietly treat the runtime conditions as controlled.
+
 ---
 
 ## 5. Prototype and Repository Zero decision sequence
@@ -699,6 +713,9 @@ Repository Zero adds a pure comparison over two existing measured cycles. Ordere
 
 ### D098 — Measurement Subject Identity Separates Logical Workspace From Architectural State
 Repository Zero adds immutable subject evidence to every measured cycle using Repository ID, Workspace ID, and generation-manifest RIR identity already owned by the build. Comparison revalidates that evidence before constructing deltas, permits different RIR states within one logical Workspace, and rejects unrelated or forged subjects before comparison evidence is produced.
+
+### D099 — Runtime Input Identity Exposes Workload Comparability Without Retaining Raw Text
+Repository Zero adds immutable runtime-input evidence containing SHA-256 over exact UTF-8 bytes, Unicode character count, and UTF-8 byte count. Comparison retains exact before/after workload evidence and reports whether it matches while still allowing descriptive comparison of different workloads. Input mismatch is a confound to expose, not a rejection rule or causal explanation.
 
 `DECISIONS.md` remains the compact normative record; this archive records why those decisions emerged.
 
@@ -988,6 +1005,16 @@ The subject contains `repository_id`, `workspace_id`, and `rir_sha256`. Measurem
 
 Before `compare_build_and_run_measurements()` constructs stage or work deltas, it revalidates each stored subject against its own `BuildResult`. Matching Repository/Workspace identity is required; matching RIR identity is not. This permits one logical Workspace to be compared across architectural revisions while preserving both exact RIR states. Unrelated Workspace subjects and tampered subject evidence fail before comparison evidence is produced.
 
+### 7.28 Privacy-preserving runtime input identity
+
+`BuildAndRunMeasurementEvidence` now also includes immutable `RuntimeInputEvidence` derived from the exact runtime text supplied to the permanent build/run operation.
+
+Measurement UTF-8 encodes the text for evidence, records its deterministic SHA-256, Unicode character count, and UTF-8 byte count, and retains none of the raw text in the measurement object. The runtime still receives the original text through the established operation unchanged.
+
+`compare_build_and_run_measurements()` carries the exact before/after `RuntimeInputEvidence` objects into `RuntimeInputComparisonEvidence` and sets `matches` only from exact evidence equality. A different input does not abort comparison: stage and work deltas are still returned, while `matches=False` makes the workload mismatch explicit for later interpretation.
+
+The 11D acceptance fixture proves raw text is absent from the evidence shape/repr, Unicode character and byte counts differ as expected, same inputs report `matches=True`, different inputs report `matches=False`, and different workloads remain descriptively comparable.
+
 ---
 
 ## 8. Proof status
@@ -1030,11 +1057,13 @@ Milestone 11B executes a real first build followed by an identical rebuild and c
 
 Milestone 11C measures one Workspace across two architectural states and proves the logical Repository/Workspace subject remains stable while the RIR SHA-256 changes. Comparison retains the exact stored subject evidence for each cycle, rejects unrelated Workspaces before any timing-delta object can be constructed, and rejects subject metadata that disagrees with its underlying `BuildResult`.
 
+Milestone 11D measures Unicode runtime input without retaining its raw text, proves SHA-256 plus character/UTF-8 byte counts are immutable workload evidence, and compares repeated cycles with both identical and different inputs. Different input remains comparable with full stage/work evidence while `matches=False` explicitly prevents later analysis from assuming identical runtime workload conditions.
+
 The permanent rule remains:
 
 > Never broaden a claim beyond the exact condition that was executed and verified.
 
-D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims. D098 applies it to measurement coherence: subject identity comes from owned build/RIR evidence, architectural state stays explicit, and unrelated subjects fail before comparison.
+D081 applies that rule to portability. D082 applies it to presentation. D083 applies it to reopening Workspaces. D084 applies it to framework scope. D085 applies it to UI sequencing. D086 applies it to action ownership. D087 applies it to transient UI-operation state ownership. D088 applies it to the distinction between proposed architecture and current Workspace evidence. D089 applies it to visible preview semantics: proposed display is still not apply. D090 applies it to mutation: Apply consumes the retained proposal and resets transient evidence that no longer belongs to the new architecture. D091 applies it to combined interaction state: one live application authority owns the transient evidence shared across operations. D092 applies that same authority at the Textual boundary. D093 applies it to visible mutation: Textual advances evidence only after the application controller returns success. D094 applies it to READY recovery: verified export evidence, not filesystem presence, is what re-establishes current readiness. D095 applies the same discipline to the visible export action: controls are evidence-gated and rendering advances only after verified application success. D096 applies it to measurement: observe the existing operation and carry owned work facts before adding interpretation. D097 applies it to comparison: report observed deltas and status transitions without converting association into causal or waste claims. D098 applies it to measurement coherence: subject identity comes from owned build/RIR evidence, architectural state stays explicit, and unrelated subjects fail before comparison. D099 applies it to workload comparability: input identity is privacy-preserving evidence, mismatches remain visible and non-blocking, and neither match nor mismatch is itself a causal performance claim.
 
 ---
 
@@ -1098,6 +1127,7 @@ The original milestone order proved useful:
 - Milestone 11A — first application-owned build/run measurement evidence boundary: complete.
 - Milestone 11B — pure descriptive comparison of two measured build/run cycles: complete.
 - Milestone 11C — measurement subject identity and comparison coherence: complete.
+- Milestone 11D — privacy-preserving runtime-input identity and workload-match evidence: complete.
 
 ### Milestone 10 — First local Workspace UI
 
@@ -1109,17 +1139,17 @@ This closes the minimum local Workspace lifecycle without adding generalized arc
 
 ### Milestone 11 — Measurement
 
-Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves. Milestone 11C makes the logical Workspace and exact RIR state of each observation explicit and enforces subject coherence before comparison.
+Milestone 11A establishes one stable observation primitive around the permanent build/run operation. Milestone 11B establishes a pure comparison primitive that can state exact timing and work differences between two such observations without pretending those differences explain themselves. Milestone 11C makes the logical Workspace and exact RIR state of each observation explicit and enforces subject coherence before comparison. Milestone 11D makes runtime workload identity explicit without retaining raw input and preserves descriptive comparison when workloads differ.
 
 The Execution Ledger should continue to evolve from these proven observations rather than imagined fields.
 
-### Next narrow step — Milestone 11D
+### Next narrow step — Milestone 11E
 
-Add immutable **runtime-input identity evidence** to the existing measured build/run cycle before comparison is asked to support stronger performance interpretation.
+Add immutable **execution-environment identity evidence** to each measured build/run cycle before repeated sampling or broader performance interpretation is introduced.
 
-The runtime stage currently receives explicit text, but the measurement record does not say whether two compared runtime observations used the same workload. Record a privacy-preserving identity of that input—preferably deterministic SHA-256 plus simple size evidence such as UTF-8 byte length and/or character count—without storing the raw text in measurement evidence.
+Use stable, non-identifying facts already available from the running Python process—for example Python implementation/version and platform system/machine identity—and make acquisition injectable so tests remain exact. Avoid hostnames, usernames, absolute paths, process IDs, or other machine-specific/private identifiers.
 
-Comparison should expose before/after runtime-input identity and whether the identities match as a literal fact. Different inputs should remain comparable descriptively rather than being rejected, because the purpose is to expose the confound rather than hide it. Do not infer that equal hashes make timings causally comparable, do not add payload persistence, UI, a full Execution Ledger, scoring, or Preview/Apply/Export measurement in 11D.
+Comparison should expose before/after environment identity and whether it matches as a literal fact. Different environments should remain descriptively comparable, just as different runtime inputs do, while the mismatch prevents later analysis from silently treating execution conditions as controlled. Do not add system-load telemetry, sampling statistics, persistence, UI, a full Execution Ledger, scoring, or causal interpretation in 11E.
 
 ### Milestone 12 — Browser/research capabilities
 
@@ -1243,7 +1273,11 @@ Do not regress to caller-memory or filesystem assumptions about whether two obse
 
 ### Comparing runtime timing without workload identity
 
-Two measurements may belong to the same Workspace and RIR yet have received different runtime inputs. Do not treat their runtime-duration delta as if workload identity were known until the measurement record explicitly carries a privacy-preserving input identity.
+Two measurements may belong to the same Workspace and RIR yet have received different runtime inputs. Do not treat their runtime-duration delta as if workload conditions were controlled merely because subject identity matches. Use `RuntimeInputEvidence`/`matches` to expose that confound without retaining raw text or rejecting the observations.
+
+### Treating input identity as causal explanation
+
+Matching runtime-input evidence means only that the recorded input bytes and size facts match; mismatching evidence means they do not. Neither condition proves why a runtime duration changed.
 
 ### Shadow implementations
 
@@ -1318,6 +1352,7 @@ Before adding something, ask:
 29. If measurements are compared, are duration/work deltas kept descriptive until there is evidence for any causal or waste interpretation?
 30. Do compared measurements identify their Workspace/architectural subject from owned evidence rather than caller assumptions or filesystem shape?
 31. If runtime durations are compared, does the evidence say whether the runtime inputs were actually the same without retaining raw payload unnecessarily?
+32. If workload identity matches or differs, is that fact being treated as a comparability condition rather than a causal explanation?
 
 If those answers are unclear, the feature is probably ahead of the architecture.
 
@@ -1347,12 +1382,12 @@ For packaging, Milestone 9 is closed. The portable contract is conventional sour
 
 For UI work, Milestones 10A through 10N are complete and Milestone 10 is closed for Repository Zero. `WorkspacePresentation` remains the immutable current-evidence renderer contract; `query_workspace_presentation()` is the existing-Workspace assembly path; the application layer owns runtime/preview/apply/export-refresh behavior and one unified `WorkspaceController`; and Textual performs runtime, Preview, rationale-bearing Apply, and evidence-gated verified export through that one authority. The real headless lifecycle proves READY → Preview/Apply → no READY → verified export → READY, including non-optimistic failure behavior.
 
-For measurement, Milestones 11A through 11C are complete. `measure_build_and_run_workspace()` observes the permanent build/run operation once, records exact stage timing, carries compiler/materializer work facts directly, and now attaches coherent Repository/Workspace/RIR subject identity. `compare_build_and_run_measurements()` revalidates that identity before pairing observations and remains pure and non-causal.
+For measurement, Milestones 11A through 11D are complete. `measure_build_and_run_workspace()` observes the permanent build/run operation once, records exact stage timing, carries compiler/materializer work facts directly, attaches coherent Repository/Workspace/RIR subject identity, and records only privacy-preserving runtime-input identity/size evidence rather than raw text. `compare_build_and_run_measurements()` revalidates Workspace subject coherence, preserves exact input evidence, reports whether workloads match, and remains pure and non-causal even when workloads differ.
 
-The next pressure is workload identity rather than subject identity. Milestone 11D should record a privacy-preserving deterministic identity for the explicit runtime text and expose whether compared runtime inputs match. Keep different inputs descriptively comparable; the goal is to reveal the confound, not discard the evidence. Do not persist raw runtime text, add UI, a ledger, or performance interpretation in the same step.
+The next pressure is stable execution-environment identity. Before repeated samples or broader performance interpretation, Milestone 11E should record non-identifying Python/platform facts with injectable acquisition and expose whether compared environments match. Do not add host identifiers, system-load telemetry, persistence, UI, statistics, or causal interpretation in the same step.
 
 ---
 
 ## 15. Current continuity sentence
 
-At the 2026-08-12 Milestone 11C closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement/comparison with explicit subject coherence. Measurement records exact ordered build/runtime durations, carries compiler/materializer work evidence directly from `BuildResult`, and identifies the logical Repository/Workspace plus exact RIR state; comparison revalidates that subject before reporting literal timing/work deltas and permits architectural-state changes only within the same logical Workspace. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A–11C are complete; the next narrow step is 11D: privacy-preserving runtime-input identity so workload sameness/difference is explicit before any persistence, UI, causal interpretation, or full Execution Ledger.
+At the 2026-08-12 Milestone 11D closure, Pyxis has a permanent evidence-bearing path from canonical Workspace intent through RIR, deterministic/incremental compiler products, read-only runtime, append-only revisions, exact-byte verified export, conventional package projection, independent package execution, standard wheel construction, fresh network-disabled installation/execution of the verified wheel, immutable current and proposed presentation contracts, an existing-Workspace evidence query, governed runtime/preview/apply/export-refresh application operations, one unified `WorkspaceController`, a complete first local Textual lifecycle, and application-owned measurement/comparison with explicit subject and workload identity. Measurement records exact ordered build/runtime durations, carries compiler/materializer work evidence directly from `BuildResult`, identifies the logical Repository/Workspace plus exact RIR state, and records SHA-256 plus character/UTF-8 byte counts for the explicit runtime input without retaining raw text. Comparison revalidates subject coherence, reports literal timing/work deltas, preserves before/after workload evidence, and exposes workload match/mismatch without rejecting different inputs or claiming causation. Milestone 9 is closed. Milestone 10 is closed with 10A–10N complete. Milestones 11A–11D are complete; the next narrow step is 11E: non-identifying execution-environment identity before sampling, persistence, UI, causal interpretation, or a full Execution Ledger.
