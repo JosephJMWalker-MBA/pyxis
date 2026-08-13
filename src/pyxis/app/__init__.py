@@ -47,6 +47,12 @@ from .measurement_cohort import (
     MeasurementCohortConditionEvidence,
     create_build_and_run_measurement_cohort,
 )
+from .measurement_partition import (
+    BuildAndRunMeasurementWorkPartitionEvidence,
+    MeasurementStageWorkPartitionEvidence,
+    StageWorkContextGroupEvidence,
+    partition_build_and_run_measurement_stage_samples,
+)
 from .measurement_samples import (
     BuildAndRunMeasurementStageSamplesEvidence,
     MeasurementStageSamplesEvidence,
@@ -86,6 +92,7 @@ __all__ = [
     "BuildAndRunMeasurementComparisonEvidence",
     "BuildAndRunMeasurementEvidence",
     "BuildAndRunMeasurementStageSamplesEvidence",
+    "BuildAndRunMeasurementWorkPartitionEvidence",
     "BuildAndRunResult",
     "BuildResult",
     "BuildWorkComparisonEvidence",
@@ -99,6 +106,7 @@ __all__ = [
     "MeasuredBuildAndRunResult",
     "MeasurementCohortConditionEvidence",
     "MeasurementStageSamplesEvidence",
+    "MeasurementStageWorkPartitionEvidence",
     "MeasurementSubjectComparisonEvidence",
     "MeasurementSubjectEvidence",
     "RIRPresentation",
@@ -108,6 +116,7 @@ __all__ = [
     "StageDurationComparisonEvidence",
     "StageDurationEvidence",
     "StageSampleObservationEvidence",
+    "StageWorkContextGroupEvidence",
     "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
     "WorkspaceArchitecturePreviewResult",
@@ -128,6 +137,7 @@ __all__ = [
     "create_workspace_presentation",
     "export_workspace",
     "measure_build_and_run_workspace",
+    "partition_build_and_run_measurement_stage_samples",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
     "preview_workspace_remove_normalize_text",
