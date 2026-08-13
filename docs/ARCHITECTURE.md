@@ -351,6 +351,25 @@ Each `StageWorkContextDurationEnvelopeEvidence` retains the exact source `StageW
 
 11I does not combine work contexts, assign semantic work-state labels, or infer why one group differs from another. It adds no mean, median, variance, standard deviation, confidence interval, quantile, percentile, trend, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
 
+Milestone 11J adds median as a separate central-tendency layer over the already-frozen 11I envelope rather than modifying that earlier evidence contract:
+
+```text
+BuildAndRunMeasurementDurationEnvelopeEvidence
+    ↓
+create_build_and_run_measurement_median()
+    ↓
+BuildAndRunMeasurementMedianEvidence
+    ├── exact source 11I envelope
+    ├── build work-context medians
+    └── runtime work-context medians
+```
+
+Each `StageWorkContextMedianEvidence` retains the exact source `StageWorkContextDurationEnvelopeEvidence` object and derives `median_seconds` only from the raw observations reachable through that envelope. Singleton groups return their one observed duration; odd-sized groups return the central ordered observation; even-sized groups use the arithmetic midpoint of the two central ordered observations.
+
+`BuildAndRunMeasurementMedianEvidence` preserves stage/group order and requires every median group to refer by identity to the corresponding 11I envelope group. Direct construction revalidates the median and rejects detached but numerically equivalent envelope objects. The median therefore remains auditable back through the exact envelope, partition, work evidence, and raw samples.
+
+11J adds no mean, variance, standard deviation, confidence interval, additional quantile or percentile, trend, semantic work-state label, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
