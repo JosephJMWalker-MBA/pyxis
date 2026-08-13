@@ -356,6 +356,17 @@ Median is a descriptive central-tendency fact for one exact recorded work contex
 
 Milestone 11J adds no mean, variance, standard deviation, confidence interval, additional quantile/percentile, trend, semantic work-state label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
 
+## D106 — Arithmetic mean remains attached to exact median/source evidence
+A second central-tendency statistic may be introduced only as another immutable evidence layer over the already-proven 11J median result, without turning the median into an input to the arithmetic mean calculation.
+
+Milestone 11K adds immutable `StageWorkContextMeanEvidence`, `MeasurementStageMeanEvidence`, and `BuildAndRunMeasurementMeanEvidence`. `create_build_and_run_measurement_mean()` consumes an existing `BuildAndRunMeasurementMedianEvidence`, preserves stage/group order, retains that exact top-level median result, and requires every mean evidence object to retain the exact source `StageWorkContextMedianEvidence` object.
+
+`mean_seconds` is computed independently from the raw durations reachable through the retained median object's exact 11I envelope. The 11K acceptance fixture deliberately chooses repeated-work samples whose arithmetic means differ from their medians, proving that the mean is not derived from or copied from `median_seconds`. Direct construction revalidates the mean against the raw observations and rejects numerically equivalent but detached median-group objects.
+
+Mean and median are separate descriptive central-tendency facts for one exact recorded work context. Their agreement or disagreement is not a performance score, distribution model, outlier policy, efficiency claim, steady-state estimate, or causal explanation.
+
+Milestone 11K adds no variance, standard deviation, confidence interval, additional quantile/percentile, trend, semantic work-state label, performance score, persistence, UI, full Execution Ledger, cross-work-context aggregation, causal interpretation, or Preview/Apply/Export measurement.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
