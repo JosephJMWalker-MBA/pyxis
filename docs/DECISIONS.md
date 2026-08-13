@@ -312,6 +312,17 @@ Stage durations and compiler/materializer work evidence are deliberately not mem
 
 Milestone 11F adds no mean, median, min/max, variance, standard deviation, confidence interval, outlier/warmup label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
 
+## D102 — Raw stage samples retain work context before summary
+A coherent cohort may be projected into stage-oriented samples only if each raw duration remains paired with the compiler/materializer work evidence observed in the same cycle.
+
+Milestone 11G adds immutable `StageSampleObservationEvidence`, `MeasurementStageSamplesEvidence`, and `BuildAndRunMeasurementStageSamplesEvidence`. `project_build_and_run_measurement_stage_samples()` consumes an existing coherent cohort and produces ordered `build` and `runtime` sample tuples while retaining the cohort's exact condition object.
+
+Every projected duration is copied in cohort observation order and paired with the exact `BuildWorkEvidence` object from that measurement. The projection therefore preserves facts such as first-cycle `new` artifacts and writes beside later `reused`/no-write cycles instead of flattening those observations into an unlabeled duration series.
+
+The projection performs no execution, timing, filesystem access, work reclassification, aggregation, or interpretation. Stage ordering and equal observation counts are enforced even for direct evidence construction.
+
+Milestone 11G adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, outlier/warmup/cache-effect label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
