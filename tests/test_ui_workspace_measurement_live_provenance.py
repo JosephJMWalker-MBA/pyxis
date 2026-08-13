@@ -14,11 +14,7 @@ measurement_module = importlib.import_module("pyxis.app.measurement")
 presentation_module = importlib.import_module("pyxis.app.measurement_summary_presentation")
 
 
-@pytest.mark.asyncio
-async def test_live_workspace_actions_keep_measurement_until_successful_rir_change(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
+def _live_evidence(tmp_path: Path):
     measurement = _measurement_presentation(tmp_path)
     subject = measurement.source.envelope.partition.condition.subject
     root = tmp_path / "workspace"
@@ -26,7 +22,10 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
     run = build_and_run_workspace(spec, root, "same workload")
     workspace = create_workspace_presentation(spec, run)
     controller = WorkspaceController(root, run)
+    return measurement, subject, workspace, controller
 
+
+def _block_measurement_work(monkeypatch) -> None:
     def fail_if_measurement_work(*args, **kwargs):
         raise AssertionError("Live Workspace actions must not acquire or re-project measurement evidence.")
 
@@ -37,6 +36,14 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
         fail_if_measurement_work,
     )
 
+
+@pytest.mark.asyncio
+async def test_same_rir_and_failed_actions_keep_measurement_snapshot(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    measurement, subject, workspace, controller = _live_evidence(tmp_path)
+    _block_measurement_work(monkeypatch)
     shell = create_workspace_shell(
         workspace,
         controller=controller,
@@ -47,14 +54,12 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
         await pilot.pause()
         detail = shell.query_one(MeasurementSummaryDetail)
         assert detail.presentation is measurement
-        assert shell.presentation.rir.rir_sha256 == subject.rir_sha256
 
         runtime_input = shell.query_one("#runtime-input", Input)
         runtime_input.value = "different runtime input"
         runtime_input.focus()
         await pilot.press("enter")
         await pilot.pause()
-
         assert shell.measurement_presentation is measurement
         assert detail.presentation is measurement
         assert shell.presentation.rir.rir_sha256 == subject.rir_sha256
@@ -64,7 +69,6 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
         export_button.focus()
         await pilot.press("enter")
         await pilot.pause()
-
         assert controller.current_export is not None
         assert shell.measurement_presentation is measurement
         assert detail.presentation is measurement
@@ -74,7 +78,6 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
         preview_button.focus()
         await pilot.press("enter")
         await pilot.pause()
-
         assert shell.measurement_presentation is measurement
         assert len(shell.query(MeasurementSummaryDetail)) == 1
 
@@ -82,15 +85,36 @@ async def test_live_workspace_actions_keep_measurement_until_successful_rir_chan
         apply_button.focus()
         await pilot.press("enter")
         await pilot.pause()
-
         assert controller.pending_preview is not None
         assert shell.measurement_presentation is measurement
         assert len(shell.query(MeasurementSummaryDetail)) == 1
         assert shell.presentation.rir.rir_sha256 == subject.rir_sha256
 
+
+@pytest.mark.asyncio
+async def test_successful_apply_removes_measurement_after_rir_change(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    measurement, subject, workspace, controller = _live_evidence(tmp_path)
+    _block_measurement_work(monkeypatch)
+    shell = create_workspace_shell(
+        workspace,
+        controller=controller,
+        measurement_presentation=measurement,
+    )
+
+    async with shell.run_test(size=(120, 60)) as pilot:
+        await pilot.pause()
+        preview_button = shell.query_one("#preview-remove-normalize-text", Button)
+        preview_button.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+
         shell.query_one("#architecture-rationale", Input).value = (
             "Remove normalization and advance to a new architecture state."
         )
+        apply_button = shell.query_one("#apply-remove-normalize-text", Button)
         apply_button.focus()
         await pilot.pause()
         await pilot.press("enter")
