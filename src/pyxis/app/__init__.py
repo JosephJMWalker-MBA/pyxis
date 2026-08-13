@@ -47,6 +47,12 @@ from .measurement_cohort import (
     MeasurementCohortConditionEvidence,
     create_build_and_run_measurement_cohort,
 )
+from .measurement_envelope import (
+    BuildAndRunMeasurementDurationEnvelopeEvidence,
+    MeasurementStageDurationEnvelopeEvidence,
+    StageWorkContextDurationEnvelopeEvidence,
+    create_build_and_run_measurement_duration_envelope,
+)
 from .measurement_partition import (
     BuildAndRunMeasurementWorkPartitionEvidence,
     MeasurementStageWorkPartitionEvidence,
@@ -90,6 +96,7 @@ __all__ = [
     "ArtifactGenerationStatusComparisonEvidence",
     "BuildAndRunMeasurementCohortEvidence",
     "BuildAndRunMeasurementComparisonEvidence",
+    "BuildAndRunMeasurementDurationEnvelopeEvidence",
     "BuildAndRunMeasurementEvidence",
     "BuildAndRunMeasurementStageSamplesEvidence",
     "BuildAndRunMeasurementWorkPartitionEvidence",
@@ -105,6 +112,7 @@ __all__ = [
     "ExportPresentation",
     "MeasuredBuildAndRunResult",
     "MeasurementCohortConditionEvidence",
+    "MeasurementStageDurationEnvelopeEvidence",
     "MeasurementStageSamplesEvidence",
     "MeasurementStageWorkPartitionEvidence",
     "MeasurementSubjectComparisonEvidence",
@@ -116,6 +124,7 @@ __all__ = [
     "StageDurationComparisonEvidence",
     "StageDurationEvidence",
     "StageSampleObservationEvidence",
+    "StageWorkContextDurationEnvelopeEvidence",
     "StageWorkContextGroupEvidence",
     "WorkspaceArchitectureApplyResult",
     "WorkspaceArchitecturePreviewController",
@@ -134,6 +143,7 @@ __all__ = [
     "compare_build_and_run_measurements",
     "create_architecture_preview_presentation",
     "create_build_and_run_measurement_cohort",
+    "create_build_and_run_measurement_duration_envelope",
     "create_workspace_presentation",
     "export_workspace",
     "measure_build_and_run_workspace",
