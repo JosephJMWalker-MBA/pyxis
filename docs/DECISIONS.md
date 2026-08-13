@@ -55,7 +55,7 @@ D081 defines the permanent Repository Zero interpretation of this requirement: t
 ## D079 — Separate source-build and wheel-install portability proofs
 Repository Zero must treat source-to-wheel construction and wheel installation as separate evidence boundaries.
 
-The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 tooling when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
+The permanent proof establishes that a conventional source package can build a standard wheel using ordinary PEP 517 build isolation when its build dependencies are obtainable, and that a verified prebuilt wheel can then be installed and executed in a fresh environment with network access blocked and without Pyxis participating.
 
 Milestone 9M separately tested the stronger source-build condition without altering the package shape: normal PEP 517 build isolation was preserved, network/index access was disabled, no build dependencies were vendored or injected, and no fallback backend was provided. Under those conditions the current source package fails before wheel construction because the isolated build environment cannot resolve its declared `setuptools>=77.0.3` requirement.
 
@@ -322,6 +322,17 @@ Every projected duration is copied in cohort observation order and paired with t
 The projection performs no execution, timing, filesystem access, work reclassification, aggregation, or interpretation. Stage ordering and equal observation counts are enforced even for direct evidence construction.
 
 Milestone 11G adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, outlier/warmup/cache-effect label, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
+
+## D103 — Work-context partitions group exact evidence without semantic labels
+Stage-oriented measurement samples may be partitioned by the work evidence they already carry, but the partition must not rename those evidence classes into inferred operational states.
+
+Milestone 11H adds immutable `StageWorkContextGroupEvidence`, `MeasurementStageWorkPartitionEvidence`, and `BuildAndRunMeasurementWorkPartitionEvidence`. `partition_build_and_run_measurement_stage_samples()` groups each stage's raw `StageSampleObservationEvidence` values by exact `BuildWorkEvidence` equality.
+
+Group order follows the first occurrence of each work-evidence value in the stage stream, and observation order is preserved within each group. The group key is the exact `BuildWorkEvidence` object from the first sample in that equality class; the original stage-sample objects are retained rather than copied. Direct construction rejects empty groups, sample/key mismatches, duplicate equal group keys, stage-contract mismatch, and unequal total observation counts across stages.
+
+The partition states only that grouped samples carried equal recorded compiler/materializer work evidence. It does not call a group cold, warm, cached, first-run, steady-state, normal, outlier, or any other semantic or causal category.
+
+Milestone 11H adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, performance score, persistence, UI, full Execution Ledger, causal interpretation, or Preview/Apply/Export measurement.
 
 ## Repository Zero rule
 
