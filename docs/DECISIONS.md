@@ -288,6 +288,19 @@ An input mismatch must not be converted into a performance explanation. It means
 
 Milestone 11D adds no raw-input persistence, measurement persistence, UI, full Execution Ledger, causal interpretation, scoring, or Preview/Apply/Export measurement.
 
+## D100 — Execution environment identity exposes context comparability without host-specific telemetry
+A measured build/run cycle should identify the stable execution context that produced its observations without turning measurement into machine fingerprinting or dynamic system telemetry.
+
+Milestone 11E adds immutable `ExecutionEnvironmentEvidence` containing Python implementation, Python version, platform system, and platform machine. The default provider derives only those coarse facts from the running Python process; unavailable system/machine values become `unknown`. Hostnames, usernames, absolute paths, process identifiers, system load, memory pressure, and other machine-specific or dynamic telemetry are outside this evidence contract.
+
+Environment acquisition is injectable and occurs exactly once before the timed build/runtime stages begin. Invalid provider output fails before the measured operation executes. The environment record therefore supplies measurement context without contributing its own discovery cost to either stage duration.
+
+`ExecutionEnvironmentComparisonEvidence` retains the exact before/after environment evidence and reports `matches=True` only when the immutable evidence objects are equal. Different environments do not make otherwise coherent Workspace measurements incomparable: comparison still returns workload, stage, and work evidence while exposing `matches=False` as an explicit execution-context confound.
+
+Environment equality or mismatch must not be converted into a performance explanation. It states only whether these recorded execution-context facts agree; it does not establish why duration changed or whether unrecorded environmental conditions were controlled.
+
+Milestone 11E adds no host-specific identity, system-load telemetry, repeated sampling, statistics, persistence, UI, full Execution Ledger, causal interpretation, scoring, or Preview/Apply/Export measurement.
+
 ## Repository Zero rule
 
 New implementation work should extend the permanent vertical slice rather than create another disposable proof repository.
