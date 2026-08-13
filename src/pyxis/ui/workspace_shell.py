@@ -77,11 +77,13 @@ class WorkspaceShell(_WorkspaceShell):
         if self.measurement_presentation is not None:
             yield MeasurementSummaryDetail(self.measurement_presentation)
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Preserve co-display only while the supplied measurement still matches."""
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Schedule a provenance check after the existing Apply handler completes."""
 
-        await super().on_button_pressed(event)
+        if event.button.id == "apply-remove-normalize-text":
+            self.call_after_refresh(self._remove_incoherent_measurement)
 
+    async def _remove_incoherent_measurement(self) -> None:
         if _measurement_provenance_matches(
             self.presentation,
             self.measurement_presentation,
