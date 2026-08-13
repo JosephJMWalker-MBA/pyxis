@@ -311,6 +311,27 @@ Each `StageSampleObservationEvidence` contains only the raw stage duration and t
 
 11G adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, outlier/warmup/cache-effect label, scoring, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
 
+Milestone 11H adds a pure exact-work partition over those raw stage samples:
+
+```text
+BuildAndRunMeasurementStageSamplesEvidence
+    ↓
+partition_build_and_run_measurement_stage_samples()
+    ↓
+BuildAndRunMeasurementWorkPartitionEvidence
+    ├── exact cohort condition
+    ├── build work-context groups
+    └── runtime work-context groups
+```
+
+Each `StageWorkContextGroupEvidence` is keyed only by exact `BuildWorkEvidence` equality. Group order follows first occurrence of a work-evidence value in the source stage stream, and observation order within each group remains source order. The group key retains the exact `BuildWorkEvidence` object from the first sample in its equality class, while group members retain the exact original `StageSampleObservationEvidence` objects.
+
+`MeasurementStageWorkPartitionEvidence` rejects empty groups, fewer than two total stage observations, and duplicate equal group keys. `BuildAndRunMeasurementWorkPartitionEvidence` preserves the cohort stage contract and equal total observation counts across stages. The partition performs no execution, filesystem access, sorting by duration, aggregation, scoring, or interpretation.
+
+The partition does not infer operational states from work evidence. A group is not called cold, warm, cached, first-run, steady-state, normal, or outlier. Those labels would add semantics not established by exact compiler/materializer evidence equality.
+
+11H adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, performance score, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
