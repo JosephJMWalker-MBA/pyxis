@@ -232,6 +232,22 @@ Comparison revalidates each retained subject against its own `BuildResult` befor
 
 Subject identity remains transient measurement evidence in Repository Zero. 11C adds no persistence, UI, ledger, scoring, causal model, or broader operation instrumentation.
 
+Milestone 11D adds privacy-preserving runtime workload identity as a separate axis from Workspace subject identity:
+
+```text
+runtime text
+    ↓ UTF-8 encode once for evidence
+SHA-256 + character count + UTF-8 byte count
+    ↓
+RuntimeInputEvidence
+```
+
+The raw text continues to flow only to the established `build_and_run_workspace()` operation because runtime execution requires it. Measurement retains no raw-input field. `RuntimeInputEvidence` records a deterministic lowercase SHA-256 digest of the exact UTF-8 bytes, Unicode character count, and UTF-8 byte count; Unicode inputs therefore preserve the distinction between logical text length and encoded workload size.
+
+Comparison retains the exact before/after `RuntimeInputEvidence` objects in `RuntimeInputComparisonEvidence`. Its `matches` flag is true only when the complete immutable evidence values are equal. Input mismatch is deliberately non-blocking: if Workspace subject coherence succeeds, stage and work comparison still proceeds while `matches=False` exposes that the two runtime workloads were not identical.
+
+That mismatch is evidence about comparability, not an explanation for a timing delta. Repository Zero does not infer that workload size or content caused a runtime difference, and later interpretation must not treat runtime conditions as controlled when input identity differs. Raw-input persistence, measurement persistence, UI, scoring, causal models, a full Execution Ledger, and Preview/Apply/Export timing remain outside 11D.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
