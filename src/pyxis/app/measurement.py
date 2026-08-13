@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 import time
 from typing import Literal
@@ -35,6 +36,25 @@ class MeasurementSubjectEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class RuntimeInputEvidence:
+    """Privacy-preserving identity and size evidence for one runtime input."""
+
+    sha256: str
+    character_count: int
+    utf8_byte_count: int
+
+    def __post_init__(self) -> None:
+        if len(self.sha256) != 64 or any(
+            character not in "0123456789abcdef" for character in self.sha256
+        ):
+            raise ValueError("Runtime input sha256 must be a lowercase SHA-256 hex digest.")
+        if self.character_count < 0:
+            raise ValueError("Runtime input character_count cannot be negative.")
+        if self.utf8_byte_count < 0:
+            raise ValueError("Runtime input utf8_byte_count cannot be negative.")
+
+
+@dataclass(frozen=True, slots=True)
 class StageDurationEvidence:
     """Elapsed time observed for one established application stage."""
 
@@ -61,6 +81,7 @@ class BuildAndRunMeasurementEvidence:
     """Immutable measurement evidence for one build-and-run cycle."""
 
     subject: MeasurementSubjectEvidence
+    runtime_input: RuntimeInputEvidence
     stages: tuple[StageDurationEvidence, ...]
     build_work: BuildWorkEvidence
 
@@ -79,6 +100,19 @@ class MeasurementSubjectComparisonEvidence:
 
     before: MeasurementSubjectEvidence
     after: MeasurementSubjectEvidence
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeInputComparisonEvidence:
+    """Before/after workload evidence without retaining raw runtime text."""
+
+    before: RuntimeInputEvidence
+    after: RuntimeInputEvidence
+    matches: bool
+
+    def __post_init__(self) -> None:
+        if self.matches != (self.before == self.after):
+            raise ValueError("Runtime input matches must reflect exact input evidence equality.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +154,7 @@ class BuildAndRunMeasurementComparisonEvidence:
     """Pure factual comparison of two already-measured build-and-run cycles."""
 
     subject: MeasurementSubjectComparisonEvidence
+    runtime_input: RuntimeInputComparisonEvidence
     stages: tuple[StageDurationComparisonEvidence, ...]
     build_work: BuildWorkComparisonEvidence
 
@@ -137,6 +172,15 @@ def _measurement_subject_from_build(build: BuildResult) -> MeasurementSubjectEvi
         repository_id=repository.repository_id,
         workspace_id=repository.workspace.workspace_id,
         rir_sha256=rir_sha256,
+    )
+
+
+def _runtime_input_evidence(text: str) -> RuntimeInputEvidence:
+    encoded = text.encode("utf-8")
+    return RuntimeInputEvidence(
+        sha256=hashlib.sha256(encoded).hexdigest(),
+        character_count=len(text),
+        utf8_byte_count=len(encoded),
     )
 
 
@@ -163,9 +207,11 @@ def measure_build_and_run_workspace(
 
     Timing observes only the established build and runtime boundaries exposed by
     ``build_and_run_workspace``. Subject identity comes from the returned
-    RepositoryIR plus generation manifest. Compiler/materialization work evidence
-    is copied directly from the returned ``BuildResult``; this layer performs no
-    filesystem discovery and makes no independent work or waste classification.
+    RepositoryIR plus generation manifest. Runtime input evidence records only a
+    deterministic SHA-256 and size facts; raw text is not retained by measurement.
+    Compiler/materialization work evidence is copied directly from the returned
+    ``BuildResult``; this layer performs no filesystem discovery and makes no
+    independent work or waste classification.
     """
 
     started_at: dict[MeasurementStage, float] = {}
@@ -203,6 +249,7 @@ def measure_build_and_run_workspace(
     build = result.build
     measurement = BuildAndRunMeasurementEvidence(
         subject=_measurement_subject_from_build(build),
+        runtime_input=_runtime_input_evidence(text),
         stages=tuple(stages),
         build_work=BuildWorkEvidence(
             generation_statuses=build.generation_statuses,
@@ -228,6 +275,11 @@ def compare_build_and_run_measurements(
     comparison is constructed. RIR identity may differ, making architectural-state
     changes explicit while still permitting comparison within one Workspace.
 
+    Runtime input evidence is retained exactly for both observations and states
+    whether the privacy-preserving workload identities match. Different inputs do
+    not invalidate descriptive comparison; they remain an explicit confound for
+    any later interpretation.
+
     This function performs no execution, filesystem access, reclassification, or
     scoring. Duration deltas mean only ``after - before``. Work comparison carries
     the exact immutable evidence already observed for each cycle and reports only
@@ -245,6 +297,11 @@ def compare_build_and_run_measurements(
     subject = MeasurementSubjectComparisonEvidence(
         before=before_subject,
         after=after_subject,
+    )
+    runtime_input = RuntimeInputComparisonEvidence(
+        before=before.measurement.runtime_input,
+        after=after.measurement.runtime_input,
+        matches=before.measurement.runtime_input == after.measurement.runtime_input,
     )
 
     before_stages = before.measurement.stages
@@ -287,6 +344,7 @@ def compare_build_and_run_measurements(
 
     return BuildAndRunMeasurementComparisonEvidence(
         subject=subject,
+        runtime_input=runtime_input,
         stages=stages,
         build_work=BuildWorkComparisonEvidence(
             before=before_work,
