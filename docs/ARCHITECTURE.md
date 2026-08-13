@@ -292,6 +292,25 @@ The cohort retains the exact original `MeasuredBuildAndRunResult` objects in cal
 
 11F performs no execution, timing, filesystem access, aggregation, statistics, outlier/warmup classification, scoring, persistence, UI, causal interpretation, full Execution Ledger work, or Preview/Apply/Export measurement.
 
+Milestone 11G adds a pure stage-oriented projection over one already-coherent cohort:
+
+```text
+BuildAndRunMeasurementCohortEvidence
+    ↓
+project_build_and_run_measurement_stage_samples()
+    ↓
+BuildAndRunMeasurementStageSamplesEvidence
+    ├── exact cohort condition
+    ├── build samples in cohort order
+    └── runtime samples in cohort order
+```
+
+Each `StageSampleObservationEvidence` contains only the raw stage duration and the exact `BuildWorkEvidence` object from that same measured cycle. Both stage views therefore preserve observation order and retain compiler/materializer context such as first-cycle `new`/written artifacts versus later `reused`/no-write cycles.
+
+`MeasurementStageSamplesEvidence` remains a raw observation container. `BuildAndRunMeasurementStageSamplesEvidence` requires its stage sequence to equal the cohort condition and requires the same observation count for every stage, including direct construction. The projection performs no execution, timing, filesystem access, work reclassification, aggregation, sorting, filtering, or interpretation.
+
+11G adds no mean, median, min/max, variance, standard deviation, confidence interval, quantile, outlier/warmup/cache-effect label, scoring, persistence, UI, causal model, full Execution Ledger, or Preview/Apply/Export timing.
+
 ### Application-owned architectural preview
 
 Milestone 10G introduces the first UI-facing architectural preview seam without adding a mutation control.
