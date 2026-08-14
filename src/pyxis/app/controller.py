@@ -10,6 +10,9 @@ from .architecture_preview import (
     preview_workspace_add_split_lines,
     preview_workspace_remove_normalize_text,
 )
+from .architecture_reconciliation import (
+    ArchitectureConsequenceReconciliationPresentation,
+)
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
 from .export_refresh import refresh_workspace_export
@@ -23,10 +26,10 @@ class WorkspaceController:
     """Single application-owned authority for one live Workspace interaction state.
 
     The controller owns exactly one current run, one optional current export
-    result, and one optional pending architecture preview. It delegates runtime,
-    preview, apply, and verified export behavior to the already-proven
-    application operations so those operations remain the owners of coherence
-    checks and domain effects.
+    result, one optional pending architecture preview, and one optional latest
+    successful post-Apply reconciliation. It delegates runtime, preview, apply,
+    and verified export behavior to the already-proven application operations so
+    those operations remain the owners of coherence checks and domain effects.
     """
 
     def __init__(
@@ -40,6 +43,9 @@ class WorkspaceController:
         self._run = run
         self._export = export
         self._pending_preview: ArchitecturePreview | None = None
+        self._last_architecture_reconciliation: (
+            ArchitectureConsequenceReconciliationPresentation | None
+        ) = None
 
     @property
     def current_run(self) -> BuildAndRunResult:
@@ -58,6 +64,14 @@ class WorkspaceController:
         """Return the exact proposed architecture retained for a later apply."""
 
         return self._pending_preview
+
+    @property
+    def last_architecture_reconciliation(
+        self,
+    ) -> ArchitectureConsequenceReconciliationPresentation | None:
+        """Return the latest successful preview-vs-observed Apply reconciliation."""
+
+        return self._last_architecture_reconciliation
 
     def rerun(self, text: str) -> WorkspacePresentation:
         """Rerun the current architecture and advance only live runtime evidence."""
@@ -80,6 +94,7 @@ class WorkspaceController:
             export=self._export,
         )
         self._pending_preview = result.preview
+        self._last_architecture_reconciliation = None
         return result.presentation
 
     def preview_add_split_lines(self) -> ArchitecturePreviewPresentation:
@@ -91,6 +106,7 @@ class WorkspaceController:
             export=self._export,
         )
         self._pending_preview = result.preview
+        self._last_architecture_reconciliation = None
         return result.presentation
 
     def apply_pending_remove_normalize_text(
@@ -116,6 +132,7 @@ class WorkspaceController:
         self._run = result.run
         self._export = None
         self._pending_preview = None
+        self._last_architecture_reconciliation = result.reconciliation
         return result.presentation
 
     def apply_pending_add_split_lines(
@@ -141,6 +158,7 @@ class WorkspaceController:
         self._run = result.run
         self._export = None
         self._pending_preview = None
+        self._last_architecture_reconciliation = result.reconciliation
         return result.presentation
 
     def refresh_export(
