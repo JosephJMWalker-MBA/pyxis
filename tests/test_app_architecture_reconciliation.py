@@ -129,7 +129,7 @@ def test_remove_normalize_reconciliation_observes_removed_compiler_product(
     assert removed.expected_generation_status == "removed"
     assert removed.observed_generation_status == "removed"
     assert removed.matches is True
-    assert reconciliation.observed_runtime_keys == ("inspect_text",)
+    assert reconciliation.observed.runtime_keys == ("inspect_text",)
     assert reconciliation.observed_runtime_keys_match_preview is True
 
 
