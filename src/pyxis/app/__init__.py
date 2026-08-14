@@ -20,6 +20,11 @@ from .build import (
     build_and_run_workspace,
     build_workspace,
 )
+from .chromium_headings import (
+    ChromiumPageHeadingEvidence,
+    ChromiumPageHeadingsEvidence,
+    observe_chromium_page_headings,
+)
 from .chromium_observation import (
     ChromiumPageContentEvidence,
     ChromiumPageLinkEvidence,
@@ -135,6 +140,8 @@ __all__ = [
     "CanonicalPresentation",
     "CanonicalPreviewPresentation",
     "ChromiumPageContentEvidence",
+    "ChromiumPageHeadingEvidence",
+    "ChromiumPageHeadingsEvidence",
     "ChromiumPageLinkEvidence",
     "ChromiumPageLinksEvidence",
     "ChromiumPageObservationEvidence",
@@ -188,6 +195,7 @@ __all__ = [
     "export_workspace",
     "measure_build_and_run_workspace",
     "observe_chromium_page",
+    "observe_chromium_page_headings",
     "observe_chromium_page_links",
     "partition_build_and_run_measurement_stage_samples",
     "preview_add_split_lines",
