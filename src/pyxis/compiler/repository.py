@@ -6,6 +6,7 @@ from .artifacts import (
     GeneratedArtifact,
     compile_inspect_text,
     compile_normalize_text,
+    compile_split_lines,
     compile_workspace_entrypoint,
 )
 
@@ -13,6 +14,7 @@ from .artifacts import (
 _CAPABILITY_COMPILERS = {
     "inspect_text": compile_inspect_text,
     "normalize_text": compile_normalize_text,
+    "split_lines": compile_split_lines,
 }
 
 
