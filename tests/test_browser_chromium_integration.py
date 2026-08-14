@@ -124,9 +124,80 @@ def _wait_for_page_evidence(
     )
 
 
+def _installed_browser_binaries() -> tuple[str, ...]:
+    """Return distinct installed Chromium-family binaries in deterministic order."""
+
+    binaries: list[str] = []
+    for command in ("google-chrome", "chromium"):
+        resolved = shutil.which(command)
+        if resolved is not None and resolved not in binaries:
+            binaries.append(resolved)
+    return tuple(binaries)
+
+
+def _terminate_browser(process: subprocess.Popen) -> None:
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+
+
+def _launch_browser_with_devtools(
+    binaries: tuple[str, ...],
+    tmp_path: Path,
+    page_url: str,
+) -> tuple[subprocess.Popen, str]:
+    """Launch one installed browser that successfully publishes DevTools.
+
+    This is test-fixture resilience only. A browser process that never publishes
+    its debugging endpoint is torn down and the next installed Chromium-family
+    binary is tried with a fresh profile. Once an endpoint exists, the test does
+    not fall back around target discovery or production observation failures.
+    """
+
+    startup_failures: list[str] = []
+    for index, browser in enumerate(binaries):
+        profile = tmp_path / f"chromium-profile-{index}"
+        process = subprocess.Popen(
+            [
+                browser,
+                "--headless=new",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--disable-dev-shm-usage",
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--remote-debugging-port=0",
+                f"--user-data-dir={profile}",
+                page_url,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        try:
+            endpoint = _wait_for_devtools_endpoint(profile, process)
+        except AssertionError as exc:
+            startup_failures.append(f"{browser}: {exc}")
+            _terminate_browser(process)
+            continue
+
+        return process, endpoint
+
+    details = "; ".join(startup_failures) or "no launch attempts were made"
+    raise AssertionError(
+        "No installed Chromium-family browser published a DevTools endpoint; "
+        f"{details}"
+    )
+
+
 def test_observe_chromium_page_against_real_headless_browser(tmp_path: Path) -> None:
-    browser = shutil.which("google-chrome") or shutil.which("chromium")
-    if browser is None:
+    browsers = _installed_browser_binaries()
+    if not browsers:
         if os.environ.get("GITHUB_ACTIONS") == "true":
             pytest.fail("GitHub Actions browser integration requires Chrome or Chromium.")
         pytest.skip("Chrome/Chromium is not installed on this machine.")
@@ -141,27 +212,9 @@ def test_observe_chromium_page_against_real_headless_browser(tmp_path: Path) -> 
         encoding="utf-8",
     )
     page_url = page.as_uri()
-    profile = tmp_path / "chromium-profile"
 
-    process = subprocess.Popen(
-        [
-            browser,
-            "--headless=new",
-            "--no-sandbox",
-            "--disable-gpu",
-            "--disable-dev-shm-usage",
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--remote-debugging-port=0",
-            f"--user-data-dir={profile}",
-            page_url,
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
+    process, endpoint = _launch_browser_with_devtools(browsers, tmp_path, page_url)
     try:
-        endpoint = _wait_for_devtools_endpoint(profile, process)
         target_id = _wait_for_page_target(endpoint, page_url, process)
         evidence = _wait_for_page_evidence(
             endpoint,
@@ -183,9 +236,4 @@ def test_observe_chromium_page_against_real_headless_browser(tmp_path: Path) -> 
         assert evidence.content.text_limit == text_limit
         assert evidence.content.truncated is True
     finally:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
+        _terminate_browser(process)
