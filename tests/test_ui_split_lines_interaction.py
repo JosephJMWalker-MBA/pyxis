@@ -83,6 +83,7 @@ async def test_visible_split_lines_preview_apply_and_measurement_invalidation(
         assert shell.query_one("#split-lines-rationale", Input)
         assert shell.query_one("#apply-add-split-lines", Button)
 
+        shell.query_one("#runtime-input", Input).value = text
         shell.query_one("#split-lines-rationale", Input).value = (
             "Add a second concrete architecture operation before generalizing edits."
         )
@@ -99,10 +100,9 @@ async def test_visible_split_lines_preview_apply_and_measurement_invalidation(
             "normalize_text",
             "split_lines",
         )
-        assert shell.presentation.runtime_result["split_lines"] == {
-            "lines": [text],
-            "line_count": 1,
-        }
+        split_result = shell.presentation.runtime_result["split_lines"]
+        assert split_result["line_count"] == 1
+        assert tuple(split_result["lines"]) == (text,)
         assert len(shell.presentation.revisions) == 1
         assert shell.presentation.revisions[0].operation == "add_capability:split_lines"
         assert shell.presentation.revisions[0].completed is True
