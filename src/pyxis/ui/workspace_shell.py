@@ -13,6 +13,7 @@ from pyxis.app.measurement_summary_presentation import (
 from pyxis.app.presentation import WorkspacePresentation
 
 from .architecture_consequence_trace_textual import ArchitectureConsequenceTraceDetail
+from .architecture_reconciliation_textual import ArchitectureReconciliationDetail
 from .measurement_summary_textual import MeasurementSummaryDetail, MeasurementSummaryShell
 from .textual_shell import (
     ArchitectureApplyControls,
@@ -113,14 +114,16 @@ class WorkspaceShell(_WorkspaceShell):
     }
 
     #split-lines-apply-controls,
-    #architecture-consequence-trace {
+    #architecture-consequence-trace,
+    #architecture-reconciliation {
         width: 100%;
         height: auto;
         margin-top: 1;
     }
 
     #split-lines-rationale-label,
-    #architecture-consequence-trace-title {
+    #architecture-consequence-trace-title,
+    #architecture-reconciliation-title {
         text-style: bold;
         margin-bottom: 1;
     }
@@ -151,7 +154,7 @@ class WorkspaceShell(_WorkspaceShell):
             yield MeasurementSummaryDetail(self.measurement_presentation)
 
     async def on_mount(self) -> None:
-        """Expose the second concrete architecture preview and read-only trace."""
+        """Expose the second architecture preview, trace, and reconciliation."""
 
         if self.controller is None:
             return
@@ -164,6 +167,12 @@ class WorkspaceShell(_WorkspaceShell):
         )
         preview_detail = self.query_one(ArchitecturePreviewDetail)
         await preview_detail.mount(ArchitectureConsequenceTraceDetail())
+        reconciliation_detail = ArchitectureReconciliationDetail()
+        await preview_detail.mount(reconciliation_detail)
+        if self.controller.last_architecture_reconciliation is not None:
+            reconciliation_detail.replace_presentation(
+                self.controller.last_architecture_reconciliation
+            )
 
     async def supply_measurement_presentation(
         self,
@@ -211,6 +220,7 @@ class WorkspaceShell(_WorkspaceShell):
         if event.button.id == "preview-remove-normalize-text":
             self.call_after_refresh(self._clear_split_lines_apply_controls)
             self.call_after_refresh(self._sync_consequence_trace)
+            self.call_after_refresh(self._sync_architecture_reconciliation)
             return
 
         if event.button.id == "apply-add-split-lines":
@@ -219,6 +229,7 @@ class WorkspaceShell(_WorkspaceShell):
 
         if event.button.id == "apply-remove-normalize-text":
             self.call_after_refresh(self._clear_consequence_trace)
+            self.call_after_refresh(self._sync_architecture_reconciliation)
             self.call_after_refresh(self._remove_incoherent_measurement)
 
     async def _preview_add_split_lines(self) -> None:
@@ -230,6 +241,7 @@ class WorkspaceShell(_WorkspaceShell):
         self.query_one(ArchitectureConsequenceTraceDetail).replace_presentation(
             presentation
         )
+        self.query_one(ArchitectureReconciliationDetail).clear_presentation()
 
         if len(self.query("#architecture-apply-controls")) != 0:
             await self.query_one(
@@ -255,6 +267,16 @@ class WorkspaceShell(_WorkspaceShell):
 
     async def _clear_consequence_trace(self) -> None:
         self.query_one(ArchitectureConsequenceTraceDetail).clear_presentation()
+
+    async def _sync_architecture_reconciliation(self) -> None:
+        if self.controller is None:
+            return
+        detail = self.query_one(ArchitectureReconciliationDetail)
+        reconciliation = self.controller.last_architecture_reconciliation
+        if reconciliation is None:
+            detail.clear_presentation()
+            return
+        detail.replace_presentation(reconciliation)
 
     async def _clear_split_lines_apply_controls(self) -> None:
         if len(self.query("#split-lines-apply-controls")) == 0:
@@ -285,6 +307,7 @@ class WorkspaceShell(_WorkspaceShell):
         self.query_one(WorkspaceDetail).replace_presentation(presentation)
         self.query_one(ArchitecturePreviewDetail).clear_presentation()
         await self._clear_consequence_trace()
+        await self._sync_architecture_reconciliation()
         await self.query_one(
             "#split-lines-apply-controls",
             SplitLinesApplyControls,
