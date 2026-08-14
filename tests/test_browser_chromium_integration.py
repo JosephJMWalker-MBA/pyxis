@@ -203,7 +203,7 @@ def _terminate_browser(process: subprocess.Popen) -> None:
 def _launch_browser_with_devtools(
     binaries: tuple[str, ...],
     tmp_path: Path,
-    page_urls: tuple[str, ...],
+    page_url: str,
 ) -> tuple[subprocess.Popen, str]:
     """Launch one installed browser that successfully publishes DevTools.
 
@@ -227,7 +227,7 @@ def _launch_browser_with_devtools(
                 "--no-default-browser-check",
                 "--remote-debugging-port=0",
                 f"--user-data-dir={profile}",
-                *page_urls,
+                page_url,
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -256,39 +256,28 @@ def test_observe_chromium_evidence_against_real_headless_browser(tmp_path: Path)
             pytest.fail("GitHub Actions browser integration requires Chrome or Chromium.")
         pytest.skip("Chrome/Chromium is not installed on this machine.")
 
-    expected_title = "Pyxis 15A"
-    expected_text = "alpha 😀 beta"
+    expected_title = "Pyxis browser evidence"
+    expected_text = "alpha 😀 beta First 😀 link Email Action"
     text_limit = 7
     page = tmp_path / "page.html"
     page.write_text(
-        "<!doctype html><meta charset='utf-8'><title>Pyxis 15A</title>"
-        "<body>alpha 😀 beta</body>",
-        encoding="utf-8",
-    )
-    page_url = page.as_uri()
-
-    links_page = tmp_path / "links.html"
-    links_page.write_text(
-        "<!doctype html><meta charset='utf-8'><title>Pyxis 15B</title><body>"
-        "<a href='first.html'>First 😀 link</a>"
-        "<a href='mailto:research@example.test'>Email</a>"
+        "<!doctype html><meta charset='utf-8'><title>Pyxis browser evidence</title>"
+        "<body>alpha 😀 beta "
+        "<a href='first.html'>First 😀 link</a> "
+        "<a href='mailto:research@example.test'>Email</a> "
         "<a href='javascript:void(0)'>Action</a>"
         "</body>",
         encoding="utf-8",
     )
-    links_page_url = links_page.as_uri()
+    page_url = page.as_uri()
     expected_first_href = (tmp_path / "first.html").as_uri()
 
-    process, endpoint = _launch_browser_with_devtools(
-        browsers,
-        tmp_path,
-        (page_url, links_page_url),
-    )
+    process, endpoint = _launch_browser_with_devtools(browsers, tmp_path, page_url)
     try:
-        page_target_id = _wait_for_page_target(endpoint, page_url, process)
+        target_id = _wait_for_page_target(endpoint, page_url, process)
         page_evidence = _wait_for_page_evidence(
             endpoint,
-            page_target_id,
+            target_id,
             process,
             expected_url=page_url,
             expected_title=expected_title,
@@ -297,7 +286,7 @@ def test_observe_chromium_evidence_against_real_headless_browser(tmp_path: Path)
         )
 
         assert page_evidence.endpoint == endpoint
-        assert page_evidence.target_id == page_target_id
+        assert page_evidence.target_id == target_id
         assert page_evidence.url == page_url
         assert page_evidence.title == expected_title
         assert page_evidence.content.source == "document.body.innerText"
@@ -306,18 +295,17 @@ def test_observe_chromium_evidence_against_real_headless_browser(tmp_path: Path)
         assert page_evidence.content.text_limit == text_limit
         assert page_evidence.content.truncated is True
 
-        links_target_id = _wait_for_page_target(endpoint, links_page_url, process)
         link_evidence = _wait_for_link_evidence(
             endpoint,
-            links_target_id,
+            target_id,
             process,
-            expected_url=links_page_url,
+            expected_url=page_url,
             expected_first_href=expected_first_href,
         )
 
         assert link_evidence.endpoint == endpoint
-        assert link_evidence.target_id == links_target_id
-        assert link_evidence.url == links_page_url
+        assert link_evidence.target_id == target_id
+        assert link_evidence.url == page_url
         assert link_evidence.source == "document.querySelectorAll('a[href]')"
         assert link_evidence.link_count == 3
         assert link_evidence.link_limit == 2
