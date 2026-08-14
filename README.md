@@ -48,6 +48,8 @@ Milestone 15A returns Pyxis to its original browser/research purpose without cha
 
 Milestone 15B adds a second read-only research fact without adding browser control: Pyxis can expose bounded DOM-order link choices already present on that selected page. It preserves browser-resolved href values, bounded anchor text, exact Unicode counts, and collection truncation evidence while refusing to rank, classify, select, or follow any link.
 
+Milestone 15C adds literal page-outline evidence without interpretation: Pyxis can expose bounded DOM-order `h1`–`h6` markers with their explicit HTML levels and bounded text. Skipped levels remain skipped; Pyxis does not repair them into a synthesized hierarchy, summarize sections, or turn outline evidence into navigation authority.
+
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
 ## Core principles
@@ -66,6 +68,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Browser state remains caller-owned unless a later explicit capability earns narrower control authority.
 - Read-only browser evidence should remain distinct from navigation, automation, and interpretation.
 - Available link choices are evidence, not navigation recommendations or permissions.
+- Heading levels are page-authored evidence, not a Pyxis-repaired semantic hierarchy.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -103,7 +106,21 @@ resolved href + bounded innerText + exact counts
 
 `observe_chromium_page_links()` returns the page URL, complete matching-link count, explicit link limit, and a frozen tuple of 1-based DOM-order link records. It preserves observed href values such as `mailto:` without adding scheme policy, ranking, recommendation, or destination selection.
 
-These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, rank links, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 15C reuses the same page-selection authority for one fixed heading read:
+
+```text
+selected existing page
+      ↓
+document.querySelectorAll('h1,h2,h3,h4,h5,h6')
+      ↓
+bounded DOM-order heading evidence
+      ↓
+explicit level + bounded innerText + exact counts
+```
+
+`observe_chromium_page_headings()` returns the page URL, complete matching-heading count, explicit heading limit, and a frozen tuple of heading records. Each record preserves the literal HTML level from 1 through 6. A sequence such as `h1 → h4` remains `1 → 4`; Pyxis adds no missing hierarchy, quality judgment, or section summary.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, rank links or sections, repair document structure, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -149,7 +166,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15B / D122.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15C / D123.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -161,6 +178,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 15B / D122: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product now has two real read-only evidence boundaries over one explicitly addressable existing Chromium page: bounded page-content observation and bounded DOM-order link-choice observation.
+Pyxis is proven through Milestone 15C / D123: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product now has three real read-only evidence boundaries over one explicitly addressable existing Chromium page: bounded page-content observation, bounded DOM-order link-choice observation, and bounded literal heading-outline observation.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Navigation, interaction, permissions, persistence, research workflows, and browser UI each require their own evidence before they are allowed to grow from the current observation boundaries.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Navigation, interaction, permissions, persistence, research workflows, semantic interpretation, and browser UI each require their own evidence before they are allowed to grow from the current observation boundaries.
