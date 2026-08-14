@@ -142,7 +142,8 @@ def test_read_chromium_page_snapshot_uses_one_fixed_read_only_runtime_command(
     assert "window.location.href" in expression
     assert "document.title" in expression
     assert "document.body.innerText" in expression
-    assert "text.slice(0, 64)" in expression
+    assert "Array.from(text)" in expression
+    assert "characters.slice(0, 64).join('')" in expression
     assert "Page.navigate" not in websocket.sent[0]
     assert "Target.activateTarget" not in websocket.sent[0]
 
