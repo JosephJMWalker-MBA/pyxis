@@ -8,6 +8,8 @@ from pyxis.rir.model import RepositoryIR, build_repository_ir
 
 _NORMALIZE_TEXT_CAPABILITY = "normalize_text"
 _NORMALIZE_TEXT_ARTIFACT_PATH = "generated/capabilities/normalize_text.py"
+_SPLIT_LINES_CAPABILITY = "split_lines"
+_SPLIT_LINES_ARTIFACT_PATH = "generated/capabilities/split_lines.py"
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +92,28 @@ def preview_restore_normalize_text(spec: WorkspaceSpec) -> ArchitecturePreview:
             changed_artifact_paths=(_workspace_entrypoint_path(proposed_repository),),
             removed_artifact_paths=(),
             added_runtime_keys=(_NORMALIZE_TEXT_CAPABILITY,),
+            removed_runtime_keys=(),
+        ),
+    )
+
+
+def preview_add_split_lines(spec: WorkspaceSpec) -> ArchitecturePreview:
+    """Preview adding split_lines without persisting or compiling anything."""
+
+    proposed_spec = spec.with_capability(_SPLIT_LINES_CAPABILITY)
+    proposed_repository = build_repository_ir(proposed_spec)
+
+    return ArchitecturePreview(
+        current_spec=spec,
+        proposed_spec=proposed_spec,
+        proposed_repository=proposed_repository,
+        delta=ArchitectureDelta(
+            added_capabilities=(_SPLIT_LINES_CAPABILITY,),
+            removed_capabilities=(),
+            added_artifact_paths=(_SPLIT_LINES_ARTIFACT_PATH,),
+            changed_artifact_paths=(_workspace_entrypoint_path(proposed_repository),),
+            removed_artifact_paths=(),
+            added_runtime_keys=(_SPLIT_LINES_CAPABILITY,),
             removed_runtime_keys=(),
         ),
     )
