@@ -11,10 +11,12 @@ dependencies = []
 
 [project.optional-dependencies]
 ui = ["textual>=8.2.8,<9"]
+browser = ["websocket-client>=1.9,<2"]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=1.4",
     "textual>=8.2.8,<9",
+    "websocket-client>=1.9,<2",
 ]
 
 [project.scripts]
