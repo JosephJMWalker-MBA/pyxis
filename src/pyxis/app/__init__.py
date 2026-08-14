@@ -20,6 +20,11 @@ from .build import (
     build_and_run_workspace,
     build_workspace,
 )
+from .chromium_observation import (
+    ChromiumPageContentEvidence,
+    ChromiumPageObservationEvidence,
+    observe_chromium_page,
+)
 from .controller import (
     WorkspaceArchitecturePreviewController,
     WorkspaceController,
@@ -126,6 +131,8 @@ __all__ = [
     "BuildWorkEvidence",
     "CanonicalPresentation",
     "CanonicalPreviewPresentation",
+    "ChromiumPageContentEvidence",
+    "ChromiumPageObservationEvidence",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -175,6 +182,7 @@ __all__ = [
     "create_workspace_presentation",
     "export_workspace",
     "measure_build_and_run_workspace",
+    "observe_chromium_page",
     "partition_build_and_run_measurement_stage_samples",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
