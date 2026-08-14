@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Repository Zero current through Milestone 14A / D120 (2026-08-14).**
+**Continuity front door — Pyxis current through Milestone 15A / D121 (2026-08-14).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, and `docs/MILESTONE_14A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, and `docs/MILESTONE_15A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
-## Current Repository Zero checkpoint
+## Current Pyxis checkpoint
 
-Repository Zero has eight proven families:
+Pyxis now has nine proven families. The first eight remain the Repository Zero reference spine; 15A adds the first concrete browser-facing product boundary without changing that spine:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -40,9 +40,11 @@ preview-only architecture consequence trace
 post-Apply proposed-vs-observed consequence reconciliation
             +
 bounded Python support / multi-version CI
+            +
+read-only Chromium page observation evidence
 ```
 
-The permanent authority chain remains:
+The permanent Repository Zero authority chain remains:
 
 ```text
 human intent
@@ -63,6 +65,8 @@ runtime
 Architectural change remains preview → rationale → append-only revision → canonical mutation → compile/materialize → run. Generated code is never a second source of truth. Export packages existing compiler products and READY remains verification evidence rather than filesystem inference.
 
 The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, traces the proposed consequences of that preview across already-owned evidence stages, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. After successful Apply it clears the proposed consequence surface and can render a separate observed reconciliation derived from the revision/compiler/RIR/runtime evidence actually produced by that Apply. One `WorkspaceController` remains the live transient-state authority.
+
+15A returns the product to its original browser/research purpose while preserving Chromium as the mature browser. A caller may supply one explicit Chromium DevTools endpoint and receive frozen application evidence for one existing page. Pyxis does not discover the browser, infer the active tab when multiple pages exist, navigate, interact, persist browser state, or interpret the page.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -286,6 +290,44 @@ D120 therefore establishes: **Pyxis package compatibility claims are bounded by 
 
 14A changes no compiler, RIR, canonical authoring, revision, runtime, export, measurement, architecture-operation, preview, reconciliation, or Textual behavior.
 
+## First read-only Chromium evidence boundary — 15A / D121
+
+15A returns to the original browser/research purpose only after the Repository Zero compiler/product spine, evidence UI, measurement foundations, architecture-change path, reconciliation boundary, and release-support contract are stable.
+
+Chromium remains Chromium. Browser state remains caller-owned.
+
+The first browser-facing path is:
+
+```text
+explicit Chromium DevTools HTTP(S) endpoint
+    ↓
+read /json/list
+    ↓
+existing page targets only
+    ↓
+exact selected target
+    ↓
+one fixed Runtime.evaluate read
+    ↓
+frozen ChromiumPageObservationEvidence
+```
+
+`pyxis.browser` owns the concrete Chromium transport. `pyxis.app.observe_chromium_page()` owns the immutable application evidence contract.
+
+The fixed observation reads only the selected page's current URL, title, and `document.body.innerText`. Rendered text is bounded by an explicit prefix limit while retaining the complete Unicode code-point count and a mechanical truncation fact. `Array.from(text)` is used in the fixed browser expression so JavaScript counting/slicing and Python evidence validation share code-point semantics even for characters such as emoji.
+
+Target selection is deliberately non-heuristic. Exactly one page may be selected implicitly. When multiple page targets exist, Pyxis refuses to infer the active/current tab from target order or browser metadata and requires an exact `target_id`.
+
+The operation does not accept arbitrary CDP methods or caller-supplied JavaScript. It does not navigate, activate, click, submit, create/close targets, persist browser/page state, mutate Workspace state, invoke an LLM, or add UI.
+
+`websocket-client` is optional under the `browser` dependency group; it is also in `dev` so the ordinary supported-Python matrix exercises the concrete transport. Core Pyxis still has no required browser dependency.
+
+15A includes a real-browser integration proof rather than only mocked transport tests. The ordinary suite launches a disposable headless Chrome/Chromium instance, receives its DevTools endpoint, discovers the exact local fixture page, and calls the production observation path. Intermediate CI runs exposed two fixture assumptions—target visibility before DOM readiness and variable browser startup latency—which were corrected in test synchronization without adding product retries, navigation, or skips.
+
+Actions #432 passed on `1f039148079b875ba706f7f1052b7a1596e1db32` across Python 3.11, 3.12, 3.13, and 3.14. The full suite contains 221 tests and includes the real-browser integration path.
+
+D121 therefore establishes: **browser observation authority does not imply browser-control authority. Pyxis may acquire frozen read-only evidence from one explicitly addressable existing Chromium page while the browser and its state remain caller-owned. Any navigation, interaction, persistence, interpretation, or autonomous workflow requires a separate product decision and proof.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -370,6 +412,9 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Proposed architecture evidence is never rewritten as observed evidence after Apply.
 - Reconciliation reports exact structural agreement or difference; it does not convert agreement into a score, confidence, or causal claim.
 - Package compatibility claims remain bounded by explicitly proven interpreter lanes.
+- Chromium remains the browser; Pyxis does not infer browser-control authority from read-only observation capability.
+- Browser target selection is explicit when multiple pages exist rather than inferred from target ordering or focus heuristics.
+- Browser observation evidence is distinct from navigation, interaction, persistence, and interpretation.
 
 ## Current development discipline
 
@@ -378,6 +423,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 12B closed the abstraction question for the current two operations. 13A proved a user can follow an architecture proposal into code/runtime-contract consequences without Pyxis inventing meaning. 13B separately proves the earlier proposal can be compared with the evidence actually produced after Apply without promoting preview evidence into post-change authority. Do not continue this thread by adding a prediction score, confidence estimate, generated explanation, or generic operation model merely because reconciliation now exists. The next milestone should answer a new concrete Pyxis product question.
 
 14A resolves the previously open Python support mismatch: package metadata is now `>=3.11,<3.15`, and the full suite is proven on Python 3.11, 3.12, 3.13, and 3.14. Do not move the upper bound or add a future interpreter lane merely because a new Python version exists; evaluate it deliberately and expand the support contract only after the complete suite passes.
+
+15A proves the first read-only Chromium observation boundary. Do not immediately grow that proof into navigation, clicks, form submission, arbitrary CDP access, browser-state persistence, autonomous research, LLM interpretation, a generic browser abstraction, or browser UI merely because an existing page can now be observed. The next browser capability must answer a concrete user/product need and define its authority boundary independently.
 
 ## Why the older central status lines are not being rewritten now
 
