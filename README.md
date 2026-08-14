@@ -27,6 +27,10 @@ Record rationale + append-only revision
       ↓
 Incremental recompilation
       ↓
+Run changed Workspace
+      ↓
+Reconcile proposed consequences with observed evidence
+      ↓
 Export exact compiler products
       ↓
 Verify provenance + runtime behavior
@@ -38,7 +42,7 @@ Verified wheel
 Fresh offline installation + execution
 ```
 
-The first local Textual Workspace UI consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T. Two concrete architecture operations now prove both additive and subtractive governed edits, with only demonstrated invariant orchestration shared privately. Milestone 13A adds a preview-only architecture consequence trace that connects requested change → proposed canonical state → proposed RIR → compiler-product consequences → runtime-contract consequences using only already-owned preview evidence.
+The first local Textual Workspace UI consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T. Two concrete architecture operations prove both additive and subtractive governed edits, with only demonstrated invariant orchestration shared privately. Milestone 13A adds a preview-only architecture consequence trace that connects requested change → proposed canonical state → proposed RIR → compiler-product consequences → runtime-contract consequences using only already-owned preview evidence. Milestone 13B keeps that proposal intact after Apply and reconciles it with a separate observed record built only from the resulting revision, compiler-generation, RIR, and runtime evidence.
 
 The first demonstrator remains intentionally small so the entire transformation can be inspected end to end.
 
@@ -47,6 +51,7 @@ The first demonstrator remains intentionally small so the entire transformation 
 - Human intent should remain visible in the implementation path.
 - Canonical source is authoritative; generated files are compiler products.
 - Architectural changes are previewed before mutation.
+- Proposed architecture evidence and observed post-Apply evidence remain distinct.
 - Revisions are append-only and carry rationale.
 - Incremental generation is based on compiler evidence, not filesystem inference.
 - Export packages existing compiler output rather than regenerating it.
@@ -90,7 +95,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 13A / D118.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 13B / D119.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -102,6 +107,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Repository Zero is proven through Milestone 13A / D118: the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, and preview-only architecture consequence trace all remain inside the permanent vertical slice.
+Repository Zero is proven through Milestone 13B / D119: the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, and distinct post-Apply proposed-vs-observed reconciliation all remain inside the permanent vertical slice.
 
-Do not add another statistic, abstraction, or explanatory layer merely because the current architecture makes one possible. The next implementation milestone should answer a concrete product question; for the consequence-trace path, the next candidate is a separate proof that post-Apply actual revision/compiler/runtime evidence can be reconciled with the earlier preview without turning preview evidence into post-change authority.
+Do not add another statistic, abstraction, score, or explanatory layer merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question; proposed-vs-observed architecture reconciliation is now proven without converting agreement into prediction quality, causality, or generated explanation.
