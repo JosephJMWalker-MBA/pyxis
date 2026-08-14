@@ -44,7 +44,9 @@ Fresh offline installation + execution
 
 The first local Textual Workspace UI consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T. Two concrete architecture operations prove both additive and subtractive governed edits, with only demonstrated invariant orchestration shared privately. Milestone 13A adds a preview-only architecture consequence trace that connects requested change → proposed canonical state → proposed RIR → compiler-product consequences → runtime-contract consequences using only already-owned preview evidence. Milestone 13B keeps that proposal intact after Apply and reconciles it with a separate observed record built only from the resulting revision, compiler-generation, RIR, and runtime evidence. Milestone 14A bounds the package support contract to Python 3.11–3.14 and proves the complete Repository Zero suite independently on every supported interpreter lane.
 
-Milestone 15A returns Pyxis to its original browser/research purpose without changing that proven compiler spine. Chromium remains Chromium and remains caller-owned. Given an explicit Chromium DevTools endpoint, Pyxis can now observe one existing page through a concrete read-only boundary and return frozen URL/title/bounded rendered-text evidence. If more than one page exists, target selection must be explicit rather than inferred from browser ordering or focus heuristics.
+Milestone 15A returns Pyxis to its original browser/research purpose without changing that proven compiler spine. Chromium remains Chromium and remains caller-owned. Given an explicit Chromium DevTools endpoint, Pyxis can observe one existing page through a concrete read-only boundary and return frozen URL/title/bounded rendered-text evidence. If more than one page exists, target selection must be explicit rather than inferred from browser ordering or focus heuristics.
+
+Milestone 15B adds a second read-only research fact without adding browser control: Pyxis can expose bounded DOM-order link choices already present on that selected page. It preserves browser-resolved href values, bounded anchor text, exact Unicode counts, and collection truncation evidence while refusing to rank, classify, select, or follow any link.
 
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
@@ -63,6 +65,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Chromium should remain Chromium; Pyxis should compose with mature browser infrastructure rather than rebuild it.
 - Browser state remains caller-owned unless a later explicit capability earns narrower control authority.
 - Read-only browser evidence should remain distinct from navigation, automation, and interpretation.
+- Available link choices are evidence, not navigation recommendations or permissions.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -86,7 +89,21 @@ frozen application evidence
 
 `observe_chromium_page()` returns the selected target ID, current URL, current title, and a bounded prefix of `document.body.innerText` with an exact Unicode code-point count and truncation fact.
 
-The boundary does **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 15B reuses that same endpoint and target-selection authority for a separate fixed link read:
+
+```text
+selected existing page
+      ↓
+document.querySelectorAll('a[href]')
+      ↓
+bounded DOM-order link evidence
+      ↓
+resolved href + bounded innerText + exact counts
+```
+
+`observe_chromium_page_links()` returns the page URL, complete matching-link count, explicit link limit, and a frozen tuple of 1-based DOM-order link records. It preserves observed href values such as `mailto:` without adding scheme policy, ranking, recommendation, or destination selection.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, rank links, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -132,7 +149,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15A / D121.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15B / D122.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -144,6 +161,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 15A / D121: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The product now also has its first real Chromium-facing boundary: read-only observation of one explicitly addressable existing page into immutable application evidence.
+Pyxis is proven through Milestone 15B / D122: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product now has two real read-only evidence boundaries over one explicitly addressable existing Chromium page: bounded page-content observation and bounded DOM-order link-choice observation.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Navigation, interaction, permissions, persistence, research workflows, and browser UI each require their own evidence before they are allowed to grow from the 15A observation boundary.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Navigation, interaction, permissions, persistence, research workflows, and browser UI each require their own evidence before they are allowed to grow from the current observation boundaries.
