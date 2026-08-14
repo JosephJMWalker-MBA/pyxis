@@ -98,6 +98,7 @@ from .preview import (
     preview_restore_normalize_text,
 )
 from .preview_presentation import (
+    ArchitectureConsequenceTraceStepPresentation,
     ArchitecturePreviewPresentation,
     CanonicalPreviewPresentation,
     create_architecture_preview_presentation,
@@ -106,6 +107,7 @@ from .query import query_workspace_presentation
 
 __all__ = [
     "ApplyResult",
+    "ArchitectureConsequenceTraceStepPresentation",
     "ArchitectureDelta",
     "ArchitecturePreview",
     "ArchitecturePreviewPresentation",
