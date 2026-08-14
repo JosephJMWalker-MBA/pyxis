@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Repository Zero current through Milestone 13B / D119 (2026-08-14).**
+**Continuity front door — Repository Zero current through Milestone 14A / D120 (2026-08-14).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, and `docs/MILESTONE_13B.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, and `docs/MILESTONE_14A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Repository Zero checkpoint
 
-Repository Zero has seven proven families:
+Repository Zero has eight proven families:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -38,6 +38,8 @@ two concrete governed architecture operations
 preview-only architecture consequence trace
             +
 post-Apply proposed-vs-observed consequence reconciliation
+            +
+bounded Python support / multi-version CI
 ```
 
 The permanent authority chain remains:
@@ -250,6 +252,40 @@ D119 therefore establishes: **proposed architecture evidence and observed post-A
 
 Proof: Actions #403 passed on `dc479d7393bfab9a6f00b2bd38358bc674352900` with all 213 Repository Zero tests; Actions #406 passed on `e94df90a10220619deb9128ce46958a7a08caf79` with all 214 Repository Zero tests.
 
+## Python support contract — 14A / D120
+
+14A closes a release-contract mismatch rather than adding application behavior. Before this milestone, package metadata declared Python `>=3.11` while ordinary CI exercised only Python 3.11. That open-ended metadata therefore claimed more compatibility than Repository Zero had actually proven.
+
+The package support contract is now:
+
+```text
+Python >=3.11,<3.15
+```
+
+The ordinary Repository Zero workflow runs the same complete suite independently on four supported interpreter lanes:
+
+```text
+Python 3.11
+Python 3.12
+Python 3.13
+Python 3.14
+```
+
+The matrix uses `fail-fast: false`, so one interpreter cannot suppress compatibility evidence from another. Each lane installs Pyxis with the same `.[dev]` dependencies and runs the same `python -m pytest` command; no compatibility-specific smoke suite or skipped product path replaces the full tests.
+
+Actions #414 on `a9077e53016de9e90795a30847f6cbf2febb505a` proved:
+
+- Python 3.11: 214 passed;
+- Python 3.12: 214 passed;
+- Python 3.13: 214 passed;
+- Python 3.14: 214 passed.
+
+Python 3.15 and later are intentionally outside the current metadata contract. A future interpreter line must be added deliberately and pass the full suite before the upper bound moves.
+
+D120 therefore establishes: **Pyxis package compatibility claims are bounded by interpreter versions explicitly represented in package metadata and independently proven by the full CI matrix. Expanding that range requires new evidence.**
+
+14A changes no compiler, RIR, canonical authoring, revision, runtime, export, measurement, architecture-operation, preview, reconciliation, or Textual behavior.
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -333,6 +369,7 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Architecture consequence traces are projections of preview evidence, not new architectural truth or explanatory inference.
 - Proposed architecture evidence is never rewritten as observed evidence after Apply.
 - Reconciliation reports exact structural agreement or difference; it does not convert agreement into a score, confidence, or causal claim.
+- Package compatibility claims remain bounded by explicitly proven interpreter lanes.
 
 ## Current development discipline
 
@@ -340,7 +377,7 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 12B closed the abstraction question for the current two operations. 13A proved a user can follow an architecture proposal into code/runtime-contract consequences without Pyxis inventing meaning. 13B separately proves the earlier proposal can be compared with the evidence actually produced after Apply without promoting preview evidence into post-change authority. Do not continue this thread by adding a prediction score, confidence estimate, generated explanation, or generic operation model merely because reconciliation now exists. The next milestone should answer a new concrete Pyxis product question.
 
-The package currently declares Python `>=3.11` while ordinary CI proves Python 3.11. That is not a Repository Zero blocker, but future release hardening should either prove additional supported interpreter lanes or narrow the declared support contract.
+14A resolves the previously open Python support mismatch: package metadata is now `>=3.11,<3.15`, and the full suite is proven on Python 3.11, 3.12, 3.13, and 3.14. Do not move the upper bound or add a future interpreter lane merely because a new Python version exists; evaluate it deliberately and expand the support contract only after the complete suite passes.
 
 ## Why the older central status lines are not being rewritten now
 
