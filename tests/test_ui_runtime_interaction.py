@@ -102,7 +102,10 @@ async def test_single_runtime_input_reruns_through_unified_workspace_controller(
         await pilot.pause()
 
         assert len(shell.query(Input)) == 1
-        assert len(shell.query(Button)) == 1
+        assert {button.id for button in shell.query(Button)} == {
+            "preview-remove-normalize-text",
+            "preview-add-split-lines",
+        }
         assert shell.query_one("#preview-remove-normalize-text", Button)
         runtime_input = shell.query_one("#runtime-input", Input)
         detail = shell.query_one(WorkspaceDetail)
@@ -148,7 +151,10 @@ async def test_single_runtime_input_reruns_through_unified_workspace_controller(
         }
         assert stable_after == stable_before
         assert len(shell.query(Input)) == 1
-        assert len(shell.query(Button)) == 1
+        assert {button.id for button in shell.query(Button)} == {
+            "preview-remove-normalize-text",
+            "preview-add-split-lines",
+        }
 
     assert _file_snapshot(source) == source_before
     assert _file_snapshot(portable) == portable_before
