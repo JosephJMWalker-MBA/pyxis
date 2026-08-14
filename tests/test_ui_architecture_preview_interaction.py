@@ -83,7 +83,10 @@ async def test_single_visible_architecture_preview_changes_only_proposed_display
     async with shell.run_test(size=(120, 46)) as pilot:
         await pilot.pause()
 
-        assert len(shell.query(Button)) == 1
+        assert {button.id for button in shell.query(Button)} == {
+            "preview-remove-normalize-text",
+            "preview-add-split-lines",
+        }
         assert len(shell.query(Input)) == 1
         assert len(shell.query("#architecture-rationale")) == 0
         assert len(shell.query("#apply-remove-normalize-text")) == 0
@@ -146,7 +149,11 @@ async def test_single_visible_architecture_preview_changes_only_proposed_display
             for selector in current_selectors
         }
         assert current_after == current_before
-        assert len(shell.query(Button)) == 2
+        assert {button.id for button in shell.query(Button)} == {
+            "preview-remove-normalize-text",
+            "preview-add-split-lines",
+            "apply-remove-normalize-text",
+        }
         assert len(shell.query(Input)) == 2
         assert shell.query_one("#architecture-rationale", Input)
         assert shell.query_one("#apply-remove-normalize-text", Button)
