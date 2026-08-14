@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Repository Zero current through Milestone 13A / D118 (2026-08-14).**
+**Continuity front door — Repository Zero current through Milestone 13B / D119 (2026-08-14).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, and `docs/MILESTONE_13A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, and `docs/MILESTONE_13B.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Repository Zero checkpoint
 
-Repository Zero has six proven families:
+Repository Zero has seven proven families:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -36,6 +36,8 @@ two concrete governed architecture operations
   with shared private application orchestration
             +
 preview-only architecture consequence trace
+            +
+post-Apply proposed-vs-observed consequence reconciliation
 ```
 
 The permanent authority chain remains:
@@ -58,7 +60,7 @@ runtime
 
 Architectural change remains preview → rationale → append-only revision → canonical mutation → compile/materialize → run. Generated code is never a second source of truth. Export packages existing compiler products and READY remains verification evidence rather than filesystem inference.
 
-The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, traces the proposed consequences of that preview across the already-owned evidence stages, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. One `WorkspaceController` remains the live transient-state authority.
+The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, traces the proposed consequences of that preview across already-owned evidence stages, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. After successful Apply it clears the proposed consequence surface and can render a separate observed reconciliation derived from the revision/compiler/RIR/runtime evidence actually produced by that Apply. One `WorkspaceController` remains the live transient-state authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -184,6 +186,70 @@ D118 therefore permits Pyxis to make an already-owned preview consequence chain 
 
 Proof: Actions #392 passed on `f8b75582176811d968335e001280942d59ad024e`; all 209 Repository Zero tests passed.
 
+## Observed architecture consequence reconciliation — 13B / D119
+
+13B keeps the 13A preview intact and asks what happened after the exact retained preview was actually applied.
+
+The reconciliation has two deliberately distinct halves:
+
+```text
+PROPOSED
+ArchitecturePreviewPresentation
+    ↓
+unchanged historical preview evidence
+
+OBSERVED
+successful Apply-owned evidence
+    ├── RevisionEvent / RevisionCompletion
+    ├── post-Apply canonical identity
+    ├── post-Apply RIR
+    ├── compiler generation statuses
+    └── post-Apply runtime-result keys
+```
+
+`ArchitectureConsequenceReconciliationPresentation` retains the original preview object under `proposed` and places the fresh Apply-derived facts under a separate immutable `observed` record. It does not reopen the filesystem, recompile, rerun, persist, export, or acquire measurement evidence in order to reconcile the two.
+
+The only comparisons currently permitted are narrow structural equalities:
+
+- preview current/proposed canonical hashes vs revision before/after canonical hashes;
+- proposed canonical hash vs observed post-Apply canonical hash;
+- proposed RIR capabilities vs observed post-Apply RIR capabilities;
+- predicted compiler-product action vs observed generation status;
+- proposed runtime keys vs observed runtime-result keys;
+- revision-completion RIR SHA-256 vs observed post-Apply RIR SHA-256.
+
+Compiler-product reconciliation is mechanically defined as:
+
+```text
+proposed add     → expected status new
+proposed change  → expected status regenerated
+proposed remove  → expected status removed
+```
+
+A mismatch is represented directly as `matches=False`. A dedicated test alters only a test copy of observed artifact presentation evidence after a genuine Apply and proves that a proposed `add` remains a proposed `add`, the expected status remains `new`, the altered observed status remains `reused`, and the reconciliation reports the difference without rewriting either side.
+
+The combined `WorkspaceController` retains at most one latest successful reconciliation. Successful Apply installs it. A later successful architecture Preview clears it before presenting a different proposal. Failed Apply does not advance it. Ordinary runtime rerun and export refresh do not reinterpret it.
+
+The Textual transition is explicit:
+
+```text
+before Apply
+    PROPOSED CONSEQUENCE TRACE — NOT APPLIED
+
+successful Apply
+    proposed trace clears
+    ↓
+    POST-APPLY RECONCILIATION — OBSERVED EVIDENCE
+```
+
+The observed renderer explicitly states that the earlier preview remains separate proposed evidence. It renders only exact `MATCH` / `DIFFERS` comparisons and adds no summary score, confidence estimate, causal claim, generated explanation, quality judgment, or architecture recommendation.
+
+The first visible proof remains the concrete `split_lines` addition. Application coverage also proves `normalize_text` removal is observed as a `removed` compiler product and as absent from post-Apply runtime keys.
+
+D119 therefore establishes: **proposed architecture evidence and observed post-Apply evidence may be reconciled, but they remain distinct evidence objects. Agreement is structural evidence, not a prediction-quality score or causal explanation.**
+
+Proof: Actions #403 passed on `dc479d7393bfab9a6f00b2bd38358bc674352900` with all 213 Repository Zero tests; Actions #406 passed on `e94df90a10220619deb9128ce46958a7a08caf79` with all 214 Repository Zero tests.
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -265,12 +331,14 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Concrete architecture semantics remain explicit even where proven orchestration is privately shared.
 - A broader architecture-operation abstraction requires new product pressure, not merely a count of existing operations.
 - Architecture consequence traces are projections of preview evidence, not new architectural truth or explanatory inference.
+- Proposed architecture evidence is never rewritten as observed evidence after Apply.
+- Reconciliation reports exact structural agreement or difference; it does not convert agreement into a score, confidence, or causal claim.
 
 ## Current development discipline
 
 Do **not** continue the 11-series by adding another statistic merely because one is available. The existing descriptive set is sufficient to prove the measurement architecture and its provenance path.
 
-12B closed the abstraction question for the current two operations. 13A begins a product-facing inspectability question instead: can a user follow architecture into code consequences without Pyxis inventing meaning? The preview-only answer is now proven. Do not silently extend preview evidence into post-Apply authority. If the consequence-trace path continues, the next separate proof should reconcile an earlier preview trace with actual revision/compiler/runtime evidence after Apply while preserving the distinction between predicted and observed evidence.
+12B closed the abstraction question for the current two operations. 13A proved a user can follow an architecture proposal into code/runtime-contract consequences without Pyxis inventing meaning. 13B separately proves the earlier proposal can be compared with the evidence actually produced after Apply without promoting preview evidence into post-change authority. Do not continue this thread by adding a prediction score, confidence estimate, generated explanation, or generic operation model merely because reconciliation now exists. The next milestone should answer a new concrete Pyxis product question.
 
 The package currently declares Python `>=3.11` while ordinary CI proves Python 3.11. That is not a Repository Zero blocker, but future release hardening should either prove additional supported interpreter lanes or narrow the declared support contract.
 
