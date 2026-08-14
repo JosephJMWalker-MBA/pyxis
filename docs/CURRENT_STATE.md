@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 15A / D121 (2026-08-14).**
+**Continuity front door — Pyxis current through Milestone 15B / D122 (2026-08-14).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, and `docs/MILESTONE_15A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, and `docs/MILESTONE_15B.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis now has nine proven families. The first eight remain the Repository Zero reference spine; 15A adds the first concrete browser-facing product boundary without changing that spine:
+Pyxis now has ten proven families. The first eight remain the Repository Zero reference spine; 15A and 15B add two concrete browser-facing evidence boundaries without changing that spine:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -42,6 +42,8 @@ post-Apply proposed-vs-observed consequence reconciliation
 bounded Python support / multi-version CI
             +
 read-only Chromium page observation evidence
+            +
+read-only Chromium link-choice evidence
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -67,6 +69,8 @@ Architectural change remains preview → rationale → append-only revision → 
 The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, traces the proposed consequences of that preview across already-owned evidence stages, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. After successful Apply it clears the proposed consequence surface and can render a separate observed reconciliation derived from the revision/compiler/RIR/runtime evidence actually produced by that Apply. One `WorkspaceController` remains the live transient-state authority.
 
 15A returns the product to its original browser/research purpose while preserving Chromium as the mature browser. A caller may supply one explicit Chromium DevTools endpoint and receive frozen application evidence for one existing page. Pyxis does not discover the browser, infer the active tab when multiple pages exist, navigate, interact, persist browser state, or interpret the page.
+
+15B reuses that exact endpoint and target-selection authority to expose bounded DOM-order link choices already present on the selected page. It preserves browser-resolved href values, bounded anchor text, exact Unicode counts, and collection truncation evidence without ranking, classifying, selecting, or following a link.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -328,6 +332,40 @@ Actions #432 passed on `1f039148079b875ba706f7f1052b7a1596e1db32` across Python 
 
 D121 therefore establishes: **browser observation authority does not imply browser-control authority. Pyxis may acquire frozen read-only evidence from one explicitly addressable existing Chromium page while the browser and its state remain caller-owned. Any navigation, interaction, persistence, interpretation, or autonomous workflow requires a separate product decision and proof.**
 
+## Read-only Chromium link evidence — 15B / D122
+
+15B asks the next concrete research question without crossing into browser control: can Pyxis expose the navigation choices already present on the selected page so a researcher can inspect them without Pyxis selecting or following a destination?
+
+The operation reuses the 15A endpoint and target-selection boundary. There is no second active-tab heuristic or target authority.
+
+```text
+explicit selected existing page
+    ↓
+one fixed Runtime.evaluate read
+    ↓
+document.querySelectorAll('a[href]')
+    ↓
+bounded DOM-order link prefix
+    ↓
+frozen ChromiumPageLinksEvidence
+```
+
+`pyxis.browser.read_chromium_page_links()` reads only the current page URL and matching anchors. For each returned anchor it preserves a 1-based DOM-order ordinal, the browser-resolved `link.href`, a bounded `link.innerText` prefix, and the exact Unicode code-point count. The snapshot also records the complete matching-link count so collection truncation is mechanically derivable from the explicit limit.
+
+`pyxis.app.observe_chromium_page_links()` projects those facts into immutable application evidence with explicit source `document.querySelectorAll('a[href]')`, link and text limits, and per-link plus collection truncation facts.
+
+DOM order is not relevance. A resolved href is not permission to request it. Anchor text is not assumed to truthfully describe the destination. Non-HTTP values such as `mailto:` or `javascript:` are preserved as observed rather than promoted, rejected, or classified by this milestone.
+
+15B does not rank, recommend, deduplicate, canonicalize, classify schemes or destination safety, fetch destination resources, navigate, activate, click, submit, create/close targets, persist evidence, invoke an LLM, or add UI.
+
+The real-browser proof uses one caller-owned disposable page containing both text and links. The same exact target proves 15A page evidence and 15B link evidence. Under `link_limit=2`, three existing anchors produce two returned records plus `link_count=3` and `truncated=True`; a relative href is verified after browser resolution, `mailto:` is preserved, and Unicode anchor text is bounded/countable in code points.
+
+An intermediate harness attempt launched two fixture file URLs at browser startup. Actions #451 showed both installed Chromium-family binaries exiting with code 13 before DevTools publication on Python 3.11; all new link unit/application tests passed and the failing path never reached production link acquisition. The harness was simplified to one explicit page rather than adding any production launch or navigation recovery.
+
+Actions #452 passed on `0f4fe856553f22983bc72bbfe5f973f20e42ab4e` across Python 3.11, 3.12, 3.13, and 3.14. The full suite contains 226 tests and includes the real-browser page/link evidence path.
+
+D122 therefore establishes: **observing available navigation choices is still observation, not control. Pyxis may expose bounded DOM-order link evidence from one explicitly addressable existing Chromium page, while destination selection and every act of navigation remain outside this milestone's authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -415,6 +453,8 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Chromium remains the browser; Pyxis does not infer browser-control authority from read-only observation capability.
 - Browser target selection is explicit when multiple pages exist rather than inferred from target ordering or focus heuristics.
 - Browser observation evidence is distinct from navigation, interaction, persistence, and interpretation.
+- Link DOM order is document-order evidence, not ranking or recommendation.
+- Observed href values are not navigation permission, destination selection, or safety classification.
 
 ## Current development discipline
 
@@ -424,7 +464,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 14A resolves the previously open Python support mismatch: package metadata is now `>=3.11,<3.15`, and the full suite is proven on Python 3.11, 3.12, 3.13, and 3.14. Do not move the upper bound or add a future interpreter lane merely because a new Python version exists; evaluate it deliberately and expand the support contract only after the complete suite passes.
 
-15A proves the first read-only Chromium observation boundary. Do not immediately grow that proof into navigation, clicks, form submission, arbitrary CDP access, browser-state persistence, autonomous research, LLM interpretation, a generic browser abstraction, or browser UI merely because an existing page can now be observed. The next browser capability must answer a concrete user/product need and define its authority boundary independently.
+15A proves the first read-only Chromium observation boundary. Do not immediately grow that proof into navigation, clicks, form submission, arbitrary CDP access, browser-state persistence, autonomous research, LLM interpretation, a generic browser abstraction, or browser UI merely because an existing page can now be observed.
+
+15B proves that the available link choices on the selected page can also be exposed as bounded immutable evidence without following them. Do not convert DOM order into ranking, observed href values into permissions, or this evidence surface into navigation control. Any future destination selection or navigation operation requires its own concrete product question, explicit authority boundary, and proof.
 
 ## Why the older central status lines are not being rewritten now
 
