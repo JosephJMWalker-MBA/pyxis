@@ -3,11 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pyxis.browser import (
+    ChromiumPageLinksSnapshot,
     ChromiumPageSnapshot,
     ChromiumPageTarget,
     ChromiumReadError,
     list_chromium_page_targets,
     normalize_chromium_endpoint,
+    read_chromium_page_links,
     read_chromium_page_snapshot,
 )
 
@@ -32,6 +34,32 @@ class ChromiumPageObservationEvidence:
     url: str
     title: str
     content: ChromiumPageContentEvidence
+
+
+@dataclass(frozen=True, slots=True)
+class ChromiumPageLinkEvidence:
+    """One read-only DOM-order link choice observed on an existing page."""
+
+    ordinal: int
+    href: str
+    text_prefix: str
+    text_character_count: int
+    text_limit: int
+    truncated: bool
+
+
+@dataclass(frozen=True, slots=True)
+class ChromiumPageLinksEvidence:
+    """Bounded link-choice evidence acquired from one explicit Chromium page."""
+
+    endpoint: str
+    target_id: str
+    url: str
+    source: str
+    links: tuple[ChromiumPageLinkEvidence, ...]
+    link_count: int
+    link_limit: int
+    truncated: bool
 
 
 def observe_chromium_page(
@@ -67,6 +95,39 @@ def observe_chromium_page(
         target=target,
         snapshot=snapshot,
         text_limit=text_limit,
+    )
+
+
+def observe_chromium_page_links(
+    endpoint: str,
+    *,
+    target_id: str | None = None,
+    link_limit: int = 64,
+    link_text_limit: int = 256,
+    timeout: float = 5.0,
+) -> ChromiumPageLinksEvidence:
+    """Observe bounded link choices on one page without following any of them.
+
+    Link evidence preserves DOM order and the browser-resolved href plus bounded
+    anchor `innerText`. The operation does not navigate, rank, classify,
+    deduplicate, activate, click, persist, or interpret any observed link.
+    """
+
+    normalized_endpoint = normalize_chromium_endpoint(endpoint)
+    targets = list_chromium_page_targets(normalized_endpoint, timeout=timeout)
+    target = _select_page_target(targets, target_id=target_id)
+    snapshot = read_chromium_page_links(
+        target,
+        link_limit=link_limit,
+        link_text_limit=link_text_limit,
+        timeout=timeout,
+    )
+    return _create_links_observation(
+        endpoint=normalized_endpoint,
+        target=target,
+        snapshot=snapshot,
+        link_limit=link_limit,
+        link_text_limit=link_text_limit,
     )
 
 
@@ -125,4 +186,60 @@ def _create_observation(
             text_limit=text_limit,
             truncated=snapshot.text_truncated,
         ),
+    )
+
+
+def _create_links_observation(
+    *,
+    endpoint: str,
+    target: ChromiumPageTarget,
+    snapshot: ChromiumPageLinksSnapshot,
+    link_limit: int,
+    link_text_limit: int,
+) -> ChromiumPageLinksEvidence:
+    if link_limit < 0:
+        raise ValueError("link_limit must be >= 0.")
+    if link_text_limit < 0:
+        raise ValueError("link_text_limit must be >= 0.")
+    if len(snapshot.links) > link_limit:
+        raise ChromiumReadError("Chromium links snapshot exceeded the requested link limit.")
+    if snapshot.link_count < len(snapshot.links):
+        raise ChromiumReadError(
+            "Chromium links snapshot count is smaller than the returned links."
+        )
+
+    links: list[ChromiumPageLinkEvidence] = []
+    for expected_ordinal, link in enumerate(snapshot.links, start=1):
+        if link.ordinal != expected_ordinal:
+            raise ChromiumReadError(
+                "Chromium link evidence ordinals were not contiguous DOM order."
+            )
+        if len(link.text_prefix) > link_text_limit:
+            raise ChromiumReadError(
+                "Chromium link snapshot exceeded the requested text limit."
+            )
+        if link.text_character_count < len(link.text_prefix):
+            raise ChromiumReadError(
+                "Chromium link snapshot text count is smaller than the returned prefix."
+            )
+        links.append(
+            ChromiumPageLinkEvidence(
+                ordinal=link.ordinal,
+                href=link.href,
+                text_prefix=link.text_prefix,
+                text_character_count=link.text_character_count,
+                text_limit=link_text_limit,
+                truncated=link.text_truncated,
+            )
+        )
+
+    return ChromiumPageLinksEvidence(
+        endpoint=endpoint,
+        target_id=target.target_id,
+        url=snapshot.url,
+        source="document.querySelectorAll('a[href]')",
+        links=tuple(links),
+        link_count=snapshot.link_count,
+        link_limit=link_limit,
+        truncated=snapshot.links_truncated,
     )

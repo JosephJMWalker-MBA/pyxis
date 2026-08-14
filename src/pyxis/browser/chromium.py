@@ -9,6 +9,8 @@ from urllib.request import urlopen
 
 DEFAULT_TEXT_LIMIT = 2048
 DEFAULT_TIMEOUT_SECONDS = 5.0
+DEFAULT_LINK_LIMIT = 64
+DEFAULT_LINK_TEXT_LIMIT = 256
 
 
 class ChromiumReadError(RuntimeError):
@@ -35,6 +37,33 @@ class ChromiumPageSnapshot:
     @property
     def text_truncated(self) -> bool:
         return self.text_character_count > len(self.text_prefix)
+
+
+@dataclass(frozen=True, slots=True)
+class ChromiumPageLinkSnapshot:
+    """One DOM-order link snapshot returned by the selected page target."""
+
+    ordinal: int
+    href: str
+    text_prefix: str
+    text_character_count: int
+
+    @property
+    def text_truncated(self) -> bool:
+        return self.text_character_count > len(self.text_prefix)
+
+
+@dataclass(frozen=True, slots=True)
+class ChromiumPageLinksSnapshot:
+    """One bounded read-only link collection from the selected page target."""
+
+    url: str
+    links: tuple[ChromiumPageLinkSnapshot, ...]
+    link_count: int
+
+    @property
+    def links_truncated(self) -> bool:
+        return self.link_count > len(self.links)
 
 
 def normalize_chromium_endpoint(endpoint: str) -> str:
@@ -185,6 +214,132 @@ def read_chromium_page_snapshot(
         title=title,
         text_prefix=text_prefix,
         text_character_count=text_character_count,
+    )
+
+
+def read_chromium_page_links(
+    target: ChromiumPageTarget,
+    *,
+    link_limit: int = DEFAULT_LINK_LIMIT,
+    link_text_limit: int = DEFAULT_LINK_TEXT_LIMIT,
+    timeout: float = DEFAULT_TIMEOUT_SECONDS,
+) -> ChromiumPageLinksSnapshot:
+    """Read bounded DOM-order link evidence without following any link.
+
+    The fixed DevTools expression reads `a[href]` elements in DOM order, the
+    browser-resolved `href`, and bounded anchor `innerText`. It does not rank,
+    classify, deduplicate, activate, click, submit, or navigate.
+    """
+
+    if link_limit < 0:
+        raise ValueError("link_limit must be >= 0.")
+    if link_text_limit < 0:
+        raise ValueError("link_text_limit must be >= 0.")
+    if timeout <= 0:
+        raise ValueError("timeout must be > 0.")
+
+    expression = (
+        "(() => {"
+        "const nodes = Array.from(document.querySelectorAll('a[href]'));"
+        f"const links = nodes.slice(0, {link_limit}).map((link, index) => {{"
+        'const text = link.innerText || "";'
+        "const characters = Array.from(text);"
+        "return {"
+        "ordinal: index + 1,"
+        "href: link.href,"
+        f"textPrefix: characters.slice(0, {link_text_limit}).join(''),"
+        "textCharacterCount: characters.length"
+        "};"
+        "});"
+        "return {url: window.location.href, linkCount: nodes.length, links};"
+        "})()"
+    )
+    command = {
+        "id": 1,
+        "method": "Runtime.evaluate",
+        "params": {
+            "expression": expression,
+            "returnByValue": True,
+        },
+    }
+
+    websocket = _open_websocket(target.websocket_debugger_url, timeout=timeout)
+    try:
+        websocket.send(json.dumps(command, sort_keys=True, separators=(",", ":")))
+        response = _receive_command_response(websocket, command_id=1)
+    except ChromiumReadError:
+        raise
+    except Exception as exc:  # pragma: no cover - transport-specific failure shape
+        raise ChromiumReadError(
+            f"Failed to read Chromium page links for target {target.target_id}: {exc}"
+        ) from exc
+    finally:
+        websocket.close()
+
+    value = _extract_runtime_value(response)
+    url = value.get("url")
+    link_count = value.get("linkCount")
+    raw_links = value.get("links")
+
+    if not isinstance(url, str):
+        raise ChromiumReadError("Chromium links snapshot URL was not a string.")
+    if not isinstance(link_count, int) or link_count < 0:
+        raise ChromiumReadError(
+            "Chromium links snapshot count was not a non-negative integer."
+        )
+    if not isinstance(raw_links, list):
+        raise ChromiumReadError("Chromium links snapshot links were not a list.")
+    if len(raw_links) > link_limit:
+        raise ChromiumReadError("Chromium links snapshot exceeded the requested link limit.")
+    if link_count < len(raw_links):
+        raise ChromiumReadError(
+            "Chromium links snapshot count is smaller than the returned links."
+        )
+
+    links: list[ChromiumPageLinkSnapshot] = []
+    for expected_ordinal, item in enumerate(raw_links, start=1):
+        if not isinstance(item, dict):
+            raise ChromiumReadError("Chromium link snapshot item was not an object.")
+
+        ordinal = item.get("ordinal")
+        href = item.get("href")
+        text_prefix = item.get("textPrefix")
+        text_character_count = item.get("textCharacterCount")
+
+        if ordinal != expected_ordinal:
+            raise ChromiumReadError(
+                "Chromium link snapshot ordinals were not contiguous DOM order."
+            )
+        if not isinstance(href, str):
+            raise ChromiumReadError("Chromium link snapshot href was not a string.")
+        if not isinstance(text_prefix, str):
+            raise ChromiumReadError("Chromium link snapshot text prefix was not a string.")
+        if not isinstance(text_character_count, int) or text_character_count < 0:
+            raise ChromiumReadError(
+                "Chromium link snapshot text count was not a non-negative integer."
+            )
+        if len(text_prefix) > link_text_limit:
+            raise ChromiumReadError(
+                "Chromium link snapshot exceeded the requested text limit."
+            )
+        if text_character_count < len(text_prefix):
+            raise ChromiumReadError(
+                "Chromium link snapshot text count is smaller than the returned prefix."
+            )
+
+        links.append(
+            ChromiumPageLinkSnapshot(
+                ordinal=ordinal,
+                href=href,
+                text_prefix=text_prefix,
+                text_character_count=text_character_count,
+            )
+        )
+
+    return ChromiumPageLinksSnapshot(
+        url=url,
+        links=tuple(links),
+        link_count=link_count,
     )
 
 
