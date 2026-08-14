@@ -8,10 +8,15 @@ from pyxis.revisions import canonical_sha256
 from pyxis.runtime import run_materialized_workspace
 
 from .apply import ApplyResult, apply_add_split_lines, apply_remove_normalize_text
+from .architecture_reconciliation import (
+    ArchitectureConsequenceReconciliationPresentation,
+    create_architecture_consequence_reconciliation,
+)
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
 from .presentation import WorkspacePresentation
 from .preview import ArchitecturePreview
+from .preview_presentation import create_architecture_preview_presentation
 from .query import query_workspace_presentation
 
 
@@ -22,6 +27,7 @@ class WorkspaceArchitectureApplyResult:
     apply: ApplyResult
     run: BuildAndRunResult
     presentation: WorkspacePresentation
+    reconciliation: ArchitectureConsequenceReconciliationPresentation
 
 
 def _apply_workspace_architecture_edit(
@@ -52,6 +58,7 @@ def _apply_workspace_architecture_edit(
     ):
         raise ValueError("Pending preview does not match current canonical Workspace state.")
 
+    proposed_presentation = create_architecture_preview_presentation(preview)
     applied = apply_builder(
         preview,
         root,
@@ -71,11 +78,17 @@ def _apply_workspace_architecture_edit(
         run=run,
         export=None,
     )
+    reconciliation = create_architecture_consequence_reconciliation(
+        proposed_presentation,
+        applied,
+        presentation,
+    )
 
     return WorkspaceArchitectureApplyResult(
         apply=applied,
         run=run,
         presentation=presentation,
+        reconciliation=reconciliation,
     )
 
 
