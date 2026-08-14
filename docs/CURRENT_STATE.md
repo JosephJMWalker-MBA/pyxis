@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Repository Zero current through Milestone 12A / D116 (2026-08-13).**
+**Continuity front door — Repository Zero current through Milestone 12B / D117 (2026-08-13).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,7 +15,7 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md` and `docs/MILESTONE_12B.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
@@ -33,6 +33,7 @@ descriptive measurement pipeline
 live measurement provenance / invalidation / re-entry
             +
 two concrete governed architecture operations
+  with shared private application orchestration
 ```
 
 The permanent authority chain remains:
@@ -108,9 +109,50 @@ pre-change READY retired
 pre-change measurement snapshot removed by exact-RIR provenance rule
 ```
 
-D116 therefore proves that the governed architecture path is not limited to one removal operation. It also intentionally exposes duplication among the concrete preview/apply/controller/UI seams. That duplication is evidence for a later abstraction decision; 12A does not introduce a generic operation registry, command schema, dynamic architecture editor, or generalized mutation form.
+D116 therefore proves that the governed architecture path is not limited to one removal operation. It also intentionally exposes duplication among the concrete preview/apply/controller/UI seams. That duplication became the evidence examined by 12B; 12A itself introduced no generic operation registry, command schema, dynamic architecture editor, or generalized mutation form.
 
 Proof: Actions #373 passed on `d8b6f0ebe9cbb97960b026efc61b4a7b602ca94e`; all 206 Repository Zero tests passed.
+
+## Shared orchestration boundary — 12B / D117
+
+12B compared `remove_normalize_text` and `add_split_lines` directly rather than assuming that two operations automatically justify a generic operation model.
+
+The comparison found two sequences that are genuinely operation-independent:
+
+```text
+Workspace preview orchestration
+    ↓
+resolve root
+→ preflight current run/export evidence
+→ load canonical state
+→ invoke one concrete preview builder
+→ project immutable preview evidence
+→ verify canonical identity remained coherent
+```
+
+and:
+
+```text
+Workspace Apply orchestration
+    ↓
+require/normalize rationale
+→ preflight current run/export evidence
+→ verify retained preview against current canonical state
+→ invoke one concrete governed Apply function
+→ run materialized post-change Workspace with explicit runtime input
+→ rebuild current presentation
+→ omit pre-change READY evidence
+```
+
+Those exact sequences are now private shared helpers in `architecture_preview.py` and `architecture_apply.py`. Public application seams remain concretely named for `remove_normalize_text` and `add_split_lines`.
+
+12B explicitly does **not** generalize capability mutations, `ArchitectureDelta` facts, revision operation identities, compiler capability registration, `WorkspaceController` operation methods, Textual controls/event IDs, or user-facing operation copy. It introduces no operation registry, command object/schema, dynamic editor, or architecture DSL.
+
+This matches the lower governed Apply boundary already proven by `_apply_previewed_edit`: shared governance/orchestration may be private while concrete wrappers retain operation identity and validation.
+
+D117 therefore establishes a narrower rule than “two examples justify abstraction”: **extract only behavior demonstrated to be invariant, and leave semantic identity concrete until additional product pressure proves that abstraction is needed.**
+
+Proof: Actions #380 passed on `4d75b37a03d0bb70de503ac98d78e3e747e61141`; all 206 Repository Zero tests passed.
 
 ## Measurement state through 11T
 
@@ -190,13 +232,14 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Cohorts require one exact subject/RIR/workload/environment/stage condition.
 - Work-context equality is not renamed into cold/warm/cached/steady-state/outlier semantics.
 - Timing/work association is not causal evidence and is not converted into efficiency or waste scoring.
-- Concrete architecture semantics remain explicit even though two operations now expose shared structural duplication.
+- Concrete architecture semantics remain explicit even where proven orchestration is privately shared.
+- A broader architecture-operation abstraction requires new product pressure, not merely a count of existing operations.
 
 ## Current development discipline
 
 Do **not** continue the 11-series by adding another statistic merely because one is available. The existing descriptive set is sufficient to prove the measurement architecture and its provenance path.
 
-12A has now supplied the second genuine architecture edit that the earlier continuity record required before considering generalization. The next implementation decision should therefore compare `remove_normalize_text` and `add_split_lines` directly and extract only the operation-independent duplication that has actually been demonstrated. Do not jump directly to a generic operation registry, command schema, dynamic form, or architecture DSL merely because two paths now exist.
+12B has completed the comparison requested by 12A. The operation-independent application orchestration has been extracted privately, while semantic and interaction boundaries remain concrete. Do not continue generalizing controller/UI operation identity merely to remove small duplication. The next milestone should answer a new concrete Pyxis product question. Revisit a broader operation model only if future work demonstrates that the named concrete seams obstruct real architecture editing.
 
 The package currently declares Python `>=3.11` while ordinary CI proves Python 3.11. That is not a Repository Zero blocker, but future release hardening should either prove additional supported interpreter lanes or narrow the declared support contract.
 

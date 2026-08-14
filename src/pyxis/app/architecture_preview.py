@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from pyxis.authoring import load_workspace_spec
+from pyxis.authoring import WorkspaceSpec, load_workspace_spec
 
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
@@ -27,6 +28,39 @@ class WorkspaceArchitecturePreviewResult:
     presentation: ArchitecturePreviewPresentation
 
 
+def _preview_workspace_architecture_edit(
+    workspace_root: Path,
+    run: BuildAndRunResult,
+    *,
+    export: WorkspaceExportResult | None,
+    preview_builder: Callable[[WorkspaceSpec], ArchitecturePreview],
+) -> WorkspaceArchitecturePreviewResult:
+    """Assemble one concrete architecture preview through shared preflight."""
+
+    root = workspace_root.resolve()
+    current_presentation = query_workspace_presentation(
+        root,
+        run=run,
+        export=export,
+    )
+    spec = load_workspace_spec(root)
+    preview = preview_builder(spec)
+    presentation = create_architecture_preview_presentation(preview)
+
+    if (
+        presentation.current.canonical_sha256
+        != current_presentation.canonical.canonical_sha256
+    ):
+        raise RuntimeError(
+            "Canonical Workspace state changed while architecture preview was being assembled."
+        )
+
+    return WorkspaceArchitecturePreviewResult(
+        preview=preview,
+        presentation=presentation,
+    )
+
+
 def preview_workspace_remove_normalize_text(
     workspace_root: Path,
     run: BuildAndRunResult,
@@ -41,27 +75,11 @@ def preview_workspace_remove_normalize_text(
     revision append, export, or readiness mutation.
     """
 
-    root = workspace_root.resolve()
-    current_presentation = query_workspace_presentation(
-        root,
-        run=run,
+    return _preview_workspace_architecture_edit(
+        workspace_root,
+        run,
         export=export,
-    )
-    spec = load_workspace_spec(root)
-    preview = preview_remove_normalize_text(spec)
-    presentation = create_architecture_preview_presentation(preview)
-
-    if (
-        presentation.current.canonical_sha256
-        != current_presentation.canonical.canonical_sha256
-    ):
-        raise RuntimeError(
-            "Canonical Workspace state changed while architecture preview was being assembled."
-        )
-
-    return WorkspaceArchitecturePreviewResult(
-        preview=preview,
-        presentation=presentation,
+        preview_builder=preview_remove_normalize_text,
     )
 
 
@@ -73,25 +91,9 @@ def preview_workspace_add_split_lines(
 ) -> WorkspaceArchitecturePreviewResult:
     """Preview split_lines addition for one coherent existing Workspace."""
 
-    root = workspace_root.resolve()
-    current_presentation = query_workspace_presentation(
-        root,
-        run=run,
+    return _preview_workspace_architecture_edit(
+        workspace_root,
+        run,
         export=export,
-    )
-    spec = load_workspace_spec(root)
-    preview = preview_add_split_lines(spec)
-    presentation = create_architecture_preview_presentation(preview)
-
-    if (
-        presentation.current.canonical_sha256
-        != current_presentation.canonical.canonical_sha256
-    ):
-        raise RuntimeError(
-            "Canonical Workspace state changed while architecture preview was being assembled."
-        )
-
-    return WorkspaceArchitecturePreviewResult(
-        preview=preview,
-        presentation=presentation,
+        preview_builder=preview_add_split_lines,
     )
