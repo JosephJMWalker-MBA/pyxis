@@ -85,7 +85,10 @@ async def test_textual_runtime_then_preview_share_one_live_workspace_controller(
         await pilot.pause()
 
         assert len(shell.query(Input)) == 1
-        assert len(shell.query(Button)) == 1
+        assert {button.id for button in shell.query(Button)} == {
+            "preview-remove-normalize-text",
+            "preview-add-split-lines",
+        }
         assert len(shell.query("#architecture-rationale")) == 0
         assert len(shell.query("#apply-remove-normalize-text")) == 0
 
@@ -150,7 +153,11 @@ async def test_textual_runtime_then_preview_share_one_live_workspace_controller(
         assert preview_detail.presentation is not None
 
         assert len(shell.query(Input)) == 2
-        assert len(shell.query(Button)) == 2
+        assert {button.id for button in shell.query(Button)} == {
+            "preview-remove-normalize-text",
+            "preview-add-split-lines",
+            "apply-remove-normalize-text",
+        }
         assert shell.query_one("#architecture-rationale", Input)
         assert shell.query_one("#apply-remove-normalize-text", Button)
 

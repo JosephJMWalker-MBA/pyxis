@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from textual.app import ComposeResult
+from textual.containers import Vertical
 from textual.widgets import Button, Input, Static
 
 from pyxis.app.controller import WorkspaceController
@@ -10,6 +13,12 @@ from pyxis.app.measurement_summary_presentation import (
 from pyxis.app.presentation import WorkspacePresentation
 
 from .measurement_summary_textual import MeasurementSummaryDetail, MeasurementSummaryShell
+from .textual_shell import (
+    ArchitectureApplyControls,
+    ArchitecturePreviewDetail,
+    ExportRefreshControls,
+    WorkspaceDetail,
+)
 from .textual_shell import WorkspaceShell as _WorkspaceShell
 
 
@@ -59,6 +68,33 @@ def _require_measurement_provenance_coherence(
         )
 
 
+class SplitLinesApplyControls(Vertical):
+    """Concrete rationale/apply controls for the second architecture operation."""
+
+    def __init__(self) -> None:
+        super().__init__(id="split-lines-apply-controls")
+
+    def compose(self) -> ComposeResult:
+        yield Static(
+            "Rationale required before Apply",
+            id="split-lines-rationale-label",
+        )
+        yield Input(
+            placeholder="Explain why split_lines should be added",
+            id="split-lines-rationale",
+        )
+        yield Button(
+            "Apply addition of split_lines",
+            id="apply-add-split-lines",
+            variant="warning",
+        )
+        yield Static(
+            "",
+            id="split-lines-apply-status",
+            markup=False,
+        )
+
+
 class WorkspaceShell(_WorkspaceShell):
     """Normal Workspace shell with one optional supplied measurement snapshot."""
 
@@ -73,6 +109,21 @@ class WorkspaceShell(_WorkspaceShell):
         padding: 1 2;
         margin-top: 1;
         border: round $secondary;
+    }
+
+    #split-lines-apply-controls {
+        width: 100%;
+        height: auto;
+        margin-top: 1;
+    }
+
+    #split-lines-rationale-label {
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
+    #split-lines-apply-status {
+        margin-top: 1;
     }
     """
     )
@@ -95,6 +146,19 @@ class WorkspaceShell(_WorkspaceShell):
         yield from super().compose()
         if self.measurement_presentation is not None:
             yield MeasurementSummaryDetail(self.measurement_presentation)
+
+    async def on_mount(self) -> None:
+        """Expose the second concrete architecture preview beside the first."""
+
+        if self.controller is None:
+            return
+        container = self.query_one("#architecture-preview-interaction", Vertical)
+        await container.mount(
+            Button(
+                "Preview addition of split_lines",
+                id="preview-add-split-lines",
+            )
+        )
 
     async def supply_measurement_presentation(
         self,
@@ -130,13 +194,85 @@ class WorkspaceShell(_WorkspaceShell):
             self.call_after_refresh(self._clear_measurement_notice)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Observe Apply provenance and expire any prior transient notice."""
+        """Observe architecture actions and transient measurement status."""
 
         if len(self.query("#measurement-snapshot-notice")) != 0:
             self.call_after_refresh(self._clear_measurement_notice)
 
+        if event.button.id == "preview-add-split-lines":
+            self.call_after_refresh(self._preview_add_split_lines)
+            return
+
+        if event.button.id == "preview-remove-normalize-text":
+            self.call_after_refresh(self._clear_split_lines_apply_controls)
+            return
+
+        if event.button.id == "apply-add-split-lines":
+            self.call_after_refresh(self._apply_add_split_lines)
+            return
+
         if event.button.id == "apply-remove-normalize-text":
             self.call_after_refresh(self._remove_incoherent_measurement)
+
+    async def _preview_add_split_lines(self) -> None:
+        if self.controller is None:
+            return
+
+        presentation = self.controller.preview_add_split_lines()
+        self.query_one(ArchitecturePreviewDetail).replace_presentation(presentation)
+
+        if len(self.query("#architecture-apply-controls")) != 0:
+            await self.query_one(
+                "#architecture-apply-controls",
+                ArchitectureApplyControls,
+            ).remove()
+        if len(self.query("#split-lines-apply-controls")) != 0:
+            await self.query_one(
+                "#split-lines-apply-controls",
+                SplitLinesApplyControls,
+            ).remove()
+
+        container = self.query_one("#architecture-preview-interaction", Vertical)
+        await container.mount(SplitLinesApplyControls())
+
+    async def _clear_split_lines_apply_controls(self) -> None:
+        if len(self.query("#split-lines-apply-controls")) == 0:
+            return
+        await self.query_one(
+            "#split-lines-apply-controls",
+            SplitLinesApplyControls,
+        ).remove()
+
+    async def _apply_add_split_lines(self) -> None:
+        if self.controller is None:
+            return
+
+        rationale_input = self.query_one("#split-lines-rationale", Input)
+        runtime_input = self.query_one("#runtime-input", Input)
+        status = self.query_one("#split-lines-apply-status", Static)
+
+        try:
+            presentation = self.controller.apply_pending_add_split_lines(
+                rationale_input.value,
+                runtime_input.value,
+            )
+        except Exception as exc:
+            status.update(f"Apply failed: {exc}")
+            return
+
+        self.presentation = presentation
+        self.query_one(WorkspaceDetail).replace_presentation(presentation)
+        self.query_one(ArchitecturePreviewDetail).clear_presentation()
+        await self.query_one(
+            "#split-lines-apply-controls",
+            SplitLinesApplyControls,
+        ).remove()
+
+        if len(self.query("#export-refresh-controls")) == 0:
+            slot = self.query_one("#export-refresh-slot", Vertical)
+            await slot.mount(ExportRefreshControls())
+
+        await self._remove_incoherent_measurement()
 
     async def _remove_incoherent_measurement(self) -> None:
         if _measurement_provenance_matches(

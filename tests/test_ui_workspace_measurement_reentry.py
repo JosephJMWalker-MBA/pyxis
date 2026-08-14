@@ -69,6 +69,7 @@ async def test_current_rir_measurement_can_reenter_without_measurement_work(
         assert len(shell.query("#measurement-snapshot-notice")) == 0
         assert {button.id for button in shell.query(Button)} == {
             "preview-remove-normalize-text",
+            "preview-add-split-lines",
             "refresh-export",
         }
         assert {widget.id for widget in shell.query(Input)} == {

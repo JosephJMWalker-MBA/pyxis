@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .architecture_apply import apply_workspace_remove_normalize_text
-from .architecture_preview import preview_workspace_remove_normalize_text
+from .architecture_apply import (
+    apply_workspace_add_split_lines,
+    apply_workspace_remove_normalize_text,
+)
+from .architecture_preview import (
+    preview_workspace_add_split_lines,
+    preview_workspace_remove_normalize_text,
+)
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
 from .export_refresh import refresh_workspace_export
@@ -76,6 +82,17 @@ class WorkspaceController:
         self._pending_preview = result.preview
         return result.presentation
 
+    def preview_add_split_lines(self) -> ArchitecturePreviewPresentation:
+        """Preview adding split_lines against the current live Workspace state."""
+
+        result = preview_workspace_add_split_lines(
+            self._workspace_root,
+            self._run,
+            export=self._export,
+        )
+        self._pending_preview = result.preview
+        return result.presentation
+
     def apply_pending_remove_normalize_text(
         self,
         rationale: str,
@@ -88,6 +105,31 @@ class WorkspaceController:
             raise ValueError("No pending architecture preview is available to apply.")
 
         result = apply_workspace_remove_normalize_text(
+            self._workspace_root,
+            preview,
+            self._run,
+            rationale,
+            text,
+            export=self._export,
+        )
+
+        self._run = result.run
+        self._export = None
+        self._pending_preview = None
+        return result.presentation
+
+    def apply_pending_add_split_lines(
+        self,
+        rationale: str,
+        text: str,
+    ) -> WorkspacePresentation:
+        """Apply the retained split_lines preview and advance shared live state."""
+
+        preview = self._pending_preview
+        if preview is None:
+            raise ValueError("No pending architecture preview is available to apply.")
+
+        result = apply_workspace_add_split_lines(
             self._workspace_root,
             preview,
             self._run,

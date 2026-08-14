@@ -2,6 +2,7 @@ from .artifacts import (
     GeneratedArtifact,
     compile_inspect_text,
     compile_normalize_text,
+    compile_split_lines,
     compile_workspace_entrypoint,
 )
 from .manifest import (
@@ -40,6 +41,7 @@ __all__ = [
     "compile_inspect_text",
     "compile_normalize_text",
     "compile_repository",
+    "compile_split_lines",
     "compile_workspace_entrypoint",
     "generation_manifest_sha256",
     "inspect_materialized_artifact_integrity",

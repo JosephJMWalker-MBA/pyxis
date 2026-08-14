@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Repository Zero current through Milestone 11T / D115 (2026-08-13).**
+**Continuity front door — Repository Zero current through Milestone 12A / D116 (2026-08-13).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md` and `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Repository Zero checkpoint
 
-Repository Zero has four proven families:
+Repository Zero has five proven families:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -31,6 +31,8 @@ interactive evidence UI
 descriptive measurement pipeline
             +
 live measurement provenance / invalidation / re-entry
+            +
+two concrete governed architecture operations
 ```
 
 The permanent authority chain remains:
@@ -53,7 +55,62 @@ runtime
 
 Architectural change remains preview → rationale → append-only revision → canonical mutation → compile/materialize → run. Generated code is never a second source of truth. Export packages existing compiler products and READY remains verification evidence rather than filesystem inference.
 
-The first local Textual Workspace UI is complete for Repository Zero: it renders current evidence, reruns the materialized Workspace, previews the controlled `remove_normalize_text` architecture edit, requires rationale for Apply, retires stale READY after architecture change, and restores READY only through verified export refresh. One `WorkspaceController` remains the live transient-state authority.
+The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. One `WorkspaceController` remains the live transient-state authority.
+
+## Second concrete architecture operation — 12A / D116
+
+Milestone 12A deliberately adds a second concrete operation before introducing any generalized architecture-edit abstraction.
+
+The new capability is:
+
+```text
+split_lines
+    ↓
+text.splitlines()
+    ↓
+{
+  "lines": [...],
+  "line_count": ...
+}
+```
+
+`split_lines` is not part of the default `WorkspaceSpec`. It appears only when explicit proposed canonical intent adds it.
+
+The proven path is:
+
+```text
+Preview addition of split_lines
+    ↓
+proposed canonical/RIR evidence
+    ├── added capability: split_lines
+    ├── new artifact: generated/capabilities/split_lines.py
+    ├── changed composed Workspace entrypoint
+    └── added runtime key: split_lines
+    ↓
+visible human rationale
+    + explicit visible runtime input
+    ↓
+Apply exact retained preview
+    ↓
+append revision operation: add_capability:split_lines
+    ↓
+canonical write → RIR → compiler/materializer
+    ├── existing capability products reused
+    ├── split_lines product new
+    └── Workspace entrypoint regenerated
+    ↓
+run new Workspace
+    ↓
+fresh WorkspacePresentation
+    ↓
+pre-change READY retired
+    +
+pre-change measurement snapshot removed by exact-RIR provenance rule
+```
+
+D116 therefore proves that the governed architecture path is not limited to one removal operation. It also intentionally exposes duplication among the concrete preview/apply/controller/UI seams. That duplication is evidence for a later abstraction decision; 12A does not introduce a generic operation registry, command schema, dynamic architecture editor, or generalized mutation form.
+
+Proof: Actions #373 passed on `d8b6f0ebe9cbb97960b026efc61b4a7b602ca94e`; all 206 Repository Zero tests passed.
 
 ## Measurement state through 11T
 
@@ -133,13 +190,13 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Cohorts require one exact subject/RIR/workload/environment/stage condition.
 - Work-context equality is not renamed into cold/warm/cached/steady-state/outlier semantics.
 - Timing/work association is not causal evidence and is not converted into efficiency or waste scoring.
-- The demonstrator-specific architecture operation should remain concrete until a second genuine edit creates pressure for a general abstraction.
+- Concrete architecture semantics remain explicit even though two operations now expose shared structural duplication.
 
 ## Current development discipline
 
 Do **not** continue the 11-series by adding another statistic merely because one is available. The existing descriptive set is sufficient to prove the measurement architecture and its provenance path.
 
-The next implementation milestone should answer a concrete Pyxis product question. Possible future pressures already visible in the project include a second genuine architecture operation, broader journey measurement, browser/research integration, persistence, or release/support hardening. None is selected by this continuity file.
+12A has now supplied the second genuine architecture edit that the earlier continuity record required before considering generalization. The next implementation decision should therefore compare `remove_normalize_text` and `add_split_lines` directly and extract only the operation-independent duplication that has actually been demonstrated. Do not jump directly to a generic operation registry, command schema, dynamic form, or architecture DSL merely because two paths now exist.
 
 The package currently declares Python `>=3.11` while ordinary CI proves Python 3.11. That is not a Repository Zero blocker, but future release hardening should either prove additional supported interpreter lanes or narrow the declared support contract.
 

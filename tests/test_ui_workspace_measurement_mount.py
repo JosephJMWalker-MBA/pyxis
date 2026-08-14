@@ -63,6 +63,7 @@ async def test_workspace_shell_mounts_supplied_measurement_without_refresh(
         assert detail.presentation is measurement
         assert {button.id for button in shell.query(Button)} == {
             "preview-remove-normalize-text",
+            "preview-add-split-lines",
             "refresh-export",
         }
         assert {widget.id for widget in shell.query(Input)} == {
