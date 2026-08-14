@@ -42,7 +42,7 @@ Verified wheel
 Fresh offline installation + execution
 ```
 
-The first local Textual Workspace UI consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T. Two concrete architecture operations prove both additive and subtractive governed edits, with only demonstrated invariant orchestration shared privately. Milestone 13A adds a preview-only architecture consequence trace that connects requested change → proposed canonical state → proposed RIR → compiler-product consequences → runtime-contract consequences using only already-owned preview evidence. Milestone 13B keeps that proposal intact after Apply and reconciles it with a separate observed record built only from the resulting revision, compiler-generation, RIR, and runtime evidence.
+The first local Textual Workspace UI consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T. Two concrete architecture operations prove both additive and subtractive governed edits, with only demonstrated invariant orchestration shared privately. Milestone 13A adds a preview-only architecture consequence trace that connects requested change → proposed canonical state → proposed RIR → compiler-product consequences → runtime-contract consequences using only already-owned preview evidence. Milestone 13B keeps that proposal intact after Apply and reconciles it with a separate observed record built only from the resulting revision, compiler-generation, RIR, and runtime evidence. Milestone 14A bounds the package support contract to Python 3.11–3.14 and proves the complete Repository Zero suite independently on every supported interpreter lane.
 
 The first demonstrator remains intentionally small so the entire transformation can be inspected end to end.
 
@@ -58,6 +58,7 @@ The first demonstrator remains intentionally small so the entire transformation 
 - READY is derived from verification evidence.
 - Presentation and UI render application-owned evidence rather than rediscovering product state.
 - Measurement observes established operations and remains descriptive rather than causal.
+- Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
 - Pyxis should leave users better Python programmers by making the transformation from architecture to code inspectable.
@@ -75,6 +76,16 @@ The source repository preserves the exact compiler products, provenance evidence
 The verified wheel has been proven to install and execute in a fresh environment with network access blocked, without Pyxis participating, while reproducing the already-verified Workspace behavior.
 
 Raw source-to-wheel construction remains conventional PEP 517 packaging and may require declared build dependencies to be obtainable. Pyxis does not require the raw source repository to rebuild its wheel while offline.
+
+## Python support
+
+Pyxis currently declares:
+
+```text
+Python >=3.11,<3.15
+```
+
+The same full Repository Zero suite is exercised in CI on Python 3.11, 3.12, 3.13, and 3.14. Future interpreter lines are not implicitly supported by the open-ended package metadata; the supported range expands only after a new lane is deliberately added and proven.
 
 ## Repository Zero
 
@@ -95,7 +106,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 13B / D119.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 14A / D120.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -107,6 +118,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Repository Zero is proven through Milestone 13B / D119: the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, and distinct post-Apply proposed-vs-observed reconciliation all remain inside the permanent vertical slice.
+Repository Zero is proven through Milestone 14A / D120: the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract all remain inside the permanent vertical slice.
 
-Do not add another statistic, abstraction, score, or explanatory layer merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question; proposed-vs-observed architecture reconciliation is now proven without converting agreement into prediction quality, causality, or generated explanation.
+Do not add another statistic, abstraction, score, explanatory layer, or compatibility lane merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question; interpreter support should expand only when an additional version is intentionally evaluated and proven.
