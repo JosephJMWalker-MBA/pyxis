@@ -4,7 +4,12 @@ from pathlib import Path
 import pytest
 from textual.widgets import Button, Static
 
-from pyxis.app import WorkspaceController, build_and_run_workspace, export_workspace
+from pyxis.app import (
+    WorkspaceController,
+    build_and_run_workspace,
+    export_workspace,
+    query_workspace_presentation,
+)
 from pyxis.authoring import create_workspace_spec
 from pyxis.ui import create_workspace_shell
 
@@ -34,6 +39,11 @@ async def test_split_lines_preview_shows_read_only_consequence_trace(
     )
     run = build_and_run_workspace(spec, source, text)
     export = export_workspace(run.build, source, portable, text)
+    presentation = query_workspace_presentation(
+        source,
+        run=run,
+        export=export,
+    )
     controller = WorkspaceController(source, run, export=export)
     source_before = _file_snapshot(source)
     portable_before = _file_snapshot(portable)
@@ -48,9 +58,7 @@ async def test_split_lines_preview_shows_read_only_consequence_trace(
     )
 
     shell = create_workspace_shell(
-        controller.preview_add_split_lines.__self__.current_run
-        and __import__("pyxis.app", fromlist=["query_workspace_presentation"])
-        .query_workspace_presentation(source, run=run, export=export),
+        presentation,
         controller=controller,
     )
 
