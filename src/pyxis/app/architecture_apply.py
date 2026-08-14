@@ -6,7 +6,7 @@ from pathlib import Path
 from pyxis.revisions import canonical_sha256
 from pyxis.runtime import run_materialized_workspace
 
-from .apply import ApplyResult, apply_remove_normalize_text
+from .apply import ApplyResult, apply_add_split_lines, apply_remove_normalize_text
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
 from .presentation import WorkspacePresentation
@@ -60,6 +60,60 @@ def apply_workspace_remove_normalize_text(
         raise ValueError("Pending preview does not match current canonical Workspace state.")
 
     applied = apply_remove_normalize_text(
+        preview,
+        root,
+        clean_rationale,
+    )
+    runtime_result = run_materialized_workspace(
+        applied.build.repository,
+        root,
+        text,
+    )
+    run = BuildAndRunResult(
+        build=applied.build,
+        runtime_result=runtime_result,
+    )
+    presentation = query_workspace_presentation(
+        root,
+        run=run,
+        export=None,
+    )
+
+    return WorkspaceArchitectureApplyResult(
+        apply=applied,
+        run=run,
+        presentation=presentation,
+    )
+
+
+def apply_workspace_add_split_lines(
+    workspace_root: Path,
+    preview: ArchitecturePreview,
+    current_run: BuildAndRunResult,
+    rationale: str,
+    text: str,
+    *,
+    export: WorkspaceExportResult | None = None,
+) -> WorkspaceArchitectureApplyResult:
+    """Apply one retained split_lines-addition preview and rerun the result."""
+
+    clean_rationale = rationale.strip()
+    if not clean_rationale:
+        raise ValueError("Architecture rationale is required before apply.")
+
+    root = workspace_root.resolve()
+    current_presentation = query_workspace_presentation(
+        root,
+        run=current_run,
+        export=export,
+    )
+    if (
+        canonical_sha256(preview.current_spec)
+        != current_presentation.canonical.canonical_sha256
+    ):
+        raise ValueError("Pending preview does not match current canonical Workspace state.")
+
+    applied = apply_add_split_lines(
         preview,
         root,
         clean_rationale,
