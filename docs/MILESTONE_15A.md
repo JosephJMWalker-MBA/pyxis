@@ -74,18 +74,27 @@ The fixed browser expression therefore uses `Array.from(text)` for both counting
 
 ## Real-browser proof
 
-15A does not rely only on mocked transport tests. The ordinary Repository Zero suite launches a disposable headless Chrome/Chromium instance with its own non-default profile, lets Chromium publish its DevTools endpoint, discovers the exact fixture page target, and calls the production `observe_chromium_page()` path over the real HTTP/WebSocket DevTools boundary.
+15A does not rely only on mocked transport tests. The ordinary Repository Zero suite launches a disposable headless Chrome/Chromium instance with its own non-default profile, lets the browser publish its DevTools endpoint, discovers the exact fixture page target, and calls the production `observe_chromium_page()` path over the real HTTP/WebSocket DevTools boundary.
 
 The fixture proves exact URL, title, rendered-text prefix, Unicode character count, limit, and truncation evidence.
 
-Two intermediate CI attempts exposed test-harness facts rather than product defects:
+The integration work exposed three test-harness facts rather than product defects:
 
 1. a page target can become visible before its title/body evidence is ready;
-2. browser startup and DevTools endpoint publication can vary enough that a 10-second fixture-startup assumption is not reliable.
+2. browser startup and DevTools endpoint publication can vary enough that a 10-second fixture-startup assumption is not reliable;
+3. one installed Chrome process can remain alive without publishing `DevToolsActivePort` even after 30 seconds, while another installed Chromium-family binary is available and healthy.
 
-The final fixture therefore synchronizes only its own setup: Chromium allocates the debugging port, the test reads `DevToolsActivePort`, and test-only readiness polling waits for the known fixture evidence. The production observation remains one discovery plus one fixed read and gains no retry, navigation, or readiness semantics from the test harness.
+The fixture therefore synchronizes only its own setup. The browser allocates the debugging port and the test reads `DevToolsActivePort`; test-only readiness polling waits for the known fixture evidence; and if an installed browser binary never publishes any DevTools endpoint, that process is torn down and the next distinct installed Chromium-family binary is tried with a fresh profile. Once a DevTools endpoint exists, target discovery or production-observation failures remain hard failures rather than fallback conditions.
 
-Actions #432 on `1f039148079b875ba706f7f1052b7a1596e1db32` completed successfully on Python 3.11, 3.12, 3.13, and 3.14. The full suite contains 221 tests; the real-browser integration test is part of that ordinary suite rather than a reduced compatibility smoke path.
+The production observation itself remains one target discovery plus one fixed read. It gains no browser-launch retry, navigation, target activation, page-read retry, or readiness semantics from the integration fixture.
+
+Evidence trail:
+
+- Actions #432 on `1f039148079b875ba706f7f1052b7a1596e1db32` first completed successfully on Python 3.11, 3.12, 3.13, and 3.14 with 221 tests including the real-browser path.
+- PR-context Actions #436 on `12b74bdd718764d6a4e035208ee969d74368b155` exposed the third fixture fact on Python 3.12 before production DevTools acquisition was reached; the other three lanes passed.
+- PR-context Actions #438 on `16acfa205718576a11102b85d082d0616eff88a2` then completed successfully on all four supported Python lanes. The previously failing Python 3.12 lane collected and passed all 221 tests, including the real-browser integration test.
+
+The real-browser integration test remains part of the ordinary suite rather than a reduced compatibility smoke path or a skipped supported-interpreter lane.
 
 ## Dependency boundary
 
