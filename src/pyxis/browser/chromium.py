@@ -126,11 +126,12 @@ def read_chromium_page_snapshot(
     expression = (
         "(() => {"
         'const text = document.body ? document.body.innerText : "";'
+        "const characters = Array.from(text);"
         "return {"
         'url: window.location.href,'
         'title: document.title,'
-        f"textPrefix: text.slice(0, {text_limit}),"
-        "textCharacterCount: text.length"
+        f"textPrefix: characters.slice(0, {text_limit}).join(''),"
+        "textCharacterCount: characters.length"
         "};"
         "})()"
     )
