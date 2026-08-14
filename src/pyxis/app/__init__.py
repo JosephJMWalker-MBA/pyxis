@@ -1,14 +1,17 @@
 from .apply import (
     ApplyResult,
+    apply_add_split_lines,
     apply_remove_normalize_text,
     apply_restore_normalize_text,
 )
 from .architecture_apply import (
     WorkspaceArchitectureApplyResult,
+    apply_workspace_add_split_lines,
     apply_workspace_remove_normalize_text,
 )
 from .architecture_preview import (
     WorkspaceArchitecturePreviewResult,
+    preview_workspace_add_split_lines,
     preview_workspace_remove_normalize_text,
 )
 from .build import (
@@ -90,6 +93,7 @@ from .presentation import (
 from .preview import (
     ArchitectureDelta,
     ArchitecturePreview,
+    preview_add_split_lines,
     preview_remove_normalize_text,
     preview_restore_normalize_text,
 )
@@ -153,8 +157,10 @@ __all__ = [
     "WorkspacePresentation",
     "WorkspaceRerunResult",
     "WorkspaceRuntimeController",
+    "apply_add_split_lines",
     "apply_remove_normalize_text",
     "apply_restore_normalize_text",
+    "apply_workspace_add_split_lines",
     "apply_workspace_remove_normalize_text",
     "build_and_run_workspace",
     "build_workspace",
@@ -168,8 +174,10 @@ __all__ = [
     "export_workspace",
     "measure_build_and_run_workspace",
     "partition_build_and_run_measurement_stage_samples",
+    "preview_add_split_lines",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
+    "preview_workspace_add_split_lines",
     "preview_workspace_remove_normalize_text",
     "project_build_and_run_measurement_stage_samples",
     "query_workspace_presentation",
