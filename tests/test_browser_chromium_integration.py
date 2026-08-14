@@ -18,7 +18,7 @@ def _wait_for_devtools_endpoint(
     profile: Path,
     process: subprocess.Popen,
     *,
-    timeout_seconds: float = 10.0,
+    timeout_seconds: float = 30.0,
 ) -> str:
     """Wait for Chromium's own remote-debugging endpoint declaration."""
 
