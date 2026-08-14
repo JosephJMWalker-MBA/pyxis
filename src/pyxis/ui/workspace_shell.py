@@ -12,6 +12,7 @@ from pyxis.app.measurement_summary_presentation import (
 )
 from pyxis.app.presentation import WorkspacePresentation
 
+from .architecture_consequence_trace_textual import ArchitectureConsequenceTraceDetail
 from .measurement_summary_textual import MeasurementSummaryDetail, MeasurementSummaryShell
 from .textual_shell import (
     ArchitectureApplyControls,
@@ -111,13 +112,15 @@ class WorkspaceShell(_WorkspaceShell):
         border: round $secondary;
     }
 
-    #split-lines-apply-controls {
+    #split-lines-apply-controls,
+    #architecture-consequence-trace {
         width: 100%;
         height: auto;
         margin-top: 1;
     }
 
-    #split-lines-rationale-label {
+    #split-lines-rationale-label,
+    #architecture-consequence-trace-title {
         text-style: bold;
         margin-bottom: 1;
     }
@@ -148,7 +151,7 @@ class WorkspaceShell(_WorkspaceShell):
             yield MeasurementSummaryDetail(self.measurement_presentation)
 
     async def on_mount(self) -> None:
-        """Expose the second concrete architecture preview beside the first."""
+        """Expose the second concrete architecture preview and read-only trace."""
 
         if self.controller is None:
             return
@@ -159,6 +162,8 @@ class WorkspaceShell(_WorkspaceShell):
                 id="preview-add-split-lines",
             )
         )
+        preview_detail = self.query_one(ArchitecturePreviewDetail)
+        await preview_detail.mount(ArchitectureConsequenceTraceDetail())
 
     async def supply_measurement_presentation(
         self,
@@ -205,6 +210,7 @@ class WorkspaceShell(_WorkspaceShell):
 
         if event.button.id == "preview-remove-normalize-text":
             self.call_after_refresh(self._clear_split_lines_apply_controls)
+            self.call_after_refresh(self._sync_consequence_trace)
             return
 
         if event.button.id == "apply-add-split-lines":
@@ -212,6 +218,7 @@ class WorkspaceShell(_WorkspaceShell):
             return
 
         if event.button.id == "apply-remove-normalize-text":
+            self.call_after_refresh(self._clear_consequence_trace)
             self.call_after_refresh(self._remove_incoherent_measurement)
 
     async def _preview_add_split_lines(self) -> None:
@@ -220,6 +227,9 @@ class WorkspaceShell(_WorkspaceShell):
 
         presentation = self.controller.preview_add_split_lines()
         self.query_one(ArchitecturePreviewDetail).replace_presentation(presentation)
+        self.query_one(ArchitectureConsequenceTraceDetail).replace_presentation(
+            presentation
+        )
 
         if len(self.query("#architecture-apply-controls")) != 0:
             await self.query_one(
@@ -234,6 +244,17 @@ class WorkspaceShell(_WorkspaceShell):
 
         container = self.query_one("#architecture-preview-interaction", Vertical)
         await container.mount(SplitLinesApplyControls())
+
+    async def _sync_consequence_trace(self) -> None:
+        preview_detail = self.query_one(ArchitecturePreviewDetail)
+        trace_detail = self.query_one(ArchitectureConsequenceTraceDetail)
+        if preview_detail.presentation is None:
+            trace_detail.clear_presentation()
+            return
+        trace_detail.replace_presentation(preview_detail.presentation)
+
+    async def _clear_consequence_trace(self) -> None:
+        self.query_one(ArchitectureConsequenceTraceDetail).clear_presentation()
 
     async def _clear_split_lines_apply_controls(self) -> None:
         if len(self.query("#split-lines-apply-controls")) == 0:
@@ -263,6 +284,7 @@ class WorkspaceShell(_WorkspaceShell):
         self.presentation = presentation
         self.query_one(WorkspaceDetail).replace_presentation(presentation)
         self.query_one(ArchitecturePreviewDetail).clear_presentation()
+        await self._clear_consequence_trace()
         await self.query_one(
             "#split-lines-apply-controls",
             SplitLinesApplyControls,
