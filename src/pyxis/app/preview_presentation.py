@@ -20,6 +20,16 @@ class CanonicalPreviewPresentation:
 
 
 @dataclass(frozen=True, slots=True)
+class ArchitectureConsequenceTraceStepPresentation:
+    """One exact preview-owned fact in an architecture consequence trace."""
+
+    stage: str
+    action: str
+    subject_kind: str
+    subject: str
+
+
+@dataclass(frozen=True, slots=True)
 class ArchitecturePreviewPresentation:
     """Immutable presentation-safe evidence for one proposed architecture edit."""
 
@@ -34,6 +44,7 @@ class ArchitecturePreviewPresentation:
     proposed_runtime_keys: tuple[str, ...]
     added_runtime_keys: tuple[str, ...]
     removed_runtime_keys: tuple[str, ...]
+    consequence_trace: tuple[ArchitectureConsequenceTraceStepPresentation, ...]
 
 
 def _present_canonical(spec: WorkspaceSpec) -> CanonicalPreviewPresentation:
@@ -44,6 +55,82 @@ def _present_canonical(spec: WorkspaceSpec) -> CanonicalPreviewPresentation:
         capabilities=spec.capabilities,
         canonical_sha256=canonical_sha256(spec),
     )
+
+
+def _trace_step(
+    stage: str,
+    action: str,
+    subject_kind: str,
+    subject: str,
+) -> ArchitectureConsequenceTraceStepPresentation:
+    return ArchitectureConsequenceTraceStepPresentation(
+        stage=stage,
+        action=action,
+        subject_kind=subject_kind,
+        subject=subject,
+    )
+
+
+def _create_consequence_trace(
+    preview: ArchitecturePreview,
+) -> tuple[ArchitectureConsequenceTraceStepPresentation, ...]:
+    """Project the preview's already-owned structural facts into stage order."""
+
+    delta = preview.delta
+    steps: list[ArchitectureConsequenceTraceStepPresentation] = []
+
+    for capability in delta.added_capabilities:
+        steps.append(
+            _trace_step(
+                "requested_architecture_change",
+                "add",
+                "capability",
+                capability,
+            )
+        )
+    for capability in delta.removed_capabilities:
+        steps.append(
+            _trace_step(
+                "requested_architecture_change",
+                "remove",
+                "capability",
+                capability,
+            )
+        )
+
+    for capability in delta.added_capabilities:
+        steps.append(
+            _trace_step("proposed_canonical", "add", "capability", capability)
+        )
+    for capability in delta.removed_capabilities:
+        steps.append(
+            _trace_step("proposed_canonical", "remove", "capability", capability)
+        )
+
+    for capability in delta.added_capabilities:
+        steps.append(_trace_step("proposed_rir", "add", "capability", capability))
+    for capability in delta.removed_capabilities:
+        steps.append(
+            _trace_step("proposed_rir", "remove", "capability", capability)
+        )
+
+    for path in delta.added_artifact_paths:
+        steps.append(_trace_step("compiler_product", "add", "artifact_path", path))
+    for path in delta.changed_artifact_paths:
+        steps.append(
+            _trace_step("compiler_product", "change", "artifact_path", path)
+        )
+    for path in delta.removed_artifact_paths:
+        steps.append(
+            _trace_step("compiler_product", "remove", "artifact_path", path)
+        )
+
+    for key in delta.added_runtime_keys:
+        steps.append(_trace_step("runtime_contract", "add", "runtime_key", key))
+    for key in delta.removed_runtime_keys:
+        steps.append(_trace_step("runtime_contract", "remove", "runtime_key", key))
+
+    return tuple(steps)
 
 
 def create_architecture_preview_presentation(
@@ -119,4 +206,5 @@ def create_architecture_preview_presentation(
         proposed_runtime_keys=proposed.capabilities,
         added_runtime_keys=preview.delta.added_runtime_keys,
         removed_runtime_keys=preview.delta.removed_runtime_keys,
+        consequence_trace=_create_consequence_trace(preview),
     )

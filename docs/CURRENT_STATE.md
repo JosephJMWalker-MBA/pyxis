@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Repository Zero current through Milestone 12B / D117 (2026-08-13).**
+**Continuity front door — Repository Zero current through Milestone 13A / D118 (2026-08-14).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md` and `docs/MILESTONE_12B.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, and `docs/MILESTONE_13A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Repository Zero checkpoint
 
-Repository Zero has five proven families:
+Repository Zero has six proven families:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -34,6 +34,8 @@ live measurement provenance / invalidation / re-entry
             +
 two concrete governed architecture operations
   with shared private application orchestration
+            +
+preview-only architecture consequence trace
 ```
 
 The permanent authority chain remains:
@@ -56,7 +58,7 @@ runtime
 
 Architectural change remains preview → rationale → append-only revision → canonical mutation → compile/materialize → run. Generated code is never a second source of truth. Export packages existing compiler products and READY remains verification evidence rather than filesystem inference.
 
-The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. One `WorkspaceController` remains the live transient-state authority.
+The first local Textual Workspace UI is complete for the current Repository Zero slice: it renders current evidence, reruns the materialized Workspace, previews either removal of `normalize_text` or addition of `split_lines`, traces the proposed consequences of that preview across the already-owned evidence stages, requires rationale before Apply, retires stale READY after architecture change, removes stale measurement evidence when exact RIR identity changes, and restores READY only through verified export refresh. One `WorkspaceController` remains the live transient-state authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -154,6 +156,34 @@ D117 therefore establishes a narrower rule than “two examples justify abstract
 
 Proof: Actions #380 passed on `4d75b37a03d0bb70de503ac98d78e3e747e61141`; all 206 Repository Zero tests passed.
 
+## Architecture consequence trace — 13A / D118
+
+13A moves the product from merely co-displaying evidence toward making the architecture-to-code transformation directly inspectable.
+
+`ArchitecturePreviewPresentation` now contains an immutable stage-ordered trace made only from facts already owned and validated by the preview:
+
+```text
+requested architecture change
+    ↓
+proposed canonical state
+    ↓
+proposed RIR
+    ↓
+compiler products
+    ↓
+runtime contract
+```
+
+Each step carries only stage, action, subject kind, and exact subject. For the visible `split_lines` proof, the trace states that the preview requests adding the capability, shows the same capability in proposed canonical and RIR state, identifies the new capability artifact and changed Workspace entrypoint, and identifies the added runtime key.
+
+The trace renderer is nested inside the existing preview evidence panel and remains explicitly **PROPOSED — NOT APPLIED**. It does not compile, run, persist, mutate, append revisions, refresh READY, acquire measurements, explain code, score impact, or infer causality. Current Workspace evidence remains unchanged during Preview.
+
+The application trace projection also produces the corresponding remove-action shape for `normalize_text`, while the first visible acceptance proof remains deliberately focused on `split_lines`.
+
+D118 therefore permits Pyxis to make an already-owned preview consequence chain explicit for the user without creating a new source of truth or an explanatory model.
+
+Proof: Actions #392 passed on `f8b75582176811d968335e001280942d59ad024e`; all 209 Repository Zero tests passed.
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -234,12 +264,13 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Timing/work association is not causal evidence and is not converted into efficiency or waste scoring.
 - Concrete architecture semantics remain explicit even where proven orchestration is privately shared.
 - A broader architecture-operation abstraction requires new product pressure, not merely a count of existing operations.
+- Architecture consequence traces are projections of preview evidence, not new architectural truth or explanatory inference.
 
 ## Current development discipline
 
 Do **not** continue the 11-series by adding another statistic merely because one is available. The existing descriptive set is sufficient to prove the measurement architecture and its provenance path.
 
-12B has completed the comparison requested by 12A. The operation-independent application orchestration has been extracted privately, while semantic and interaction boundaries remain concrete. Do not continue generalizing controller/UI operation identity merely to remove small duplication. The next milestone should answer a new concrete Pyxis product question. Revisit a broader operation model only if future work demonstrates that the named concrete seams obstruct real architecture editing.
+12B closed the abstraction question for the current two operations. 13A begins a product-facing inspectability question instead: can a user follow architecture into code consequences without Pyxis inventing meaning? The preview-only answer is now proven. Do not silently extend preview evidence into post-Apply authority. If the consequence-trace path continues, the next separate proof should reconcile an earlier preview trace with actual revision/compiler/runtime evidence after Apply while preserving the distinction between predicted and observed evidence.
 
 The package currently declares Python `>=3.11` while ordinary CI proves Python 3.11. That is not a Repository Zero blocker, but future release hardening should either prove additional supported interpreter lanes or narrow the declared support contract.
 

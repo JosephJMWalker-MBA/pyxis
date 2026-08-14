@@ -21,6 +21,8 @@ Run
       ↓
 Preview architectural change
       ↓
+Trace proposed architectural consequences
+      ↓
 Record rationale + append-only revision
       ↓
 Incremental recompilation
@@ -36,7 +38,7 @@ Verified wheel
 Fresh offline installation + execution
 ```
 
-The first local Textual Workspace UI now consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T.
+The first local Textual Workspace UI consumes those application boundaries rather than recreating them. Repository Zero also has a descriptive measurement path over the established build/run operation, with exact subject/workload/environment/work provenance, read-only summary presentation, and live Workspace/RIR provenance rules through Milestone 11T. Two concrete architecture operations now prove both additive and subtractive governed edits, with only demonstrated invariant orchestration shared privately. Milestone 13A adds a preview-only architecture consequence trace that connects requested change → proposed canonical state → proposed RIR → compiler-product consequences → runtime-contract consequences using only already-owned preview evidence.
 
 The first demonstrator remains intentionally small so the entire transformation can be inspected end to end.
 
@@ -88,7 +90,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 11T / D115.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current Repository Zero map through Milestone 13A / D118.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -100,6 +102,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Repository Zero is proven through Milestone 11T: the compiler/runtime/revision/export lifecycle, first interactive evidence UI, descriptive measurement pipeline, and live measurement provenance/invalidation/re-entry path all remain inside the permanent vertical slice.
+Repository Zero is proven through Milestone 13A / D118: the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, and preview-only architecture consequence trace all remain inside the permanent vertical slice.
 
-The next implementation milestone should answer a concrete Pyxis product question. Do not add another statistic or generalized abstraction merely because the current architecture makes one possible.
+Do not add another statistic, abstraction, or explanatory layer merely because the current architecture makes one possible. The next implementation milestone should answer a concrete product question; for the consequence-trace path, the next candidate is a separate proof that post-Apply actual revision/compiler/runtime evidence can be reconciled with the earlier preview without turning preview evidence into post-change authority.
