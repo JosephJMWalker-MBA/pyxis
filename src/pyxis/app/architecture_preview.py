@@ -7,7 +7,11 @@ from pyxis.authoring import load_workspace_spec
 
 from .build import BuildAndRunResult
 from .export import WorkspaceExportResult
-from .preview import ArchitecturePreview, preview_remove_normalize_text
+from .preview import (
+    ArchitecturePreview,
+    preview_add_split_lines,
+    preview_remove_normalize_text,
+)
 from .preview_presentation import (
     ArchitecturePreviewPresentation,
     create_architecture_preview_presentation,
@@ -45,6 +49,38 @@ def preview_workspace_remove_normalize_text(
     )
     spec = load_workspace_spec(root)
     preview = preview_remove_normalize_text(spec)
+    presentation = create_architecture_preview_presentation(preview)
+
+    if (
+        presentation.current.canonical_sha256
+        != current_presentation.canonical.canonical_sha256
+    ):
+        raise RuntimeError(
+            "Canonical Workspace state changed while architecture preview was being assembled."
+        )
+
+    return WorkspaceArchitecturePreviewResult(
+        preview=preview,
+        presentation=presentation,
+    )
+
+
+def preview_workspace_add_split_lines(
+    workspace_root: Path,
+    run: BuildAndRunResult,
+    *,
+    export: WorkspaceExportResult | None = None,
+) -> WorkspaceArchitecturePreviewResult:
+    """Preview split_lines addition for one coherent existing Workspace."""
+
+    root = workspace_root.resolve()
+    current_presentation = query_workspace_presentation(
+        root,
+        run=run,
+        export=export,
+    )
+    spec = load_workspace_spec(root)
+    preview = preview_add_split_lines(spec)
     presentation = create_architecture_preview_presentation(preview)
 
     if (
