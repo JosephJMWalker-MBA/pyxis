@@ -19,6 +19,7 @@ from pyxis.revisions import (
 from .build import BuildResult, build_workspace
 from .preview import (
     ArchitecturePreview,
+    preview_add_split_lines,
     preview_remove_normalize_text,
     preview_restore_normalize_text,
 )
@@ -26,6 +27,7 @@ from .preview import (
 
 _REMOVE_NORMALIZE_OPERATION = "remove_capability:normalize_text"
 _RESTORE_NORMALIZE_OPERATION = "restore_capability:normalize_text"
+_ADD_SPLIT_LINES_OPERATION = "add_capability:split_lines"
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,4 +114,20 @@ def apply_restore_normalize_text(
         rationale,
         operation=_RESTORE_NORMALIZE_OPERATION,
         preview_builder=preview_restore_normalize_text,
+    )
+
+
+def apply_add_split_lines(
+    preview: ArchitecturePreview,
+    destination_root: Path,
+    rationale: str,
+) -> ApplyResult:
+    """Apply the previewed split_lines addition through permanent boundaries."""
+
+    return _apply_previewed_edit(
+        preview,
+        destination_root,
+        rationale,
+        operation=_ADD_SPLIT_LINES_OPERATION,
+        preview_builder=preview_add_split_lines,
     )
