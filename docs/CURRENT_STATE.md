@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 15B / D122 (2026-08-14).**
+**Continuity front door — Pyxis current through Milestone 15C / D123 (2026-08-14).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, and `docs/MILESTONE_15B.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, and `docs/MILESTONE_15C.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis now has ten proven families. The first eight remain the Repository Zero reference spine; 15A and 15B add two concrete browser-facing evidence boundaries without changing that spine:
+Pyxis now has eleven proven families. The first eight remain the Repository Zero reference spine; 15A through 15C add three concrete browser-facing evidence boundaries without changing that spine:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -44,6 +44,8 @@ bounded Python support / multi-version CI
 read-only Chromium page observation evidence
             +
 read-only Chromium link-choice evidence
+            +
+read-only Chromium heading-outline evidence
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -71,6 +73,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 15A returns the product to its original browser/research purpose while preserving Chromium as the mature browser. A caller may supply one explicit Chromium DevTools endpoint and receive frozen application evidence for one existing page. Pyxis does not discover the browser, infer the active tab when multiple pages exist, navigate, interact, persist browser state, or interpret the page.
 
 15B reuses that exact endpoint and target-selection authority to expose bounded DOM-order link choices already present on the selected page. It preserves browser-resolved href values, bounded anchor text, exact Unicode counts, and collection truncation evidence without ranking, classifying, selecting, or following a link.
+
+15C reuses that same page-selection authority to expose bounded DOM-order `h1`–`h6` markers with literal HTML levels and bounded text. Heading gaps remain exactly as authored; Pyxis does not repair them into a semantic tree, summarize sections, or turn document structure into navigation authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -366,6 +370,38 @@ Actions #452 passed on `0f4fe856553f22983bc72bbfe5f973f20e42ab4e` across Python 
 
 D122 therefore establishes: **observing available navigation choices is still observation, not control. Pyxis may expose bounded DOM-order link evidence from one explicitly addressable existing Chromium page, while destination selection and every act of navigation remain outside this milestone's authority.**
 
+## Read-only Chromium heading-outline evidence — 15C / D123
+
+15C asks a separate research question: can Pyxis expose the section markers already encoded by the page author so a researcher can inspect document structure without Pyxis summarizing the page or inferring a semantic tree?
+
+The operation reuses the existing endpoint and exact page-selection boundary. `pyxis.app.chromium_headings` imports the existing private target selector rather than duplicating it.
+
+```text
+explicit selected existing page
+    ↓
+one fixed Runtime.evaluate read
+    ↓
+document.querySelectorAll('h1,h2,h3,h4,h5,h6')
+    ↓
+bounded DOM-order heading prefix
+    ↓
+frozen ChromiumPageHeadingsEvidence
+```
+
+`pyxis.browser.read_chromium_page_headings()` preserves a 1-based DOM-order ordinal, the literal HTML heading level from 1 through 6, a bounded `heading.innerText` prefix, and exact Unicode code-point count for every returned heading. The snapshot also records the complete matching-heading count so collection truncation is mechanical.
+
+`pyxis.app.observe_chromium_page_headings()` projects those facts into immutable evidence with explicit source `document.querySelectorAll('h1,h2,h3,h4,h5,h6')`, heading and text limits, and per-heading plus collection truncation facts.
+
+Heading level is page-authored evidence, not a Pyxis quality judgment or inferred hierarchy. A skipped sequence such as `h1 → h4` remains exactly `1 → 4`; Pyxis does not repair the gap, create missing levels, or classify the authoring pattern as an accessibility defect. Heading text is not treated as a verified summary of the following section.
+
+15C does not summarize, rank sections, infer a semantic tree, repair heading levels, extract ARIA landmarks, navigate, scroll, activate, click, submit, create/close targets, persist evidence, invoke an LLM, or add UI.
+
+The same real-browser fixture now proves all three observation families against one explicit caller-owned page target. It contains literal `h1`, `h3`, and `h6` elements. Under `heading_limit=2`, the first two are returned as levels 1 and 3 while the third remains represented only through `heading_count=3` and `truncated=True`. Unicode heading text is bounded and counted in code points.
+
+Actions #465 passed on `05e19a3516972ffaf3b8b7f692cffe42d465e4e5` across Python 3.11, 3.12, 3.13, and 3.14. The full suite contains 231 tests and includes the real-browser page/link/heading evidence path.
+
+D123 therefore establishes: **literal author-provided heading markers are valid read-only research evidence. Pyxis may expose bounded DOM-order h1–h6 facts from one explicitly selected existing Chromium page, but the encoded levels remain observations rather than a repaired hierarchy, summary, quality score, or control surface.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -455,6 +491,8 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Browser observation evidence is distinct from navigation, interaction, persistence, and interpretation.
 - Link DOM order is document-order evidence, not ranking or recommendation.
 - Observed href values are not navigation permission, destination selection, or safety classification.
+- Heading DOM order and literal h1–h6 levels are page-authored evidence, not a repaired semantic hierarchy.
+- Skipped heading levels remain skipped unless a separate future product decision explicitly earns interpretive authority.
 
 ## Current development discipline
 
@@ -467,6 +505,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 15A proves the first read-only Chromium observation boundary. Do not immediately grow that proof into navigation, clicks, form submission, arbitrary CDP access, browser-state persistence, autonomous research, LLM interpretation, a generic browser abstraction, or browser UI merely because an existing page can now be observed.
 
 15B proves that the available link choices on the selected page can also be exposed as bounded immutable evidence without following them. Do not convert DOM order into ranking, observed href values into permissions, or this evidence surface into navigation control. Any future destination selection or navigation operation requires its own concrete product question, explicit authority boundary, and proof.
+
+15C proves that literal h1–h6 markers can be exposed as bounded document-structure evidence without semantic repair or summarization. Do not convert heading level into quality, skipped levels into automatically corrected hierarchy, heading text into verified section summaries, or the outline into scrolling/navigation authority. Any future semantic interpretation, accessibility judgment, or browser control requires its own product question and evidence.
 
 ## Why the older central status lines are not being rewritten now
 
