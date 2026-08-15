@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 15G / D127 (2026-08-15).**
+**Continuity front door — Pyxis current through Milestone 16A / D128 (2026-08-15).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, and `docs/MILESTONE_15G.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, and `docs/MILESTONE_16A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis now has fifteen proven families. The first eight remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, and 16A composes those seven existing browser families without creating a new source of truth:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -54,6 +54,8 @@ read-only Chromium paragraph evidence
 read-only Chromium table-structure evidence
             +
 read-only Chromium list-structure evidence
+            +
+sequential read-only Chromium research evidence bundle
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -91,6 +93,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 15F reuses the same page-selection authority to expose bounded literal HTML-table structure. It preserves table/row/cell DOM order, direct captions, literal `TH`/`TD` cell identity, browser-exposed row/column spans, exact counts, and nested truncation facts without expanding spans, inferring header relationships, typing values, or flattening the structure into a normalized dataset.
 
 15G reuses the same page-selection authority to expose bounded literal ordered/unordered-list structure. It preserves global list DOM order, literal `OL`/`UL` identity, raw authored `start`/`value` strings, direct `LI` children, exact counts, and mechanical parent-list/item ordinals for nested lists. Direct-list item text excludes descendant-list text so nesting remains separate evidence rather than being silently flattened. Pyxis does not repair numbering or turn DOM nesting into semantic hierarchy.
+
+16A composes those seven proven browser evidence families through one application-level convenience boundary. The first page read selects the target under the existing 15A rules; the remaining six reads reuse that exact target ID in fixed order. Every constituent evidence object must retain the same endpoint, target ID, and page URL before the bundle is emitted. The bundle records `acquisition_mode="sequential_non_atomic_url_coherent"`: URL agreement is a coherence check, not proof that one frozen DOM state existed across all seven reads.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -550,6 +554,42 @@ Actions #517 passed on `5f3f5fbdefc2b27d1d54395cce69e7044c4ec60b` across Python 
 
 D127 therefore establishes: **literal ordered/unordered list structure is valid read-only research evidence, but DOM nesting and authored numbering attributes are not semantic hierarchy or corrected numbering. Pyxis may expose bounded DOM-order `OL`/`UL` records from one explicitly selected existing Chromium page, including raw authored `start`/`value` attributes, direct `LI` children, direct-list text evidence that excludes descendant-list text, and mechanical parent-list/item ordinals, while granting no list repair, semantic grouping, ranking, interpretation, navigation, or browser-control authority.**
 
+## Read-only Chromium research evidence bundle — 16A / D128
+
+16A asks whether Pyxis can compose the seven proven browser evidence families into one convenient research-page object without pretending seven sequential reads form one atomic DOM snapshot.
+
+The new boundary is application composition only:
+
+```text
+caller-supplied Chromium endpoint
+    ↓
+page observation / established target selection
+    ↓
+exact selected target id
+    ↓
+links → headings → metadata → paragraphs → tables → lists
+    ↓
+exact endpoint + target + URL coherence after each read
+    ↓
+frozen ChromiumPageResearchEvidenceBundle
+```
+
+`pyxis.app.observe_chromium_page_research_bundle()` calls the existing seven public observers rather than adding a second transport path. The first `observe_chromium_page()` call selects the page under the existing 15A authority. Every later family receives that exact selected target ID explicitly.
+
+The resulting `ChromiumPageResearchEvidenceBundle` contains the exact existing page, link, heading, metadata, paragraph, table, and list evidence objects. It does not copy their facts into a second representation, merge their semantics, rank across families, or become a new source of truth.
+
+The fixed acquisition order is `page → links → headings → metadata → paragraphs → tables → lists`. The bundle records `acquisition_mode="sequential_non_atomic_url_coherent"`. After each constituent read, endpoint, target ID, and URL must exactly match the initial page evidence. A mismatch raises `ChromiumReadError`, stops later acquisition, and emits no bundle.
+
+That coherence rule is deliberately weaker than an atomic-snapshot claim. A same-URL DOM mutation can still occur between reads. 16A adds no DOM hash, page-version token, mutation observer, freeze protocol, browser-state ownership, or other mechanism that would justify saying all seven objects describe one frozen browser instant.
+
+16A also adds no bundle-wide limit configuration. Each constituent observer keeps its already-proven bounded defaults; callers that need different limits may continue to call the individual observers directly.
+
+The independent real-browser proof uses one static local page containing all seven supported evidence shapes: title/body text, one link, one `h1`, authored language/canonical/description metadata, one paragraph, one table, and one ordered list with authored `start`/`value`. The production bundle operation retains one exact endpoint, target ID, and URL across all seven members while preserving each family's literal evidence.
+
+Actions #527 passed on `b4e803ec725fb7bff34020ee94f894bb7cc759af` across Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected **260 tests**; the five focused 16A application tests, the real Chromium research-bundle integration, and all established browser integrations passed; **260 passed**.
+
+D128 therefore establishes: **existing read-only Chromium evidence families may be composed into one research-page bundle only when composition preserves their independent evidence ownership and makes acquisition order, exact target reuse, URL coherence, and non-atomicity explicit. URL agreement across sequential reads is a coherence check, not proof of one frozen DOM state. A bundle is a convenience boundary, not a new browser snapshot authority or source of truth.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -649,6 +689,8 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Span expansion, value typing, dataset normalization, and header relationship inference require separate future authority.
 - List DOM order, literal OL/UL identity, authored `start`/`value` strings, and nesting coordinates remain structure evidence rather than corrected numbering or semantic hierarchy.
 - Direct-list item text excludes descendant-list text so nested list evidence remains structurally separate rather than silently flattened.
+- Research-bundle composition preserves the seven constituent application evidence objects rather than creating a second normalized representation or source of truth.
+- Exact endpoint/target/URL agreement across sequential bundle reads is coherence evidence, not proof of one atomic or frozen DOM state.
 
 ## Current development discipline
 
@@ -671,6 +713,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 15F proves that literal HTML-table structure can be exposed as bounded nested evidence without turning that structure into an invented dataset. Do not infer header-to-cell relationships, expand spans into synthesized grid coordinates, flatten tables into CSV-like rows, coerce rendered strings into typed values, or rank tables merely because the structure is visible. Any future table normalization, schema inference, typed-data extraction, or browser control requires its own product question and evidence.
 
 15G proves that literal ordered/unordered-list structure can be exposed without flattening nested lists or inventing semantic hierarchy. Do not repair authored numbering, calculate displayed counters, normalize invalid `start`/`value` attributes, interpret nested lists as substeps/dependencies/priorities, or merge descendant-list text into parent-item evidence merely because the DOM relationship is visible. Any future semantic outline, list normalization, priority inference, or browser control requires its own product question and evidence.
+
+16A proves the seven existing browser evidence families can be composed for research convenience without being promoted into one atomic snapshot. Do not add a DOM-freeze claim, page-version identity, semantic cross-family join, citation verifier, source verifier, browser-agent loop, generalized evidence-query language, persistence layer, or navigation/control surface merely because the bundle makes those directions convenient. Any such capability needs its own product pressure, authority boundary, and proof.
 
 ## Why the older central status lines are not being rewritten now
 
