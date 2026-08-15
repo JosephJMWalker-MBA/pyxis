@@ -25,6 +25,13 @@ from .chromium_paragraphs import (
     ChromiumPageParagraphsSnapshot,
     read_chromium_page_paragraphs,
 )
+from .chromium_tables import (
+    ChromiumPageTableCellSnapshot,
+    ChromiumPageTableRowSnapshot,
+    ChromiumPageTableSnapshot,
+    ChromiumPageTablesSnapshot,
+    read_chromium_page_tables,
+)
 
 __all__ = [
     "ChromiumPageCanonicalLinkSnapshot",
@@ -37,6 +44,10 @@ __all__ = [
     "ChromiumPageParagraphSnapshot",
     "ChromiumPageParagraphsSnapshot",
     "ChromiumPageSnapshot",
+    "ChromiumPageTableCellSnapshot",
+    "ChromiumPageTableRowSnapshot",
+    "ChromiumPageTableSnapshot",
+    "ChromiumPageTablesSnapshot",
     "ChromiumPageTarget",
     "ChromiumReadError",
     "list_chromium_page_targets",
@@ -46,4 +57,5 @@ __all__ = [
     "read_chromium_page_metadata",
     "read_chromium_page_paragraphs",
     "read_chromium_page_snapshot",
+    "read_chromium_page_tables",
 ]
