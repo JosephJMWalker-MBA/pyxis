@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 15F / D126 (2026-08-15).**
+**Continuity front door — Pyxis current through Milestone 15G / D127 (2026-08-15).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, and `docs/MILESTONE_15F.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, and `docs/MILESTONE_15G.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis now has fourteen proven families. The first eight remain the Repository Zero reference spine; 15A through 15F add six concrete browser-facing evidence boundaries without changing that spine:
+Pyxis now has fifteen proven families. The first eight remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -52,6 +52,8 @@ read-only Chromium page-declared metadata evidence
 read-only Chromium paragraph evidence
             +
 read-only Chromium table-structure evidence
+            +
+read-only Chromium list-structure evidence
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -87,6 +89,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 15E reuses the same page-selection authority to expose literal `<p>` elements as bounded DOM-order passage evidence. It preserves authored element IDs exactly as present, including duplicates and empty values, without treating paragraph boundaries as semantic segmentation or IDs as stable citation locators.
 
 15F reuses the same page-selection authority to expose bounded literal HTML-table structure. It preserves table/row/cell DOM order, direct captions, literal `TH`/`TD` cell identity, browser-exposed row/column spans, exact counts, and nested truncation facts without expanding spans, inferring header relationships, typing values, or flattening the structure into a normalized dataset.
+
+15G reuses the same page-selection authority to expose bounded literal ordered/unordered-list structure. It preserves global list DOM order, literal `OL`/`UL` identity, raw authored `start`/`value` strings, direct `LI` children, exact counts, and mechanical parent-list/item ordinals for nested lists. Direct-list item text excludes descendant-list text so nesting remains separate evidence rather than being silently flattened. Pyxis does not repair numbering or turn DOM nesting into semantic hierarchy.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -512,6 +516,40 @@ Actions #504 passed on `670e74274e09e22c71fcb414ae3cb27efc053647` across Python 
 
 D126 therefore establishes: **literal HTML table structure is valid read-only research evidence, but table markup is not automatically a normalized dataset. Pyxis may expose bounded table/row/cell DOM facts from one explicitly selected existing Chromium page, including literal TH/TD identity and browser-exposed row/column spans, while granting no header-inference, span-expansion, value-typing, dataset-normalization, ranking, interpretation, or browser-control authority.**
 
+## Read-only Chromium list evidence — 15G / D127
+
+15G asks whether Pyxis can expose authored ordered/unordered list structure for research inspection without flattening nested lists, repairing numbering, or promoting DOM nesting into semantic hierarchy.
+
+The operation reuses the established endpoint and exact page-selection authority.
+
+```text
+explicit selected existing page
+    ↓
+one fixed Runtime.evaluate read
+    ↓
+document.querySelectorAll('ol,ul')
+    ↓
+bounded global DOM-order OL/UL evidence
+    ↓
+direct LI children + mechanical nesting coordinates
+```
+
+`pyxis.browser.read_chromium_page_lists()` preserves global 1-based list DOM ordinals, literal `OL`/`UL` tag identity, raw authored `start` strings, direct `LI` children, raw authored item `value` strings, bounded direct-list text, exact Unicode code-point counts, and complete list/item counts. When a list is nested, it also preserves the nearest ancestor-list ordinal and the direct parent-item ordinal within that ancestor list.
+
+Parent-item `innerText` would include descendant-list content and silently flatten two DOM structures. The fixed 15G read instead walks text nodes and includes a text node only when its nearest `ol,ul` ancestor is the list currently being observed. Descendant-list text therefore remains separate evidence owned by the descendant list record.
+
+`pyxis.app.observe_chromium_page_lists()` projects those facts into immutable evidence with explicit source `document.querySelectorAll('ol,ul')`, list/item/text limits, and mechanical collection/item/text truncation facts.
+
+List markup is structure evidence, not semantic hierarchy or corrected numbering. Raw `start`/`value` strings are preserved even when unusual or invalid for the authored element; Pyxis does not discard, parse, repair, or validate them into a numbering model. A nested list is nested because the DOM nests it, not because Pyxis decided it is a subargument, substep, dependency, priority, or conceptual child.
+
+15G does not calculate displayed list numbers, repair numbering, validate authored attributes, interpret CSS counters/styles, flatten nested lists, infer a semantic outline, classify task/substep relationships, rank items, infer priority, summarize list content, scroll, navigate, activate, click, submit, create/close targets, persist evidence, invoke an LLM, or add UI.
+
+The independent real-browser proof contains one `OL start="3"` with three direct items, a nested `UL start="99"` inside the second item, and a separate third list. Under `list_limit=2`, `item_limit=2`, and `text_limit=7`, Pyxis returns two lists while preserving `list_count=3`; returns two outer items while preserving `item_count=3`; retains raw `value="7"` and bounded `Alpha 😀` text for the first item; retains the parent item's direct text as `Parent tail` without the nested `Nested` text; and preserves the nested list at parent-list ordinal 1 / parent-item ordinal 2 with raw `start="99"`, raw nested item `value="42"`, and separate `Nested` text.
+
+Actions #517 passed on `5f3f5fbdefc2b27d1d54395cce69e7044c4ec60b` across Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected 254 tests; established Chromium integrations and the new list real-browser integration all passed; **254 passed**.
+
+D127 therefore establishes: **literal ordered/unordered list structure is valid read-only research evidence, but DOM nesting and authored numbering attributes are not semantic hierarchy or corrected numbering. Pyxis may expose bounded DOM-order `OL`/`UL` records from one explicitly selected existing Chromium page, including raw authored `start`/`value` attributes, direct `LI` children, direct-list text evidence that excludes descendant-list text, and mechanical parent-list/item ordinals, while granting no list repair, semantic grouping, ranking, interpretation, navigation, or browser-control authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -609,6 +647,8 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Paragraph element IDs remain literal authored strings rather than guaranteed unique/stable citation locators.
 - Table DOM order, literal TH/TD identity, and browser-exposed spans remain structure evidence rather than a normalized dataset or inferred header map.
 - Span expansion, value typing, dataset normalization, and header relationship inference require separate future authority.
+- List DOM order, literal OL/UL identity, authored `start`/`value` strings, and nesting coordinates remain structure evidence rather than corrected numbering or semantic hierarchy.
+- Direct-list item text excludes descendant-list text so nested list evidence remains structurally separate rather than silently flattened.
 
 ## Current development discipline
 
@@ -629,6 +669,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 15E proves that authored `<p>` elements can be exposed as bounded passage-level evidence without semantic segmentation. Do not turn paragraph ordinals into relevance ranking, paragraph IDs into stable citation keys, or rendered paragraph text into a verified quotation claim. Any future citation/quotation verification, locator stability, semantic passage extraction, or browser control requires its own product question and evidence.
 
 15F proves that literal HTML-table structure can be exposed as bounded nested evidence without turning that structure into an invented dataset. Do not infer header-to-cell relationships, expand spans into synthesized grid coordinates, flatten tables into CSV-like rows, coerce rendered strings into typed values, or rank tables merely because the structure is visible. Any future table normalization, schema inference, typed-data extraction, or browser control requires its own product question and evidence.
+
+15G proves that literal ordered/unordered-list structure can be exposed without flattening nested lists or inventing semantic hierarchy. Do not repair authored numbering, calculate displayed counters, normalize invalid `start`/`value` attributes, interpret nested lists as substeps/dependencies/priorities, or merge descendant-list text into parent-item evidence merely because the DOM relationship is visible. Any future semantic outline, list normalization, priority inference, or browser control requires its own product question and evidence.
 
 ## Why the older central status lines are not being rewritten now
 
