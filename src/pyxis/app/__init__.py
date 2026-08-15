@@ -25,6 +25,12 @@ from .chromium_headings import (
     ChromiumPageHeadingsEvidence,
     observe_chromium_page_headings,
 )
+from .chromium_lists import (
+    ChromiumPageListEvidence,
+    ChromiumPageListItemEvidence,
+    ChromiumPageListsEvidence,
+    observe_chromium_page_lists,
+)
 from .chromium_metadata import (
     ChromiumCanonicalLinkEvidence,
     ChromiumMetaDescriptionEvidence,
@@ -164,6 +170,9 @@ __all__ = [
     "ChromiumPageHeadingsEvidence",
     "ChromiumPageLinkEvidence",
     "ChromiumPageLinksEvidence",
+    "ChromiumPageListEvidence",
+    "ChromiumPageListItemEvidence",
+    "ChromiumPageListsEvidence",
     "ChromiumPageMetadataEvidence",
     "ChromiumPageObservationEvidence",
     "ChromiumPageParagraphEvidence",
@@ -224,6 +233,7 @@ __all__ = [
     "observe_chromium_page",
     "observe_chromium_page_headings",
     "observe_chromium_page_links",
+    "observe_chromium_page_lists",
     "observe_chromium_page_metadata",
     "observe_chromium_page_paragraphs",
     "observe_chromium_page_tables",
