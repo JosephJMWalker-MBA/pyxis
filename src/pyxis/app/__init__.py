@@ -50,6 +50,10 @@ from .chromium_paragraphs import (
     ChromiumPageParagraphsEvidence,
     observe_chromium_page_paragraphs,
 )
+from .chromium_research_bundle import (
+    ChromiumPageResearchEvidenceBundle,
+    observe_chromium_page_research_bundle,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -177,6 +181,7 @@ __all__ = [
     "ChromiumPageObservationEvidence",
     "ChromiumPageParagraphEvidence",
     "ChromiumPageParagraphsEvidence",
+    "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
@@ -236,6 +241,7 @@ __all__ = [
     "observe_chromium_page_lists",
     "observe_chromium_page_metadata",
     "observe_chromium_page_paragraphs",
+    "observe_chromium_page_research_bundle",
     "observe_chromium_page_tables",
     "partition_build_and_run_measurement_stage_samples",
     "preview_add_split_lines",
