@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 15E / D125 (2026-08-15).**
+**Continuity front door — Pyxis current through Milestone 15F / D126 (2026-08-15).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, and `docs/MILESTONE_15E.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, and `docs/MILESTONE_15F.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis now has thirteen proven families. The first eight remain the Repository Zero reference spine; 15A through 15E add five concrete browser-facing evidence boundaries without changing that spine:
+Pyxis now has fourteen proven families. The first eight remain the Repository Zero reference spine; 15A through 15F add six concrete browser-facing evidence boundaries without changing that spine:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -50,6 +50,8 @@ read-only Chromium heading-outline evidence
 read-only Chromium page-declared metadata evidence
             +
 read-only Chromium paragraph evidence
+            +
+read-only Chromium table-structure evidence
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -83,6 +85,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 15D reuses the same page-selection authority to expose page-declared source-identity hints without promoting them into verified provenance. It preserves the authored document-language string, bounded canonical-link declarations with raw and browser-resolved hrefs, and bounded meta-description declarations. Duplicate or conflicting declarations remain visible rather than being silently resolved.
 
 15E reuses the same page-selection authority to expose literal `<p>` elements as bounded DOM-order passage evidence. It preserves authored element IDs exactly as present, including duplicates and empty values, without treating paragraph boundaries as semantic segmentation or IDs as stable citation locators.
+
+15F reuses the same page-selection authority to expose bounded literal HTML-table structure. It preserves table/row/cell DOM order, direct captions, literal `TH`/`TD` cell identity, browser-exposed row/column spans, exact counts, and nested truncation facts without expanding spans, inferring header relationships, typing values, or flattening the structure into a normalized dataset.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -474,6 +478,40 @@ Actions #491 passed on `291a0f2b617300b0be9cc1df6306096cf3de0967` across Python 
 
 D125 therefore establishes: **literal paragraph elements are valid read-only passage evidence, but paragraph boundaries and authored element IDs remain page-authored facts rather than Pyxis semantic segmentation or citation authority. Pyxis may expose bounded DOM-order `<p>` evidence from one explicitly selected existing Chromium page while preserving duplicate/empty IDs and granting no ranking, quotation-verification, locator-stability, or browser-control authority.**
 
+## Read-only Chromium table evidence — 15F / D126
+
+15F asks whether Pyxis can expose literal HTML table structure for research inspection without converting that structure into an inferred or normalized dataset.
+
+The operation reuses the established endpoint and exact page-selection authority.
+
+```text
+explicit selected existing page
+    ↓
+one fixed Runtime.evaluate read
+    ↓
+document.querySelectorAll('table')
+    ↓
+bounded table → row → direct TH/TD cell evidence
+    ↓
+frozen ChromiumPageTablesEvidence
+```
+
+`pyxis.browser.read_chromium_page_tables()` preserves 1-based table/row/cell DOM ordinals, a direct caption when present, literal `TH`/`TD` cell tag identity, browser-exposed `rowSpan` and `colSpan`, bounded rendered text, and exact Unicode code-point counts. Descendant rows whose nearest table ancestor is a nested table are excluded from the outer table's row evidence.
+
+The read is bounded independently by table count, rows per returned table, cells per returned row, and caption/cell text. Each collection retains its complete observed count, so table-, row-, and cell-level truncation remain mechanical rather than inferred.
+
+`pyxis.app.observe_chromium_page_tables()` projects those facts into immutable evidence with explicit source `document.querySelectorAll('table')` and explicit nested limits.
+
+Table markup is structure evidence, not automatically a rectangular dataset. `TH` is literal tag identity rather than a Pyxis-inferred header mapping. `rowspan` and `colspan` remain spans rather than being expanded into duplicated grid cells. Rendered strings remain strings; Pyxis does not infer numbers, dates, units, categories, schemas, or data quality.
+
+15F does not infer header relationships, expand spans, flatten tables into CSV-like rows, coerce values, merge multi-row headers, infer units or schemas, rank tables, judge statistical/data quality, reinterpret visual/CSS layout as table semantics, scroll, navigate, activate, click, submit, create/close targets, persist evidence, invoke an LLM, or add UI.
+
+The independent real-browser proof contains two tables. The first has caption `Study 😀 table`, two rows, a `TH` with `rowspan="2"`, a `TD` with `colspan="2"`, and a first row containing three cells. Under `table_limit=1`, `row_limit=1`, `cell_limit=2`, and `text_limit=7`, Pyxis returns one table, one row, and two cells while preserving complete counts of two tables, two first-table rows, and three first-row cells. The literal TH/TD identities and spans remain unchanged; caption/cell Unicode text is bounded and counted exactly.
+
+Actions #504 passed on `670e74274e09e22c71fcb414ae3cb27efc053647` across Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected 248 tests; established Chromium integrations and the new table real-browser integration all passed; **248 passed**.
+
+D126 therefore establishes: **literal HTML table structure is valid read-only research evidence, but table markup is not automatically a normalized dataset. Pyxis may expose bounded table/row/cell DOM facts from one explicitly selected existing Chromium page, including literal TH/TD identity and browser-exposed row/column spans, while granting no header-inference, span-expansion, value-typing, dataset-normalization, ranking, interpretation, or browser-control authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -569,6 +607,8 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Conflicting metadata declarations remain visible unless a separate future product decision explicitly earns resolution authority.
 - Paragraph boundaries remain page-authored DOM evidence rather than Pyxis semantic segmentation.
 - Paragraph element IDs remain literal authored strings rather than guaranteed unique/stable citation locators.
+- Table DOM order, literal TH/TD identity, and browser-exposed spans remain structure evidence rather than a normalized dataset or inferred header map.
+- Span expansion, value typing, dataset normalization, and header relationship inference require separate future authority.
 
 ## Current development discipline
 
@@ -587,6 +627,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 15D proves that page-declared language, canonical links, and descriptions can be exposed without being promoted into verified provenance. Do not silently choose among conflicting declarations, normalize authored language into a confidence claim, fetch a declared canonical destination, or turn metadata presence into source-quality evidence. Any future provenance verification or conflict resolution requires its own concrete product question and independently owned evidence.
 
 15E proves that authored `<p>` elements can be exposed as bounded passage-level evidence without semantic segmentation. Do not turn paragraph ordinals into relevance ranking, paragraph IDs into stable citation keys, or rendered paragraph text into a verified quotation claim. Any future citation/quotation verification, locator stability, semantic passage extraction, or browser control requires its own product question and evidence.
+
+15F proves that literal HTML-table structure can be exposed as bounded nested evidence without turning that structure into an invented dataset. Do not infer header-to-cell relationships, expand spans into synthesized grid coordinates, flatten tables into CSV-like rows, coerce rendered strings into typed values, or rank tables merely because the structure is visible. Any future table normalization, schema inference, typed-data extraction, or browser control requires its own product question and evidence.
 
 ## Why the older central status lines are not being rewritten now
 

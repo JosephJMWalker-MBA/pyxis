@@ -54,6 +54,8 @@ Milestone 15D adds page-declared metadata without promoting declaration into pro
 
 Milestone 15E adds literal paragraph-level passage evidence without semantic segmentation: Pyxis can expose bounded DOM-order `<p>` elements with authored IDs and exact Unicode counts. Duplicate or empty IDs remain exactly as authored and are not promoted into stable citation locators.
 
+Milestone 15F adds literal HTML-table structure evidence without normalizing it into a dataset: Pyxis can expose bounded DOM-order tables, captions, rows, direct `TH`/`TD` cells, browser-exposed row/column spans, and exact counts. Spans remain spans; Pyxis does not synthesize grid cells, infer header relationships, coerce value types, flatten tables into CSV-like rows, or rank tables.
+
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
 ## Core principles
@@ -75,6 +77,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Heading levels are page-authored evidence, not a Pyxis-repaired semantic hierarchy.
 - Page-declared metadata is evidence of declaration, not verified provenance or source identity.
 - Paragraph boundaries and authored IDs are page-authored evidence, not Pyxis citation authority or semantic segmentation.
+- HTML table structure is evidence; normalized datasets, header relationships, span expansion, and typed values require separate authority.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -154,7 +157,21 @@ authored id + bounded innerText + exact counts
 
 `observe_chromium_page_paragraphs()` returns the page URL, complete paragraph count, explicit paragraph limit, and a frozen tuple of paragraph records. Each record preserves the authored `id` string exactly as present, including duplicates or empty values. The operation does not split sentences, merge paragraphs, rank passages, verify quotations, or treat IDs as stable citation keys.
 
-These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, rank links/sections/passages, repair document structure, resolve provenance conflicts, verify quotations, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 15F adds a separate fixed table-structure read:
+
+```text
+selected existing page
+      ↓
+document.querySelectorAll('table')
+      ↓
+bounded table → row → direct TH/TD cell evidence
+      ↓
+literal tags + spans + bounded innerText + exact counts
+```
+
+`observe_chromium_page_tables()` returns the page URL, complete table count, explicit table limit, and frozen nested table evidence. Each returned table preserves a bounded direct caption, complete row count, and bounded row prefix; each returned row preserves a complete direct-cell count and bounded cell prefix; each returned cell preserves literal `TH`/`TD`, browser-exposed `rowSpan`/`colSpan`, bounded rendered text, and exact Unicode counts. Descendant rows belonging to a nested table are excluded from the outer table's row evidence. The operation does not expand spans, infer header mappings, normalize a rectangular grid, coerce values, or flatten the structure into a dataset.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, rank links/sections/passages/tables, repair document structure, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -200,7 +217,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15E / D125.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15F / D126.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -212,6 +229,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 15E / D125: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product now has five real read-only evidence boundaries over explicitly addressable existing Chromium pages: bounded page-content observation, bounded DOM-order link-choice observation, bounded literal heading-outline observation, bounded page-declared metadata observation, and bounded literal paragraph passage observation.
+Pyxis is proven through Milestone 15F / D126: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product now has six real read-only evidence boundaries over explicitly addressable existing Chromium pages: bounded page-content observation, bounded DOM-order link-choice observation, bounded literal heading-outline observation, bounded page-declared metadata observation, bounded literal paragraph passage observation, and bounded literal HTML-table structure observation.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Verified source identity, quotation verification, citation stability, navigation, interaction, permissions, persistence, research workflows, semantic interpretation, and browser UI each require their own evidence before they are allowed to grow from the current observation boundaries.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, navigation, interaction, permissions, persistence, research workflows, semantic interpretation, and browser UI each require their own evidence before they are allowed to grow from the current observation boundaries.
