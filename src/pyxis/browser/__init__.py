@@ -20,6 +20,11 @@ from .chromium_metadata import (
     ChromiumPageMetadataSnapshot,
     read_chromium_page_metadata,
 )
+from .chromium_paragraphs import (
+    ChromiumPageParagraphSnapshot,
+    ChromiumPageParagraphsSnapshot,
+    read_chromium_page_paragraphs,
+)
 
 __all__ = [
     "ChromiumPageCanonicalLinkSnapshot",
@@ -29,6 +34,8 @@ __all__ = [
     "ChromiumPageLinkSnapshot",
     "ChromiumPageLinksSnapshot",
     "ChromiumPageMetadataSnapshot",
+    "ChromiumPageParagraphSnapshot",
+    "ChromiumPageParagraphsSnapshot",
     "ChromiumPageSnapshot",
     "ChromiumPageTarget",
     "ChromiumReadError",
@@ -37,5 +44,6 @@ __all__ = [
     "read_chromium_page_headings",
     "read_chromium_page_links",
     "read_chromium_page_metadata",
+    "read_chromium_page_paragraphs",
     "read_chromium_page_snapshot",
 ]
