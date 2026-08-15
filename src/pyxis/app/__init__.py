@@ -39,6 +39,11 @@ from .chromium_observation import (
     observe_chromium_page,
     observe_chromium_page_links,
 )
+from .chromium_paragraphs import (
+    ChromiumPageParagraphEvidence,
+    ChromiumPageParagraphsEvidence,
+    observe_chromium_page_paragraphs,
+)
 from .controller import (
     WorkspaceArchitecturePreviewController,
     WorkspaceController,
@@ -154,6 +159,8 @@ __all__ = [
     "ChromiumPageLinksEvidence",
     "ChromiumPageMetadataEvidence",
     "ChromiumPageObservationEvidence",
+    "ChromiumPageParagraphEvidence",
+    "ChromiumPageParagraphsEvidence",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -207,6 +214,7 @@ __all__ = [
     "observe_chromium_page_headings",
     "observe_chromium_page_links",
     "observe_chromium_page_metadata",
+    "observe_chromium_page_paragraphs",
     "partition_build_and_run_measurement_stage_samples",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
