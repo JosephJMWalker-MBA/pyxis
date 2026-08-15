@@ -58,6 +58,8 @@ Milestone 15F adds literal HTML-table structure evidence without normalizing it 
 
 Milestone 15G adds literal ordered/unordered list evidence without flattening or semantic repair: Pyxis can expose bounded global DOM-order `OL`/`UL` records, direct `LI` children, raw authored `start`/`value` attributes, and mechanical parent-list/item ordinals for nested lists. Parent-item direct text excludes descendant-list text so nested structure remains separate evidence; Pyxis does not repair numbering or turn DOM nesting into conceptual hierarchy.
 
+Milestone 16A composes those seven proven evidence families into one immutable research-page bundle without inventing an atomic browser snapshot. The first read selects the page under existing rules; the next six reuse that exact target ID. Every member must retain the same endpoint, target, and URL, while the bundle explicitly records that acquisition is sequential and non-atomic.
+
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
 ## Core principles
@@ -81,6 +83,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Paragraph boundaries and authored IDs are page-authored evidence, not Pyxis citation authority or semantic segmentation.
 - HTML table structure is evidence; normalized datasets, header relationships, span expansion, and typed values require separate authority.
 - Ordered/unordered list identity, authored numbering attributes, and DOM nesting are structure evidence, not corrected numbering or semantic hierarchy.
+- Sequential composition of browser evidence must not be relabeled as one atomic DOM snapshot.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -190,7 +193,31 @@ mechanical parent-list/item coordinates
 
 `observe_chromium_page_lists()` returns the page URL, complete matching-list count, explicit list limit, and frozen list evidence. Each list preserves literal `OL`/`UL`, the raw authored `start` attribute, its direct `LI` count/prefix, and—when nested—the nearest ancestor-list ordinal plus direct parent-item ordinal. Each item preserves its raw authored `value` attribute and bounded direct-list text with exact Unicode counts. Direct-list text excludes descendant `OL`/`UL` text so nested content is not silently flattened into its parent item. The operation does not compute displayed numbering, validate or repair attributes, flatten nesting, or infer a semantic outline.
 
-These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 16A adds an application-level composition over those seven existing observers:
+
+```text
+page
+  ↓
+links
+  ↓
+headings
+  ↓
+metadata
+  ↓
+paragraphs
+  ↓
+tables
+  ↓
+lists
+  ↓
+exact endpoint + target + URL coherence
+  ↓
+ChromiumPageResearchEvidenceBundle
+```
+
+`observe_chromium_page_research_bundle()` performs no new CDP operation. The first page observation selects one exact existing target; every later observer receives that target ID explicitly. The bundle retains the seven constituent evidence objects unchanged, records the fixed acquisition order, and records `acquisition_mode="sequential_non_atomic_url_coherent"`. A changed endpoint, target, or URL aborts acquisition and emits no bundle. Same-URL DOM mutation remains possible, so URL agreement is a coherence gate rather than proof of one frozen DOM state. 16A adds no bundle-wide limit policy; each constituent observer keeps its established bounded defaults.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -236,7 +263,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 15G / D127.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 16A / D128.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -248,6 +275,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 15G / D127: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product now has seven real read-only evidence boundaries over explicitly addressable existing Chromium pages: bounded page-content observation, bounded DOM-order link-choice observation, bounded literal heading-outline observation, bounded page-declared metadata observation, bounded literal paragraph passage observation, bounded literal HTML-table structure observation, and bounded literal ordered/unordered-list structure observation.
+Pyxis is proven through Milestone 16A / D128: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages—page content, links, headings, page-declared metadata, paragraphs, HTML tables, and ordered/unordered lists—and one application-level research bundle that composes those families through fixed sequential acquisition with exact target and URL coherence while explicitly denying atomic-DOM semantics.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, navigation, interaction, permissions, persistence, research workflows, semantic interpretation, and browser UI each require their own evidence before they are allowed to grow from the current observation boundaries.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, persistence, autonomous research workflows, semantic interpretation, and browser UI each require their own evidence before they are allowed to grow from the current observation and composition boundaries.
