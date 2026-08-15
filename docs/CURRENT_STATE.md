@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 15C / D123 (2026-08-14).**
+**Continuity front door — Pyxis current through Milestone 15D / D124 (2026-08-15).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, and `docs/MILESTONE_15C.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, and `docs/MILESTONE_15D.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis now has eleven proven families. The first eight remain the Repository Zero reference spine; 15A through 15C add three concrete browser-facing evidence boundaries without changing that spine:
+Pyxis now has twelve proven families. The first eight remain the Repository Zero reference spine; 15A through 15D add four concrete browser-facing evidence boundaries without changing that spine:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -46,6 +46,8 @@ read-only Chromium page observation evidence
 read-only Chromium link-choice evidence
             +
 read-only Chromium heading-outline evidence
+            +
+read-only Chromium page-declared metadata evidence
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -75,6 +77,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 15B reuses that exact endpoint and target-selection authority to expose bounded DOM-order link choices already present on the selected page. It preserves browser-resolved href values, bounded anchor text, exact Unicode counts, and collection truncation evidence without ranking, classifying, selecting, or following a link.
 
 15C reuses that same page-selection authority to expose bounded DOM-order `h1`–`h6` markers with literal HTML levels and bounded text. Heading gaps remain exactly as authored; Pyxis does not repair them into a semantic tree, summarize sections, or turn document structure into navigation authority.
+
+15D reuses the same page-selection authority to expose page-declared source-identity hints without promoting them into verified provenance. It preserves the authored document-language string, bounded canonical-link declarations with raw and browser-resolved hrefs, and bounded meta-description declarations. Duplicate or conflicting declarations remain visible rather than being silently resolved.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -402,6 +406,38 @@ Actions #465 passed on `05e19a3516972ffaf3b8b7f692cffe42d465e4e5` across Python 
 
 D123 therefore establishes: **literal author-provided heading markers are valid read-only research evidence. Pyxis may expose bounded DOM-order h1–h6 facts from one explicitly selected existing Chromium page, but the encoded levels remain observations rather than a repaired hierarchy, summary, quality score, or control surface.**
 
+## Read-only page-declared metadata evidence — 15D / D124
+
+15D asks whether Pyxis can expose the source-identity hints already declared by a page without converting those hints into verified provenance.
+
+The operation reuses the existing endpoint and exact target-selection boundary. `pyxis.app.chromium_metadata` imports the same private target selector used by 15C rather than duplicating page-selection logic.
+
+```text
+explicit selected existing page
+    ↓
+one fixed Runtime.evaluate read
+    ↓
+authored document lang
++ link[rel~=canonical] declarations
++ meta[name=description] declarations
+    ↓
+frozen ChromiumPageMetadataEvidence
+```
+
+`pyxis.browser.read_chromium_page_metadata()` preserves the literal authored document `lang` string; bounded canonical-link declarations in DOM order with both raw `getAttribute('href')` and browser-resolved `link.href`; and bounded meta-description declarations with exact Unicode code-point counts. Complete canonical-link and description counts make collection truncation mechanical.
+
+`pyxis.app.observe_chromium_page_metadata()` projects those facts into immutable application evidence with explicit source strings and explicit limits. Duplicate or conflicting canonical links and descriptions remain separate declarations. Language is not normalized or validated.
+
+A canonical declaration is not verified canonical identity. A meta description is not a verified abstract or citation. A document language attribute is not proof that the rendered content actually uses that language. Browser resolution of a relative canonical href is an observed browser fact, not authorization to request or trust the destination.
+
+15D does not choose an authoritative canonical URL or description, validate language tags, extract author/publication-date/Open Graph/JSON-LD/schema.org/citation metadata, fetch destinations, navigate, activate, click, submit, scroll, create/close targets, persist evidence, score provenance, invoke an LLM, or add UI.
+
+The same real-browser fixture now proves all four observation families against one explicit caller-owned page target. The 15D fixture deliberately contains `EN-us`, two canonical declarations, and two description declarations. Under one-item collection limits, Pyxis returns the first observed declaration while preserving total counts of two and explicit truncation. The first relative canonical retains raw `canonical.html` alongside its exact Chromium-resolved file URL; the mixed-case metadata selectors are observed without selecting either declaration as authoritative.
+
+Actions #478 passed the 15D implementation suite on Python 3.11, 3.12, 3.13, and 3.14 at `947962c3aab3301eb245b75bc2f57eaf536d9aa5`. The full suite contains 236 tests and includes the real-browser page/link/heading/metadata evidence path.
+
+D124 therefore establishes: **page-declared metadata is evidence of what the page declares, not verified provenance. Pyxis may expose bounded document-language, canonical-link, and meta-description declarations from one explicitly selected existing Chromium page, while duplicate or conflicting declarations remain visible rather than being silently resolved into source truth.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -493,6 +529,8 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Observed href values are not navigation permission, destination selection, or safety classification.
 - Heading DOM order and literal h1–h6 levels are page-authored evidence, not a repaired semantic hierarchy.
 - Skipped heading levels remain skipped unless a separate future product decision explicitly earns interpretive authority.
+- Page-declared language, canonical links, and descriptions remain declarations rather than verified provenance.
+- Conflicting metadata declarations remain visible unless a separate future product decision explicitly earns resolution authority.
 
 ## Current development discipline
 
@@ -507,6 +545,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 15B proves that the available link choices on the selected page can also be exposed as bounded immutable evidence without following them. Do not convert DOM order into ranking, observed href values into permissions, or this evidence surface into navigation control. Any future destination selection or navigation operation requires its own concrete product question, explicit authority boundary, and proof.
 
 15C proves that literal h1–h6 markers can be exposed as bounded document-structure evidence without semantic repair or summarization. Do not convert heading level into quality, skipped levels into automatically corrected hierarchy, heading text into verified section summaries, or the outline into scrolling/navigation authority. Any future semantic interpretation, accessibility judgment, or browser control requires its own product question and evidence.
+
+15D proves that page-declared language, canonical links, and descriptions can be exposed without being promoted into verified provenance. Do not silently choose among conflicting declarations, normalize authored language into a confidence claim, fetch a declared canonical destination, or turn metadata presence into source-quality evidence. Any future provenance verification or conflict resolution requires its own concrete product question and independently owned evidence.
 
 ## Why the older central status lines are not being rewritten now
 

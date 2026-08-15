@@ -13,10 +13,12 @@ import pytest
 from pyxis.app import (
     ChromiumPageHeadingsEvidence,
     ChromiumPageLinksEvidence,
+    ChromiumPageMetadataEvidence,
     ChromiumPageObservationEvidence,
     observe_chromium_page,
     observe_chromium_page_headings,
     observe_chromium_page_links,
+    observe_chromium_page_metadata,
 )
 from pyxis.browser import ChromiumReadError
 
@@ -229,6 +231,59 @@ def _wait_for_heading_evidence(
     )
 
 
+def _wait_for_metadata_evidence(
+    endpoint: str,
+    target_id: str,
+    process: subprocess.Popen,
+    *,
+    expected_url: str,
+    expected_canonical_href: str,
+    timeout_seconds: float = 10.0,
+) -> ChromiumPageMetadataEvidence:
+    """Synchronize the test with head metadata readiness using production reads only."""
+
+    deadline = time.monotonic() + timeout_seconds
+    last_evidence: ChromiumPageMetadataEvidence | None = None
+    last_error: ChromiumReadError | None = None
+
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise AssertionError(
+                f"Chromium exited before metadata evidence became ready: {process.returncode}"
+            )
+        try:
+            evidence = observe_chromium_page_metadata(
+                endpoint,
+                target_id=target_id,
+                canonical_link_limit=1,
+                description_limit=1,
+                description_text_limit=7,
+                timeout=3.0,
+            )
+            last_evidence = evidence
+            if (
+                evidence.url == expected_url
+                and evidence.document_language == "EN-us"
+                and evidence.canonical_link_count == 2
+                and len(evidence.canonical_links) == 1
+                and evidence.canonical_links[0].raw_href == "canonical.html"
+                and evidence.canonical_links[0].resolved_href == expected_canonical_href
+                and evidence.description_count == 2
+                and len(evidence.descriptions) == 1
+                and evidence.descriptions[0].content_prefix == "Study 😀"
+                and evidence.descriptions[0].content_character_count == len("Study 😀 notes")
+            ):
+                return evidence
+        except ChromiumReadError as exc:
+            last_error = exc
+        time.sleep(0.1)
+
+    raise AssertionError(
+        "Timed out waiting for loaded Chromium metadata evidence; "
+        f"last evidence={last_evidence!r}; last error={last_error!r}"
+    )
+
+
 def _installed_browser_binaries() -> tuple[str, ...]:
     """Return distinct installed Chromium-family binaries in deterministic order."""
 
@@ -312,20 +367,26 @@ def test_observe_chromium_evidence_against_real_headless_browser(tmp_path: Path)
     text_limit = 7
     page = tmp_path / "page.html"
     page.write_text(
-        "<!doctype html><meta charset='utf-8'><title>Pyxis browser evidence</title>"
+        "<!doctype html><html lang='EN-us'><head><meta charset='utf-8'>"
+        "<title>Pyxis browser evidence</title>"
+        "<link rel='canonical' href='canonical.html'>"
+        "<link rel='CANONICAL' href='https://mirror.example.test/item'>"
+        "<meta name='Description' content='Study 😀 notes'>"
+        "<meta name='description' content='Conflicting description'>"
         "<style>h1,h3,h6{display:inline;font-size:inherit}</style>"
-        "<body>alpha 😀 beta "
+        "</head><body>alpha 😀 beta "
         "<a href='first.html'>First 😀 link</a> "
         "<a href='mailto:research@example.test'>Email</a> "
         "<a href='javascript:void(0)'>Action</a> "
         "<h1>Intro 😀 section</h1> "
         "<h3>Methods</h3> "
         "<h6>Appendix</h6>"
-        "</body>",
+        "</body></html>",
         encoding="utf-8",
     )
     page_url = page.as_uri()
     expected_first_href = (tmp_path / "first.html").as_uri()
+    expected_canonical_href = (tmp_path / "canonical.html").as_uri()
 
     process, endpoint = _launch_browser_with_devtools(browsers, tmp_path, page_url)
     try:
@@ -400,5 +461,33 @@ def test_observe_chromium_evidence_against_real_headless_browser(tmp_path: Path)
         assert heading_evidence.headings[1].level == 3
         assert heading_evidence.headings[1].text_prefix == "Methods"
         assert heading_evidence.headings[1].truncated is False
+
+        metadata_evidence = _wait_for_metadata_evidence(
+            endpoint,
+            target_id,
+            process,
+            expected_url=page_url,
+            expected_canonical_href=expected_canonical_href,
+        )
+
+        assert metadata_evidence.endpoint == endpoint
+        assert metadata_evidence.target_id == target_id
+        assert metadata_evidence.url == page_url
+        assert metadata_evidence.document_language == "EN-us"
+        assert metadata_evidence.language_source == "document.documentElement.getAttribute('lang')"
+        assert metadata_evidence.canonical_link_count == 2
+        assert metadata_evidence.canonical_link_limit == 1
+        assert metadata_evidence.canonical_links_truncated is True
+        assert metadata_evidence.canonical_links[0].ordinal == 1
+        assert metadata_evidence.canonical_links[0].raw_href == "canonical.html"
+        assert metadata_evidence.canonical_links[0].resolved_href == expected_canonical_href
+        assert metadata_evidence.description_count == 2
+        assert metadata_evidence.description_limit == 1
+        assert metadata_evidence.descriptions_truncated is True
+        assert metadata_evidence.descriptions[0].ordinal == 1
+        assert metadata_evidence.descriptions[0].content_prefix == "Study 😀"
+        assert metadata_evidence.descriptions[0].content_character_count == len("Study 😀 notes")
+        assert metadata_evidence.descriptions[0].content_limit == 7
+        assert metadata_evidence.descriptions[0].truncated is True
     finally:
         _terminate_browser(process)

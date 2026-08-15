@@ -25,6 +25,12 @@ from .chromium_headings import (
     ChromiumPageHeadingsEvidence,
     observe_chromium_page_headings,
 )
+from .chromium_metadata import (
+    ChromiumCanonicalLinkEvidence,
+    ChromiumMetaDescriptionEvidence,
+    ChromiumPageMetadataEvidence,
+    observe_chromium_page_metadata,
+)
 from .chromium_observation import (
     ChromiumPageContentEvidence,
     ChromiumPageLinkEvidence,
@@ -139,11 +145,14 @@ __all__ = [
     "BuildWorkEvidence",
     "CanonicalPresentation",
     "CanonicalPreviewPresentation",
+    "ChromiumCanonicalLinkEvidence",
+    "ChromiumMetaDescriptionEvidence",
     "ChromiumPageContentEvidence",
     "ChromiumPageHeadingEvidence",
     "ChromiumPageHeadingsEvidence",
     "ChromiumPageLinkEvidence",
     "ChromiumPageLinksEvidence",
+    "ChromiumPageMetadataEvidence",
     "ChromiumPageObservationEvidence",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
@@ -197,6 +206,7 @@ __all__ = [
     "observe_chromium_page",
     "observe_chromium_page_headings",
     "observe_chromium_page_links",
+    "observe_chromium_page_metadata",
     "partition_build_and_run_measurement_stage_samples",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
