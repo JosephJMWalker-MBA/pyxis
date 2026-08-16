@@ -73,6 +73,13 @@ from .chromium_research_selection_note import (
     ChromiumPageResearchParagraphNoteRecord,
     create_chromium_research_paragraph_note,
 )
+from .chromium_research_selection_note_persistence import (
+    ChromiumPageResearchParagraphNotePersistenceEvidence,
+    ChromiumPageResearchParagraphNoteVerificationEvidence,
+    ChromiumResearchParagraphNoteIntegrityError,
+    persist_chromium_research_paragraph_note,
+    verify_chromium_research_paragraph_note,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -204,13 +211,16 @@ __all__ = [
     "ChromiumPageResearchCaptureVerificationEvidence",
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageResearchLoadedCaptureEvidence",
+    "ChromiumPageResearchParagraphNotePersistenceEvidence",
     "ChromiumPageResearchParagraphNoteRecord",
+    "ChromiumPageResearchParagraphNoteVerificationEvidence",
     "ChromiumPageResearchParagraphSelectionEvidence",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
     "ChromiumPageTablesEvidence",
     "ChromiumResearchCaptureIntegrityError",
+    "ChromiumResearchParagraphNoteIntegrityError",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -272,6 +282,7 @@ __all__ = [
     "observe_chromium_page_tables",
     "partition_build_and_run_measurement_stage_samples",
     "persist_chromium_page_research_capture",
+    "persist_chromium_research_paragraph_note",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
@@ -283,4 +294,5 @@ __all__ = [
     "rerun_workspace",
     "select_chromium_research_capture_paragraph",
     "verify_chromium_page_research_capture",
+    "verify_chromium_research_paragraph_note",
 ]
