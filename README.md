@@ -68,6 +68,8 @@ Milestone 17A adds the first explicit researcher-owned action over that durable 
 
 Milestone 17B lets the caller attach one exact human-authored note to one exact 17A selection. The immutable note record retains the exact selection object and caller text verbatim while keeping human interpretation visibly separate from page/source evidence; it adds no inferred author, timestamp, claim support, truth, relevance, citation, or machine-interpretation authority.
 
+Milestone 17C makes that one 17B note durable without copying the source evidence. A deterministic no-overwrite sidecar stores only the source capture format + bundle SHA-256, explicit paragraph ordinal/selection mode, and exact note mode/verbatim caller text. Its digest covers the complete attachment record but remains self-integrity only; note verification does not reopen or relink the source capture.
+
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
 ## Core principles
@@ -96,6 +98,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Rehydrated durable evidence must retain the verification evidence that authorized reopening; reconstructing types must not erase acquisition origin.
 - Explicit researcher selection must point to existing evidence and preserve its limits; human choice is provenance, not relevance or truth proof.
 - Caller-authored notes may reference exact selected evidence, but human interpretation remains distinct from page/source evidence and must not be silently promoted into a claim about the source.
+- Durable human-note persistence should reference already-durable source content rather than copy browser evidence into a second representation; its checksum is integrity, not authorship.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -297,7 +300,27 @@ ChromiumPageResearchParagraphNoteRecord
 
 `create_chromium_research_paragraph_note()` is pure application logic. It retains the exact supplied 17A selection object and stores the caller's string without trimming or normalization; whitespace stripping is used only to refuse an all-whitespace non-note. The selected paragraph must still be the exact object by identity at its ordinal inside the exact loaded-capture source. An equal-by-value paragraph copy is rejected. The result is deliberately called a `NoteRecord`, not page evidence: it records human interpretation attached to selected evidence, not a statement that the page proves the note. 17B adds no author identity, timestamp, tag, note type, relevance, confidence, claim-support semantics, quotation/citation authority, or machine interpretation.
 
-These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, authenticate capture authorship, verify source provenance, create trusted timestamps, treat rehydrated evidence as fresh observation, automatically choose research evidence, promote caller-authored notes into source truth, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 17C adds one durable sidecar boundary downstream of 17B:
+
+```text
+ChromiumPageResearchParagraphNoteRecord
+      ↓
+source capture format + bundle SHA-256
++ paragraph ordinal / selection mode
++ note mode / verbatim note text
+      ↓
+canonical deterministic JSON
+      ↓
+SHA-256 over complete attachment record
+      ↓
+exclusive-create human-note sidecar
+```
+
+`persist_chromium_research_paragraph_note()` does not serialize the 17B object graph. The sidecar format `pyxis.chromium.research_paragraph_note.v1` stores only the already-durable source capture content reference, the exact paragraph ordinal/selection mode, and the note mode/text. Page URL, endpoint, target ID, paragraph text, source file path, and the complete capture remain absent. Runtime persistence evidence retains the exact supplied 17B note object, while the on-disk identity changes honestly from Python object identity to durable source-content identity.
+
+`verify_chromium_research_paragraph_note()` reads only the sidecar and checks its exact shape, modes, source bundle-digest shape, positive paragraph ordinal, nonblank verbatim note text, recorded SHA-256, and canonical bytes. It does not locate, read, verify, or rehydrate the referenced capture and therefore does not yet recreate a 17A selection or 17B note object. The sidecar checksum is self-integrity only: an actor able to rewrite the payload and digest can create another self-consistent sidecar, so 17C adds no authorship or authentication authority.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, authenticate capture or note authorship, verify source provenance, create trusted timestamps, treat rehydrated evidence as fresh observation, automatically choose research evidence, promote caller-authored notes into source truth, relink a durable note sidecar to source evidence without an explicit future check, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -343,7 +366,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 17B / D132.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 17C / D133.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -355,6 +378,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 17B / D132: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, one deterministic no-overwrite capture format that preserves the complete already-observed bundle with SHA-256 self-integrity evidence, one verified rehydration boundary that can reconstruct the typed bundle after the browser is gone while retaining the exact capture-verification evidence, one human-owned paragraph-selection boundary that points to exact already-returned durable evidence without reacquisition or semantic promotion, and one human-authored note-record boundary that preserves exact caller text over the exact selection while keeping interpretation distinct from source evidence.
+Pyxis is proven through Milestone 17C / D133: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, one deterministic no-overwrite capture format that preserves the complete already-observed bundle with SHA-256 self-integrity evidence, one verified rehydration boundary that can reconstruct the typed bundle after the browser is gone while retaining the exact capture-verification evidence, one human-owned paragraph-selection boundary that points to exact already-returned durable evidence without reacquisition or semantic promotion, one human-authored note-record boundary that preserves exact caller text over the exact selection while keeping interpretation distinct from source evidence, and one deterministic human-note sidecar that preserves only the durable source-content reference + human action without duplicating source evidence or claiming authorship.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, capture database, authenticity claim, generic selection/annotation registry, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete researcher action. Persisted selections/notes, note editing/history, multiple-note or notebook abstractions, questions, tags, trusted temporal provenance, capture indexing/search, cross-capture comparison, HMAC/signature systems, verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, autonomous research workflows, machine semantic interpretation, generated notes, and browser UI each still require their own evidence before they are allowed to grow from the current observation, composition, persistence, rehydration, human-selection, and human-note boundaries.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, capture database, authenticity claim, generic selection/annotation registry, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete researcher action. Durable-note relinking/typed reopening, note editing/history, multiple-note or notebook abstractions, questions, tags, trusted temporal provenance, capture indexing/search, cross-capture comparison, HMAC/signature systems, verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, autonomous research workflows, machine semantic interpretation, generated notes, and browser UI each still require their own evidence before they are allowed to grow from the current observation, composition, source persistence/rehydration, human-selection, human-note, and human-note persistence boundaries.
