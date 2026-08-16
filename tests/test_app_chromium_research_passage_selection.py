@@ -5,6 +5,11 @@ from pathlib import Path
 
 import pytest
 
+from pyxis.app import (
+    load_chromium_page_research_capture,
+    persist_chromium_page_research_capture,
+    select_chromium_research_capture_paragraph,
+)
 from pyxis.app.chromium_headings import ChromiumPageHeadingsEvidence
 from pyxis.app.chromium_lists import ChromiumPageListsEvidence
 from pyxis.app.chromium_metadata import ChromiumPageMetadataEvidence
@@ -20,9 +25,6 @@ from pyxis.app.chromium_paragraphs import (
 from pyxis.app.chromium_research_bundle import ChromiumPageResearchEvidenceBundle
 from pyxis.app.chromium_research_capture import ChromiumPageResearchCaptureVerificationEvidence
 from pyxis.app.chromium_research_capture_load import ChromiumPageResearchLoadedCaptureEvidence
-from pyxis.app.chromium_research_passage_selection import (
-    select_chromium_research_capture_paragraph,
-)
 from pyxis.app.chromium_tables import ChromiumPageTablesEvidence
 
 
@@ -237,3 +239,20 @@ def test_select_rehydrated_paragraph_rejects_source_origin_incoherence() -> None
 
     with pytest.raises(ValueError, match="verification url is incoherent"):
         select_chromium_research_capture_paragraph(source, paragraph_ordinal=1)
+
+
+def test_select_paragraph_after_real_capture_persist_and_reload(tmp_path: Path) -> None:
+    original = _loaded_capture()
+    capture_path = tmp_path / "research-capture.json"
+
+    persist_chromium_page_research_capture(original.bundle, capture_path)
+    loaded = load_chromium_page_research_capture(capture_path)
+    selection = select_chromium_research_capture_paragraph(
+        loaded,
+        paragraph_ordinal=1,
+    )
+
+    assert selection.source is loaded
+    assert selection.source.verification.path == capture_path.resolve()
+    assert selection.paragraph is loaded.bundle.paragraphs.paragraphs[0]
+    assert selection.paragraph.text_prefix == "Alpha"
