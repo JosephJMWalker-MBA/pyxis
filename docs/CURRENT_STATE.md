@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 16B / D129 (2026-08-15).**
+**Continuity front door — Pyxis current through Milestone 16C / D130 (2026-08-15).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, and `docs/MILESTONE_16B.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, and `docs/MILESTONE_16C.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary plus one durable capture boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, and 16B persists the completed bundle without reacquiring or reinterpreting the page:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, and one verified typed-rehydration boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, and 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -58,6 +58,8 @@ read-only Chromium list-structure evidence
 sequential read-only Chromium research evidence bundle
             +
 deterministic durable Chromium research capture
+            +
+verified typed Chromium research capture rehydration
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -99,6 +101,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 16A composes those seven proven browser evidence families through one application-level convenience boundary. The first page read selects the target under the existing 15A rules; the remaining six reads reuse that exact target ID in fixed order. Every constituent evidence object must retain the same endpoint, target ID, and page URL before the bundle is emitted. The bundle records `acquisition_mode="sequential_non_atomic_url_coherent"`: URL agreement is a coherence check, not proof that one frozen DOM state existed across all seven reads.
 
 16B persists that completed 16A bundle as deterministic canonical JSON at one exact caller-chosen new file path. Saving never re-observes Chromium. The complete bundle payload is retained with a SHA-256 self-integrity digest, and later verification checks canonical bytes, the recorded digest, and persisted endpoint/target/URL coherence without reconnecting to the page. The checksum is not authentication or verified provenance, and 16B adds no timestamp because persistence time would not represent the seven sequential browser-read moments.
+
+16C reopens one verified 16B capture as typed application evidence only after the complete nested payload passes exact JSON-type, field-set, source, ordinal, count, limit, truncation, and structural validation plus a lossless reconstruction check. The load result retains the exact 16B file-verification evidence beside a newly constructed 16A-shaped bundle, so reopened durable evidence remains distinguishable from fresh Chromium observation. The real-browser acceptance proof terminates Chromium before load and still reconstructs evidence equal to the original bundle.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -628,6 +632,40 @@ The real Chromium acceptance path extends the existing 16A fixture rather than l
 
 D129 therefore establishes: **a completed read-only Chromium research bundle may be persisted as a deterministic, no-overwrite capture artifact whose complete bundle payload is protected by explicit SHA-256 integrity evidence. Persistence and later file verification preserve already-acquired evidence; they do not reacquire page state, authenticate the producer or source, verify provenance, add a trusted timestamp, rehydrate new semantic authority, or strengthen the bundle's sequential/non-atomic browser claim.**
 
+## Verified Chromium research capture rehydration — 16C / D130
+
+16C asks whether one durable 16B capture can re-enter the typed Pyxis application layer after the browser is gone without confusing file integrity with valid nested application evidence or erasing the capture origin.
+
+The reopening path is deliberately downstream of the existing verifier:
+
+```text
+persisted 16B capture
+    ↓
+16B canonical-byte + SHA-256 verification
+    ↓
+exact nested JSON type reconstruction
+    ↓
+full application evidence validation
+    ↓
+lossless payload round-trip proof
+    ↓
+ChromiumPageResearchLoadedCaptureEvidence
+    ├── exact 16B verification evidence
+    └── reconstructed ChromiumPageResearchEvidenceBundle
+```
+
+`pyxis.app.load_chromium_page_research_capture()` does not duplicate the file-integrity boundary. It first calls `verify_chromium_page_research_capture()`. Only after that succeeds does it decode the persisted bundle into the established frozen evidence dataclasses.
+
+Rehydration is stricter than file verification because a writer able to alter both payload and digest can create a different self-consistent 16B file. Before typed evidence is emitted, 16C therefore validates exact JSON types and dataclass field sets, established evidence-source strings, endpoint/target/URL coherence, acquisition mode/order, contiguous ordinals, non-negative counts/limits, exact truncation relationships, text bounds, heading levels, literal table cell identity/spans, and literal list/nesting constraints. A checksum-valid capture with a negative link count or boolean where an integer limit belongs passes the 16B self-integrity check but is rejected by 16C.
+
+After typed construction, serializing the reconstructed bundle through its dataclass projection must reproduce the persisted bundle payload exactly. Reopening is lossless and performs no normalization, repair, migration, enrichment, or evidence dropping.
+
+The public result retains both the exact `ChromiumPageResearchCaptureVerificationEvidence` that authorized reopening and the new `ChromiumPageResearchEvidenceBundle`. This deliberately prevents a rehydrated bundle from masquerading as evidence freshly acquired from Chromium. The bundle's facts remain the persisted observations, and they gain no authenticity, publisher/source identity, trusted time, quotation/citation, locator-stability, or atomic-snapshot authority merely because their Python types were reconstructed.
+
+The real-browser acceptance proof now extends the complete durable lifecycle. Pyxis acquires a genuine 16A bundle, persists/verifies it through 16B, explicitly terminates the Chromium process, and only then loads the capture through 16C. The new typed bundle is value-equal to the original live evidence while remaining a distinct new object. Actions #547 on `fd3c16682d6e0c88cf77a09c1aa429ae3049f78d` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected **268 tests**, passed all eight research-capture tests and the browser-terminated integration, and finished **268 passed in 40.32s**.
+
+D130 therefore establishes: **an integrity-verified durable Chromium research capture may be reopened as typed application evidence only when the complete persisted nested payload passes exact structural/domain validation and lossless reconstruction. Rehydration must retain the 16B file-verification evidence that authorized the load; the reconstructed bundle is not fresh browser observation and gains no stronger authenticity, source-provenance, temporal, citation, quotation, or atomic-snapshot authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -732,6 +770,9 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Research-capture persistence consumes an existing coherent 16A bundle and never reacquires the page as a hidden side effect of saving.
 - A capture SHA-256 is self-integrity evidence, not authentication, source verification, publisher identity, or trusted provenance.
 - Persisting or verifying a capture does not strengthen the original sequential/non-atomic browser evidence claim.
+- File verification is necessary but not sufficient to emit rehydrated typed evidence; the complete nested payload must satisfy the application evidence contract.
+- Typed rehydration must preserve the exact capture-verification evidence that authorized reopening rather than erase durable acquisition origin.
+- Reconstructing a `ChromiumPageResearchEvidenceBundle` from disk does not make it a fresh browser observation or add authenticity, provenance, temporal, citation, quotation, or atomic-snapshot authority.
 
 ## Current development discipline
 
@@ -757,7 +798,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 16A proves the seven existing browser evidence families can be composed for research convenience without being promoted into one atomic snapshot. Do not add a DOM-freeze claim, page-version identity, semantic cross-family join, citation verifier, source verifier, browser-agent loop, generalized evidence-query language, or navigation/control surface merely because the bundle makes those directions convenient. Any such capability needs its own product pressure, authority boundary, and proof.
 
-16B proves an already-completed bundle can be preserved durably without turning persistence into reacquisition, interpretation, authentication, or stronger browser evidence. Do not infer observation time from file mtime/save time, treat the embedded digest as cryptographic authorship, add silent overwrite/update semantics, create a capture database/index, or rehydrate persisted JSON into new typed authority merely because one deterministic file format now exists. Typed reopening, temporal provenance, search/indexing, comparison, HMAC/signature systems, verified provenance, and downstream researcher UI each require their own concrete product question and proof.
+16B proves an already-completed bundle can be preserved durably without turning persistence into reacquisition, interpretation, authentication, or stronger browser evidence. Do not infer observation time from file mtime/save time, treat the embedded digest as cryptographic authorship, add silent overwrite/update semantics, or create a capture database/index merely because one deterministic file format exists.
+
+16C proves that verified durable evidence can re-enter the typed application layer without Chromium, while file integrity and nested evidence validity remain separate gates and acquisition origin remains visible. Do not treat typed reopening as permission for indexing/search, cross-capture comparison, human-evidence selection, signed provenance, source verification, quotation/citation verification, semantic interpretation, autonomous research, or researcher UI. The next milestone should answer one concrete researcher action rather than continue storage mechanics by inertia.
 
 ## Why the older central status lines are not being rewritten now
 

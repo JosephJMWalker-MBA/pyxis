@@ -22,6 +22,7 @@ from pyxis.app.chromium_research_capture import (
     persist_chromium_page_research_capture,
     verify_chromium_page_research_capture,
 )
+from pyxis.app.chromium_research_capture_load import load_chromium_page_research_capture
 from pyxis.app.chromium_tables import ChromiumPageTablesEvidence
 
 
@@ -79,12 +80,12 @@ def _bundle() -> ChromiumPageResearchEvidenceBundle:
         url=URL,
         document_language="en",
         language_source="document.documentElement.getAttribute('lang')",
-        canonical_source="document.querySelectorAll('link[rel~='canonical' i]')",
+        canonical_source='document.querySelectorAll("link[rel~=\'canonical\' i][href]")',
         canonical_links=(),
         canonical_link_count=0,
         canonical_link_limit=8,
         canonical_links_truncated=False,
-        description_source="document.querySelectorAll('meta[name='description' i]')",
+        description_source='document.querySelectorAll("meta[name=\'description\' i]")',
         descriptions=(),
         description_count=0,
         description_limit=8,
@@ -136,6 +137,28 @@ def _bundle() -> ChromiumPageResearchEvidenceBundle:
     )
 
 
+def _write_self_consistent_document(path: Path, document: dict) -> None:
+    bundle_bytes = json.dumps(
+        document["bundle"],
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    document["bundle_sha256"] = hashlib.sha256(bundle_bytes).hexdigest()
+    path.write_text(
+        json.dumps(
+            document,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def test_persist_and_verify_research_capture_is_deterministic_and_frozen(tmp_path: Path) -> None:
     bundle = _bundle()
     first_path = tmp_path / "capture-one.json"
@@ -166,6 +189,31 @@ def test_persist_and_verify_research_capture_is_deterministic_and_frozen(tmp_pat
 
     with pytest.raises(FrozenInstanceError):
         verification.url = "changed"  # type: ignore[misc]
+
+
+def test_load_research_capture_retains_verification_and_losslessly_rehydrates_bundle(
+    tmp_path: Path,
+) -> None:
+    bundle = _bundle()
+    path = tmp_path / "capture.json"
+    capture = persist_chromium_page_research_capture(bundle, path)
+
+    loaded = load_chromium_page_research_capture(path)
+
+    assert loaded.verification.path == path.resolve()
+    assert loaded.verification.bundle_sha256 == capture.bundle_sha256
+    assert loaded.verification.byte_count == capture.byte_count
+    assert loaded.bundle == bundle
+    assert loaded.bundle is not bundle
+    assert loaded.bundle.page is not bundle.page
+    assert loaded.bundle.metadata is not bundle.metadata
+    assert loaded.bundle.acquisition_mode == bundle.acquisition_mode
+    assert loaded.bundle.acquisition_order == bundle.acquisition_order
+
+    with pytest.raises(FrozenInstanceError):
+        loaded.bundle.url = "changed"  # type: ignore[misc]
+    with pytest.raises(FrozenInstanceError):
+        loaded.verification.url = "changed"  # type: ignore[misc]
 
 
 def test_persist_research_capture_refuses_overwrite_and_missing_parent(tmp_path: Path) -> None:
@@ -235,3 +283,30 @@ def test_verify_research_capture_rejects_noncanonical_bytes_even_when_digest_mat
 
     with pytest.raises(ChromiumResearchCaptureIntegrityError, match="canonical Pyxis JSON"):
         verify_chromium_page_research_capture(path)
+
+
+def test_load_research_capture_rejects_checksum_valid_semantic_corruption(tmp_path: Path) -> None:
+    path = tmp_path / "capture.json"
+    persist_chromium_page_research_capture(_bundle(), path)
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["bundle"]["links"]["link_count"] = -1
+    _write_self_consistent_document(path, document)
+
+    assert verify_chromium_page_research_capture(path).bundle_sha256 == document["bundle_sha256"]
+    with pytest.raises(ChromiumResearchCaptureIntegrityError, match="links count is negative"):
+        load_chromium_page_research_capture(path)
+
+
+def test_load_research_capture_rejects_checksum_valid_json_type_corruption(tmp_path: Path) -> None:
+    path = tmp_path / "capture.json"
+    persist_chromium_page_research_capture(_bundle(), path)
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["bundle"]["headings"]["heading_limit"] = True
+    _write_self_consistent_document(path, document)
+
+    assert verify_chromium_page_research_capture(path).bundle_sha256 == document["bundle_sha256"]
+    with pytest.raises(
+        ChromiumResearchCaptureIntegrityError,
+        match=r"bundle\.headings\.heading_limit must be a JSON integer",
+    ):
+        load_chromium_page_research_capture(path)
