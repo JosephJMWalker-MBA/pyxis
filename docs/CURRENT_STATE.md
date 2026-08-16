@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 16A / D128 (2026-08-15).**
+**Continuity front door — Pyxis current through Milestone 16B / D129 (2026-08-15).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, and `docs/MILESTONE_16A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, and `docs/MILESTONE_16B.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, and 16A composes those seven existing browser families without creating a new source of truth:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary plus one durable capture boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, and 16B persists the completed bundle without reacquiring or reinterpreting the page:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -56,6 +56,8 @@ read-only Chromium table-structure evidence
 read-only Chromium list-structure evidence
             +
 sequential read-only Chromium research evidence bundle
+            +
+deterministic durable Chromium research capture
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -95,6 +97,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 15G reuses the same page-selection authority to expose bounded literal ordered/unordered-list structure. It preserves global list DOM order, literal `OL`/`UL` identity, raw authored `start`/`value` strings, direct `LI` children, exact counts, and mechanical parent-list/item ordinals for nested lists. Direct-list item text excludes descendant-list text so nesting remains separate evidence rather than being silently flattened. Pyxis does not repair numbering or turn DOM nesting into semantic hierarchy.
 
 16A composes those seven proven browser evidence families through one application-level convenience boundary. The first page read selects the target under the existing 15A rules; the remaining six reads reuse that exact target ID in fixed order. Every constituent evidence object must retain the same endpoint, target ID, and page URL before the bundle is emitted. The bundle records `acquisition_mode="sequential_non_atomic_url_coherent"`: URL agreement is a coherence check, not proof that one frozen DOM state existed across all seven reads.
+
+16B persists that completed 16A bundle as deterministic canonical JSON at one exact caller-chosen new file path. Saving never re-observes Chromium. The complete bundle payload is retained with a SHA-256 self-integrity digest, and later verification checks canonical bytes, the recorded digest, and persisted endpoint/target/URL coherence without reconnecting to the page. The checksum is not authentication or verified provenance, and 16B adds no timestamp because persistence time would not represent the seven sequential browser-read moments.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -590,6 +594,40 @@ Actions #527 passed on `b4e803ec725fb7bff34020ee94f894bb7cc759af` across Python 
 
 D128 therefore establishes: **existing read-only Chromium evidence families may be composed into one research-page bundle only when composition preserves their independent evidence ownership and makes acquisition order, exact target reuse, URL coherence, and non-atomicity explicit. URL agreement across sequential reads is a coherence check, not proof of one frozen DOM state. A bundle is a convenience boundary, not a new browser snapshot authority or source of truth.**
 
+## Durable Chromium research capture — 16B / D129
+
+16B asks whether one completed 16A bundle can become durable evidence without silently reacquiring the page or granting persistence stronger authority than the observation itself possessed.
+
+The persistence path is deliberately downstream-only:
+
+```text
+completed ChromiumPageResearchEvidenceBundle
+    ↓
+revalidate 16A mode/order + endpoint/target/URL coherence
+    ↓
+complete deterministic bundle JSON
+    ↓
+SHA-256 over canonical bundle bytes
+    ↓
+exclusive-create caller-chosen capture file
+    ↓
+later canonical-byte + digest verification
+```
+
+`pyxis.app.persist_chromium_page_research_capture()` accepts the already-observed bundle and an exact destination file. It does not call Chromium, discover a browser, select a target, or perform a second observation. The destination parent must already exist and the destination itself must not; existing files are never overwritten.
+
+The capture format is `pyxis.chromium.research_capture.v1`. Its `bundle` field contains the complete 16A dataclass projection, not a selected or ranked subset. Canonical UTF-8 JSON uses direct Unicode, sorted keys, compact separators, finite numeric values only, and one final newline. `bundle_sha256` is computed over the canonical complete bundle payload.
+
+`pyxis.app.verify_chromium_page_research_capture()` later reads only the file. It verifies UTF-8/JSON shape, the supported format, exact acquisition mode/order, persisted endpoint/target/URL coherence across all seven members, the recomputed bundle digest, and exact canonical document bytes. It does not reconnect to Chromium or rehydrate a new typed bundle.
+
+That SHA-256 proves only self-integrity of the stored payload against the digest recorded beside it. An actor with authority to rewrite both payload and checksum can create another self-consistent file, so D129 does not claim authentication, publisher identity, verified provenance, chain-of-custody against a writer, or cryptographic authorship.
+
+16B deliberately adds no timestamp. File-write time describes persistence, not the seven sequential browser-read moments that produced the bundle. If temporal provenance becomes a product need, it must be acquired with explicit observation-time semantics rather than inferred from save time or filesystem metadata.
+
+The real Chromium acceptance path extends the existing 16A fixture rather than launching a second browser. The production bundle from one live caller-owned page is passed by exact object identity into persistence and then verified from disk. Actions #537 on `60fdb77ae1a56dd2654311fac70b743f4c99e797` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected **265 tests**, including all five focused capture tests and the live Chromium → bundle → persist → verify integration; **265 passed**.
+
+D129 therefore establishes: **a completed read-only Chromium research bundle may be persisted as a deterministic, no-overwrite capture artifact whose complete bundle payload is protected by explicit SHA-256 integrity evidence. Persistence and later file verification preserve already-acquired evidence; they do not reacquire page state, authenticate the producer or source, verify provenance, add a trusted timestamp, rehydrate new semantic authority, or strengthen the bundle's sequential/non-atomic browser claim.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -691,6 +729,9 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Direct-list item text excludes descendant-list text so nested list evidence remains structurally separate rather than silently flattened.
 - Research-bundle composition preserves the seven constituent application evidence objects rather than creating a second normalized representation or source of truth.
 - Exact endpoint/target/URL agreement across sequential bundle reads is coherence evidence, not proof of one atomic or frozen DOM state.
+- Research-capture persistence consumes an existing coherent 16A bundle and never reacquires the page as a hidden side effect of saving.
+- A capture SHA-256 is self-integrity evidence, not authentication, source verification, publisher identity, or trusted provenance.
+- Persisting or verifying a capture does not strengthen the original sequential/non-atomic browser evidence claim.
 
 ## Current development discipline
 
@@ -714,7 +755,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 15G proves that literal ordered/unordered-list structure can be exposed without flattening nested lists or inventing semantic hierarchy. Do not repair authored numbering, calculate displayed counters, normalize invalid `start`/`value` attributes, interpret nested lists as substeps/dependencies/priorities, or merge descendant-list text into parent-item evidence merely because the DOM relationship is visible. Any future semantic outline, list normalization, priority inference, or browser control requires its own product question and evidence.
 
-16A proves the seven existing browser evidence families can be composed for research convenience without being promoted into one atomic snapshot. Do not add a DOM-freeze claim, page-version identity, semantic cross-family join, citation verifier, source verifier, browser-agent loop, generalized evidence-query language, persistence layer, or navigation/control surface merely because the bundle makes those directions convenient. Any such capability needs its own product pressure, authority boundary, and proof.
+16A proves the seven existing browser evidence families can be composed for research convenience without being promoted into one atomic snapshot. Do not add a DOM-freeze claim, page-version identity, semantic cross-family join, citation verifier, source verifier, browser-agent loop, generalized evidence-query language, or navigation/control surface merely because the bundle makes those directions convenient. Any such capability needs its own product pressure, authority boundary, and proof.
+
+16B proves an already-completed bundle can be preserved durably without turning persistence into reacquisition, interpretation, authentication, or stronger browser evidence. Do not infer observation time from file mtime/save time, treat the embedded digest as cryptographic authorship, add silent overwrite/update semantics, create a capture database/index, or rehydrate persisted JSON into new typed authority merely because one deterministic file format now exists. Typed reopening, temporal provenance, search/indexing, comparison, HMAC/signature systems, verified provenance, and downstream researcher UI each require their own concrete product question and proof.
 
 ## Why the older central status lines are not being rewritten now
 

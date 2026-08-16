@@ -54,6 +54,13 @@ from .chromium_research_bundle import (
     ChromiumPageResearchEvidenceBundle,
     observe_chromium_page_research_bundle,
 )
+from .chromium_research_capture import (
+    ChromiumPageResearchCaptureEvidence,
+    ChromiumPageResearchCaptureVerificationEvidence,
+    ChromiumResearchCaptureIntegrityError,
+    persist_chromium_page_research_capture,
+    verify_chromium_page_research_capture,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -181,11 +188,14 @@ __all__ = [
     "ChromiumPageObservationEvidence",
     "ChromiumPageParagraphEvidence",
     "ChromiumPageParagraphsEvidence",
+    "ChromiumPageResearchCaptureEvidence",
+    "ChromiumPageResearchCaptureVerificationEvidence",
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
     "ChromiumPageTablesEvidence",
+    "ChromiumResearchCaptureIntegrityError",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -244,6 +254,7 @@ __all__ = [
     "observe_chromium_page_research_bundle",
     "observe_chromium_page_tables",
     "partition_build_and_run_measurement_stage_samples",
+    "persist_chromium_page_research_capture",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
@@ -253,4 +264,5 @@ __all__ = [
     "query_workspace_presentation",
     "refresh_workspace_export",
     "rerun_workspace",
+    "verify_chromium_page_research_capture",
 ]

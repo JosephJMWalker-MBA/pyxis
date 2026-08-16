@@ -14,6 +14,10 @@ from pyxis.app.chromium_research_bundle import (
     ChromiumPageResearchEvidenceBundle,
     observe_chromium_page_research_bundle,
 )
+from pyxis.app.chromium_research_capture import (
+    persist_chromium_page_research_capture,
+    verify_chromium_page_research_capture,
+)
 from pyxis.browser import ChromiumReadError
 
 
@@ -255,5 +259,19 @@ def test_research_bundle_composes_all_proven_readers_against_real_chromium(
         assert evidence.lists.lists[0].tag_name == "OL"
         assert evidence.lists.lists[0].start_attribute == "2"
         assert evidence.lists.lists[0].items[0].value_attribute == "4"
+
+        capture_path = tmp_path / "research-capture.json"
+        capture = persist_chromium_page_research_capture(evidence, capture_path)
+        verification = verify_chromium_page_research_capture(capture_path)
+
+        assert capture.bundle is evidence
+        assert capture.capture_format == "pyxis.chromium.research_capture.v1"
+        assert verification.bundle_sha256 == capture.bundle_sha256
+        assert verification.byte_count == capture.byte_count
+        assert verification.endpoint == endpoint
+        assert verification.target_id == target_id
+        assert verification.url == page_url
+        assert verification.acquisition_mode == evidence.acquisition_mode
+        assert verification.acquisition_order == evidence.acquisition_order
     finally:
         _terminate_browser(process)
