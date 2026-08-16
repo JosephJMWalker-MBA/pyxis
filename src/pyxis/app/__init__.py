@@ -61,6 +61,10 @@ from .chromium_research_capture import (
     persist_chromium_page_research_capture,
     verify_chromium_page_research_capture,
 )
+from .chromium_research_capture_load import (
+    ChromiumPageResearchLoadedCaptureEvidence,
+    load_chromium_page_research_capture,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -191,6 +195,7 @@ __all__ = [
     "ChromiumPageResearchCaptureEvidence",
     "ChromiumPageResearchCaptureVerificationEvidence",
     "ChromiumPageResearchEvidenceBundle",
+    "ChromiumPageResearchLoadedCaptureEvidence",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
@@ -244,6 +249,7 @@ __all__ = [
     "create_build_and_run_measurement_median",
     "create_workspace_presentation",
     "export_workspace",
+    "load_chromium_page_research_capture",
     "measure_build_and_run_workspace",
     "observe_chromium_page",
     "observe_chromium_page_headings",
