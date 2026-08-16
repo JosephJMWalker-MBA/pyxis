@@ -66,6 +66,8 @@ Milestone 16C reopens one verified 16B capture as typed application evidence onl
 
 Milestone 17A adds the first explicit researcher-owned action over that durable evidence: the caller may select one already-returned paragraph by exact ordinal. The frozen selection retains the exact loaded-capture object and exact paragraph object, refuses evidence outside a bounded returned prefix, and does not turn human choice into relevance, quotation, citation, truth, or source-authenticity authority.
 
+Milestone 17B lets the caller attach one exact human-authored note to one exact 17A selection. The immutable note record retains the exact selection object and caller text verbatim while keeping human interpretation visibly separate from page/source evidence; it adds no inferred author, timestamp, claim support, truth, relevance, citation, or machine-interpretation authority.
+
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
 ## Core principles
@@ -93,6 +95,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Persisting browser evidence must preserve already-acquired facts rather than reacquire, reinterpret, authenticate, or strengthen them.
 - Rehydrated durable evidence must retain the verification evidence that authorized reopening; reconstructing types must not erase acquisition origin.
 - Explicit researcher selection must point to existing evidence and preserve its limits; human choice is provenance, not relevance or truth proof.
+- Caller-authored notes may reference exact selected evidence, but human interpretation remains distinct from page/source evidence and must not be silently promoted into a claim about the source.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -278,7 +281,23 @@ ChromiumPageResearchParagraphSelectionEvidence
 
 `select_chromium_research_capture_paragraph()` never chooses a paragraph. The caller supplies one exact 1-based DOM ordinal. The result records `selection_mode="caller_explicit_returned_paragraph_ordinal"`, retains the exact supplied loaded-capture object, and retains the exact selected `ChromiumPageParagraphEvidence` object already inside that source. Duplicate authored IDs do not affect ordinal choice. If a paragraph is known only through a larger `paragraph_count` because the returned collection was truncated, selection refuses it rather than reconnecting to Chromium, rereading the capture file, enlarging a prior limit, or synthesizing missing text. Selection is therefore caller-choice provenance only; it is not relevance, factual correctness, quotation validity, citation authority, locator stability, source authenticity, or semantic-passage proof.
 
-These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, authenticate capture authorship, verify source provenance, create trusted timestamps, treat rehydrated evidence as fresh observation, automatically choose research evidence, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 17B adds one explicit human-authored note boundary downstream of 17A:
+
+```text
+ChromiumPageResearchParagraphSelectionEvidence
+      ↓
+caller supplies one exact nonblank note string
+      ↓
+validate selection mode + exact paragraph object identity
+      ↓
+preserve caller text verbatim
+      ↓
+ChromiumPageResearchParagraphNoteRecord
+```
+
+`create_chromium_research_paragraph_note()` is pure application logic. It retains the exact supplied 17A selection object and stores the caller's string without trimming or normalization; whitespace stripping is used only to refuse an all-whitespace non-note. The selected paragraph must still be the exact object by identity at its ordinal inside the exact loaded-capture source. An equal-by-value paragraph copy is rejected. The result is deliberately called a `NoteRecord`, not page evidence: it records human interpretation attached to selected evidence, not a statement that the page proves the note. 17B adds no author identity, timestamp, tag, note type, relevance, confidence, claim-support semantics, quotation/citation authority, or machine interpretation.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, authenticate capture authorship, verify source provenance, create trusted timestamps, treat rehydrated evidence as fresh observation, automatically choose research evidence, promote caller-authored notes into source truth, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -324,7 +343,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 17A / D131.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 17B / D132.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -336,6 +355,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 17A / D131: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, one deterministic no-overwrite capture format that preserves the complete already-observed bundle with SHA-256 self-integrity evidence, one verified rehydration boundary that can reconstruct the typed bundle after the browser is gone while retaining the exact capture-verification evidence, and one human-owned paragraph-selection boundary that points to exact already-returned durable evidence without reacquisition or semantic promotion.
+Pyxis is proven through Milestone 17B / D132: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, one deterministic no-overwrite capture format that preserves the complete already-observed bundle with SHA-256 self-integrity evidence, one verified rehydration boundary that can reconstruct the typed bundle after the browser is gone while retaining the exact capture-verification evidence, one human-owned paragraph-selection boundary that points to exact already-returned durable evidence without reacquisition or semantic promotion, and one human-authored note-record boundary that preserves exact caller text over the exact selection while keeping interpretation distinct from source evidence.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, capture database, authenticity claim, generic selection registry, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete researcher action. Annotation/notes, persisted selections, multiple-selection sets, trusted temporal provenance, capture indexing/search, cross-capture comparison, HMAC/signature systems, verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, autonomous research workflows, semantic interpretation, and browser UI each still require their own evidence before they are allowed to grow from the current observation, composition, persistence, rehydration, and human-selection boundaries.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, capture database, authenticity claim, generic selection/annotation registry, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete researcher action. Persisted selections/notes, note editing/history, multiple-note or notebook abstractions, questions, tags, trusted temporal provenance, capture indexing/search, cross-capture comparison, HMAC/signature systems, verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, autonomous research workflows, machine semantic interpretation, generated notes, and browser UI each still require their own evidence before they are allowed to grow from the current observation, composition, persistence, rehydration, human-selection, and human-note boundaries.
