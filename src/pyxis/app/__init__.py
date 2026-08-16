@@ -65,6 +65,10 @@ from .chromium_research_capture_load import (
     ChromiumPageResearchLoadedCaptureEvidence,
     load_chromium_page_research_capture,
 )
+from .chromium_research_passage_selection import (
+    ChromiumPageResearchParagraphSelectionEvidence,
+    select_chromium_research_capture_paragraph,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -196,6 +200,7 @@ __all__ = [
     "ChromiumPageResearchCaptureVerificationEvidence",
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageResearchLoadedCaptureEvidence",
+    "ChromiumPageResearchParagraphSelectionEvidence",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
@@ -270,5 +275,6 @@ __all__ = [
     "query_workspace_presentation",
     "refresh_workspace_export",
     "rerun_workspace",
+    "select_chromium_research_capture_paragraph",
     "verify_chromium_page_research_capture",
 ]
