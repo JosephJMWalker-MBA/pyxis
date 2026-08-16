@@ -69,6 +69,10 @@ from .chromium_research_passage_selection import (
     ChromiumPageResearchParagraphSelectionEvidence,
     select_chromium_research_capture_paragraph,
 )
+from .chromium_research_selection_note import (
+    ChromiumPageResearchParagraphNoteRecord,
+    create_chromium_research_paragraph_note,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -200,6 +204,7 @@ __all__ = [
     "ChromiumPageResearchCaptureVerificationEvidence",
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageResearchLoadedCaptureEvidence",
+    "ChromiumPageResearchParagraphNoteRecord",
     "ChromiumPageResearchParagraphSelectionEvidence",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
@@ -252,6 +257,7 @@ __all__ = [
     "create_build_and_run_measurement_duration_envelope",
     "create_build_and_run_measurement_mean",
     "create_build_and_run_measurement_median",
+    "create_chromium_research_paragraph_note",
     "create_workspace_presentation",
     "export_workspace",
     "load_chromium_page_research_capture",
