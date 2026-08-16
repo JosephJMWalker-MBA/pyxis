@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 16C / D130 (2026-08-15).**
+**Continuity front door — Pyxis current through Milestone 17A / D131 (2026-08-16).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, and `docs/MILESTONE_16C.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, and `docs/MILESTONE_17A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, and one verified typed-rehydration boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, and 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, and one explicit human-owned passage-selection boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, and 17A lets the caller point to one exact already-returned paragraph without semantic promotion:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -60,6 +60,8 @@ sequential read-only Chromium research evidence bundle
 deterministic durable Chromium research capture
             +
 verified typed Chromium research capture rehydration
+            +
+human-owned verified-capture paragraph selection
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -103,6 +105,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 16B persists that completed 16A bundle as deterministic canonical JSON at one exact caller-chosen new file path. Saving never re-observes Chromium. The complete bundle payload is retained with a SHA-256 self-integrity digest, and later verification checks canonical bytes, the recorded digest, and persisted endpoint/target/URL coherence without reconnecting to the page. The checksum is not authentication or verified provenance, and 16B adds no timestamp because persistence time would not represent the seven sequential browser-read moments.
 
 16C reopens one verified 16B capture as typed application evidence only after the complete nested payload passes exact JSON-type, field-set, source, ordinal, count, limit, truncation, and structural validation plus a lossless reconstruction check. The load result retains the exact 16B file-verification evidence beside a newly constructed 16A-shaped bundle, so reopened durable evidence remains distinguishable from fresh Chromium observation. The real-browser acceptance proof terminates Chromium before load and still reconstructs evidence equal to the original bundle.
+
+17A lets the caller explicitly select one already-returned paragraph from that verified rehydrated capture by exact 1-based DOM ordinal. The selection retains the exact loaded-capture object and exact paragraph object rather than copying text into a new quote/citation representation. Duplicate authored IDs do not control selection, and a paragraph known only through a truncated complete count cannot be selected or reacquired. Selection records caller choice only; it does not prove relevance, truth, quotation validity, citation authority, locator stability, source authenticity, or browser-control authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -666,6 +670,38 @@ The real-browser acceptance proof now extends the complete durable lifecycle. Py
 
 D130 therefore establishes: **an integrity-verified durable Chromium research capture may be reopened as typed application evidence only when the complete persisted nested payload passes exact structural/domain validation and lossless reconstruction. Rehydration must retain the 16B file-verification evidence that authorized the load; the reconstructed bundle is not fresh browser observation and gains no stronger authenticity, source-provenance, temporal, citation, quotation, or atomic-snapshot authority.**
 
+## Human-owned verified-capture paragraph selection — 17A / D131
+
+17A asks whether one already-returned paragraph from verified rehydrated Chromium research evidence can be explicitly chosen by the researcher without Pyxis deciding what matters or strengthening the selected evidence's epistemic status.
+
+The boundary is pure application selection:
+
+```text
+ChromiumPageResearchLoadedCaptureEvidence
+    ↓
+caller supplies exact 1-based paragraph ordinal
+    ↓
+selection-relevant origin + paragraph coherence
+    ↓
+require evidence already present in returned bounded prefix
+    ↓
+ChromiumPageResearchParagraphSelectionEvidence
+    ├── exact loaded-capture object
+    └── exact existing paragraph object
+```
+
+`pyxis.app.select_chromium_research_capture_paragraph()` performs no Chromium call, browser discovery, file read, SHA-256 verification, persistence, ranking, semantic interpretation, or text expansion. The caller supplies the exact ordinal; Pyxis does not choose by authored ID, text similarity, heading context, or model inference.
+
+The returned frozen selection records `selection_mode="caller_explicit_returned_paragraph_ordinal"`. Its `source` field is the exact supplied 16C loaded-capture object, and its `paragraph` field is the exact `ChromiumPageParagraphEvidence` already contained by that source. This prevents selection from becoming a copied quote/citation representation or second source of truth. Duplicate authored IDs therefore cannot redirect an ordinal choice.
+
+Bounded evidence remains bounded. When `paragraph_count` says another paragraph existed but the returned tuple was truncated before that ordinal, selection fails rather than reconnecting to Chromium, rereading the capture, enlarging a prior observation limit, or synthesizing missing text.
+
+Upstream ownership also remains explicit. 16B owns file integrity, 16C owns complete typed rehydration, and 17A validates only the source/paragraph coherence needed for selection. A caller choice is provenance about the researcher's action, not evidence that the chosen passage is relevant, important, true, a verified quotation, a stable citation, authentic source material, or support for a claim.
+
+Actions #556 on `32397e95c22693502004c2228617e03c8ead22f1` passed across Python 3.11, 3.12, 3.13, and 3.14; the inspected Python 3.11 log collected **273 tests** and passed the first five focused 17A tests. Actions #557 on `9f53a1e38d55624b15f0be3eee7ba7dc0dee06f5` passed across all four supported interpreters; the inspected Python 3.11 log collected **274 tests**, passed all six 17A tests including public `persist → load → select` composition, and finished **274 passed in 32.46s**.
+
+D131 therefore establishes: **an explicit caller may select one already-returned paragraph from verified rehydrated Chromium research evidence by exact ordinal, producing a frozen selection that retains the exact loaded-capture evidence object and exact paragraph evidence object. Selection records caller choice only: it does not imply relevance, importance, truth, quotation validity, citation authority, locator stability, source authenticity, or browser-control authority. Evidence outside the bounded returned paragraph prefix must not be reacquired, expanded, or synthesized as a side effect of selection.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -773,6 +809,9 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - File verification is necessary but not sufficient to emit rehydrated typed evidence; the complete nested payload must satisfy the application evidence contract.
 - Typed rehydration must preserve the exact capture-verification evidence that authorized reopening rather than erase durable acquisition origin.
 - Reconstructing a `ChromiumPageResearchEvidenceBundle` from disk does not make it a fresh browser observation or add authenticity, provenance, temporal, citation, quotation, or atomic-snapshot authority.
+- Explicit passage selection retains exact already-owned source and paragraph evidence rather than copying selected text into a new quotation or citation representation.
+- Caller selection is provenance about a human choice, not evidence of relevance, importance, truth, quotation validity, citation authority, locator stability, or source authenticity.
+- Evidence outside a bounded returned paragraph tuple is not reacquired, expanded, or synthesized as a side effect of selection.
 
 ## Current development discipline
 
@@ -800,7 +839,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 16B proves an already-completed bundle can be preserved durably without turning persistence into reacquisition, interpretation, authentication, or stronger browser evidence. Do not infer observation time from file mtime/save time, treat the embedded digest as cryptographic authorship, add silent overwrite/update semantics, or create a capture database/index merely because one deterministic file format exists.
 
-16C proves that verified durable evidence can re-enter the typed application layer without Chromium, while file integrity and nested evidence validity remain separate gates and acquisition origin remains visible. Do not treat typed reopening as permission for indexing/search, cross-capture comparison, human-evidence selection, signed provenance, source verification, quotation/citation verification, semantic interpretation, autonomous research, or researcher UI. The next milestone should answer one concrete researcher action rather than continue storage mechanics by inertia.
+16C proves that verified durable evidence can re-enter the typed application layer without Chromium, while file integrity and nested evidence validity remain separate gates and acquisition origin remains visible. Do not treat typed reopening as permission for indexing/search, cross-capture comparison, signed provenance, source verification, quotation/citation verification, semantic interpretation, autonomous research, or researcher UI.
+
+17A proves one caller-owned single-paragraph selection from a verified loaded capture. Do not generalize it into multi-selection sets, a generic evidence-family selection registry, persisted selections, annotation/notes/claims/questions, relevance ranking, quotation/citation verification, semantic interpretation, or UI merely because one explicit human-owned choice is now representable. Each such capability needs its own concrete researcher pressure, authority boundary, and proof.
 
 ## Why the older central status lines are not being rewritten now
 
