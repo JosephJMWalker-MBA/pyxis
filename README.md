@@ -62,6 +62,8 @@ Milestone 16A composes those seven proven evidence families into one immutable r
 
 Milestone 16B persists one already-observed 16A bundle as deterministic no-overwrite JSON with explicit SHA-256 integrity evidence. Saving never re-reads Chromium, and verification checks only the durable file contract; the checksum is not authentication, verified provenance, or a trusted timestamp.
 
+Milestone 16C reopens one verified 16B capture as typed application evidence only after exact nested structural/domain validation and lossless reconstruction. The load result retains the exact file-verification evidence beside a newly reconstructed bundle, so durable evidence can outlive Chromium without masquerading as a fresh browser observation.
+
 The first demonstrator remains intentionally small so each transformation can be inspected end to end.
 
 ## Core principles
@@ -87,6 +89,7 @@ The first demonstrator remains intentionally small so each transformation can be
 - Ordered/unordered list identity, authored numbering attributes, and DOM nesting are structure evidence, not corrected numbering or semantic hierarchy.
 - Sequential composition of browser evidence must not be relabeled as one atomic DOM snapshot.
 - Persisting browser evidence must preserve already-acquired facts rather than reacquire, reinterpret, authenticate, or strengthen them.
+- Rehydrated durable evidence must retain the verification evidence that authorized reopening; reconstructing types must not erase acquisition origin.
 - Package compatibility claims should be bounded by interpreter versions proven in CI.
 - Portable output should look like a conventional Python repository.
 - The smallest demonstrator should remain understandable end to end.
@@ -238,7 +241,23 @@ later canonical-byte + digest verification
 
 `persist_chromium_page_research_capture()` never observes Chromium. It requires the established 16A acquisition mode/order and exact endpoint/target/URL coherence, then writes the complete bundle payload into format `pyxis.chromium.research_capture.v1`. The destination parent must already exist and the destination itself must not; existing files are never overwritten. `verify_chromium_page_research_capture()` later checks UTF-8/JSON shape, supported format, persisted acquisition identity, exact member coherence, the bundle SHA-256, and exact canonical JSON bytes without reconnecting to the page or constructing a new typed bundle. The checksum is self-integrity evidence only: an actor able to rewrite both payload and digest can create another self-consistent file, so 16B does not claim authentication or verified provenance. No timestamp is added because persistence time would not represent the seven sequential browser-read moments.
 
-These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, authenticate capture authorship, verify source provenance, create trusted timestamps, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
+Milestone 16C adds a distinct typed reopening boundary after 16B verification:
+
+```text
+verified 16B capture
+      ↓
+exact nested JSON type reconstruction
+      ↓
+full application evidence validation
+      ↓
+lossless typed reconstruction
+      ↓
+verification evidence + reconstructed bundle
+```
+
+`load_chromium_page_research_capture()` first invokes the existing 16B verifier and then validates the complete nested evidence contract before constructing a new immutable `ChromiumPageResearchEvidenceBundle`. Exact JSON types, field sets, source strings, ordinals, counts, limits, truncation relationships, table/list structural constraints, and bundle coherence must all survive. A capture can therefore have a recomputed self-consistent SHA-256 and still be rejected as invalid typed evidence. The public `ChromiumPageResearchLoadedCaptureEvidence` retains the exact 16B verification object beside the reconstructed bundle, and a final round-trip check proves reconstruction did not normalize or discard persisted evidence. The real-browser acceptance path terminates Chromium before reopening the capture, proving that durable typed evidence can re-enter the application without browser reacquisition.
+
+These boundaries do **not** navigate, activate tabs, click, submit forms, create or close targets, accept arbitrary DevTools commands or user JavaScript, persist browser state, freeze the DOM, claim atomic page state, authenticate capture authorship, verify source provenance, create trusted timestamps, treat rehydrated evidence as fresh observation, invoke an LLM, rank links/sections/passages/tables/lists, repair document structure or list numbering, resolve provenance conflicts, verify quotations, normalize tables, infer header relationships, expand spans, coerce values, flatten nested lists, infer semantic hierarchy, or add autonomous research behavior. The optional `browser` dependency provides the concrete WebSocket transport; Pyxis core does not require a browser dependency.
 
 ## Portable output
 
@@ -284,7 +303,7 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 16B / D129.
+Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 16C / D130.
 
 The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
@@ -296,6 +315,6 @@ Later milestone documents remain the narrow proof trail for changes not safely f
 
 ## Status
 
-Pyxis is proven through Milestone 16B / D129: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, and one deterministic no-overwrite capture format that can preserve the complete already-observed bundle with SHA-256 self-integrity evidence without reacquiring or reinterpreting the page.
+Pyxis is proven through Milestone 16C / D130: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, one deterministic no-overwrite capture format that preserves the complete already-observed bundle with SHA-256 self-integrity evidence, and one verified rehydration boundary that can reconstruct the typed bundle after the browser is gone while retaining the exact capture-verification evidence and refusing malformed nested evidence.
 
-Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, capture database, authenticity claim, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete product question. Typed capture reopening, trusted temporal provenance, capture indexing/search, cross-capture comparison, HMAC/signature systems, verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, autonomous research workflows, semantic interpretation, and browser UI each require their own evidence before they are allowed to grow from the current observation, composition, and persistence boundaries.
+Do not add another statistic, abstraction, score, explanatory layer, compatibility lane, provenance resolver, citation resolver, dataset normalizer, semantic list interpreter, atomic-snapshot claim, capture database, authenticity claim, or browser-control surface merely because the current architecture makes one possible. The next implementation milestone should answer a new concrete researcher action. Human-owned evidence selection is a plausible next pressure, but trusted temporal provenance, capture indexing/search, cross-capture comparison, HMAC/signature systems, verified source identity, quotation verification, citation stability, table normalization/header inference/span expansion/value typing, list-number repair/semantic hierarchy, cross-family semantic joins, DOM-freeze/version identity, navigation, interaction, permissions, autonomous research workflows, semantic interpretation, and browser UI each still require their own evidence before they are allowed to grow from the current observation, composition, persistence, and rehydration boundaries.
