@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 17A / D131 (2026-08-16).**
+**Continuity front door — Pyxis current through Milestone 17B / D132 (2026-08-16).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, and `docs/MILESTONE_17A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, and `docs/MILESTONE_17B.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, and one explicit human-owned passage-selection boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, and 17A lets the caller point to one exact already-returned paragraph without semantic promotion:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, and one human-authored selection-note boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, and 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -62,6 +62,8 @@ deterministic durable Chromium research capture
 verified typed Chromium research capture rehydration
             +
 human-owned verified-capture paragraph selection
+            +
+human-authored exact-selection note record
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -107,6 +109,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 16C reopens one verified 16B capture as typed application evidence only after the complete nested payload passes exact JSON-type, field-set, source, ordinal, count, limit, truncation, and structural validation plus a lossless reconstruction check. The load result retains the exact 16B file-verification evidence beside a newly constructed 16A-shaped bundle, so reopened durable evidence remains distinguishable from fresh Chromium observation. The real-browser acceptance proof terminates Chromium before load and still reconstructs evidence equal to the original bundle.
 
 17A lets the caller explicitly select one already-returned paragraph from that verified rehydrated capture by exact 1-based DOM ordinal. The selection retains the exact loaded-capture object and exact paragraph object rather than copying text into a new quote/citation representation. Duplicate authored IDs do not control selection, and a paragraph known only through a truncated complete count cannot be selected or reacquired. Selection records caller choice only; it does not prove relevance, truth, quotation validity, citation authority, locator stability, source authenticity, or browser-control authority.
+
+17B lets the caller attach one exact nonblank human-authored note to one exact 17A selection. The note record retains the exact selection object, requires the selected paragraph to remain the exact object inside its loaded source, and preserves note text verbatim. The result is deliberately a note record rather than page evidence: human interpretation stays distinct from source evidence and gains no inferred author, timestamp, truth, relevance, claim-support, quotation/citation, or machine-interpretation authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -702,6 +706,34 @@ Actions #556 on `32397e95c22693502004c2228617e03c8ead22f1` passed across Python 
 
 D131 therefore establishes: **an explicit caller may select one already-returned paragraph from verified rehydrated Chromium research evidence by exact ordinal, producing a frozen selection that retains the exact loaded-capture evidence object and exact paragraph evidence object. Selection records caller choice only: it does not imply relevance, importance, truth, quotation validity, citation authority, locator stability, source authenticity, or browser-control authority. Evidence outside the bounded returned paragraph prefix must not be reacquired, expanded, or synthesized as a side effect of selection.**
 
+## Human-owned selection note — 17B / D132
+
+17B asks whether one exact 17A paragraph selection can carry one human-authored note without turning that interpretation into a statement about what the page proves.
+
+The boundary is pure application composition:
+
+```text
+ChromiumPageResearchParagraphSelectionEvidence
+    ↓
+caller supplies one exact nonblank note string
+    ↓
+selection mode + exact paragraph object identity
+    ↓
+verbatim caller text
+    ↓
+ChromiumPageResearchParagraphNoteRecord
+```
+
+`pyxis.app.create_chromium_research_paragraph_note()` performs no browser acquisition, capture-file read, persistence, ranking, summarization, claim modeling, quotation/citation/source verification, timestamp or author inference, LLM interpretation, or mutation. It accepts the established 17A selection mode and requires the selected paragraph to remain the exact object by identity at its ordinal inside the exact loaded-capture source retained by the selection. An equal-by-value paragraph copy is rejected.
+
+The caller's `note_text` must contain at least one non-whitespace character, but the stored value is not stripped or normalized. Leading/trailing spaces, line breaks, Unicode, punctuation, spelling, capitalization, and wording remain exactly as supplied. 17B adds no arbitrary note-length policy because no concrete product requirement has earned one at this layer.
+
+The result is deliberately named `ChromiumPageResearchParagraphNoteRecord`, not `...Evidence`. The paragraph remains page/source evidence; the note records human interpretation linked to that exact selection. It therefore gains no relevance, truth, claim-support, quotation-validity, citation, source-authenticity, inferred authorship/time, or machine-interpretation authority. 17B also adds no note title, tag, category, confidence, relevance score, question type, or rationale type.
+
+Actions #566 on `133d5062ec0788f542671c5ceefd4f4b78db6e6c` passed across Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected **280 tests**, passed all six focused 17B tests alongside the complete existing Repository Zero/browser/capture/selection suite, and finished **280 passed in 38.96s**. The inspected Python 3.12 log independently finished **280 passed in 28.80s**.
+
+D132 therefore establishes: **one explicit 17A paragraph selection may be linked to one immutable caller-authored note record whose text is preserved verbatim. The note record retains the exact selection object and therefore the exact selected source-evidence identity, but caller-authored interpretation remains distinct from page/source evidence: attaching a note does not establish relevance, truth, claim support, quotation validity, citation authority, source authenticity, authorship identity, observation time, or machine interpretation. Downstream note creation may validate the exact selection/paragraph identity required for its own boundary, but it must not reacquire browser state or silently redo upstream capture/selection authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -812,6 +844,9 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Explicit passage selection retains exact already-owned source and paragraph evidence rather than copying selected text into a new quotation or citation representation.
 - Caller selection is provenance about a human choice, not evidence of relevance, importance, truth, quotation validity, citation authority, locator stability, or source authenticity.
 - Evidence outside a bounded returned paragraph tuple is not reacquired, expanded, or synthesized as a side effect of selection.
+- A human-authored note retains the exact 17A selection object and must not replace the exact selected paragraph with an equal-by-value copy.
+- Caller note text is preserved verbatim; validation may refuse blank text but does not normalize stored wording.
+- A note record is human interpretation linked to source evidence, not page/source evidence, claim support, truth, quotation/citation authority, inferred authorship/time, or machine interpretation.
 
 ## Current development discipline
 
@@ -841,7 +876,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 16C proves that verified durable evidence can re-enter the typed application layer without Chromium, while file integrity and nested evidence validity remain separate gates and acquisition origin remains visible. Do not treat typed reopening as permission for indexing/search, cross-capture comparison, signed provenance, source verification, quotation/citation verification, semantic interpretation, autonomous research, or researcher UI.
 
-17A proves one caller-owned single-paragraph selection from a verified loaded capture. Do not generalize it into multi-selection sets, a generic evidence-family selection registry, persisted selections, annotation/notes/claims/questions, relevance ranking, quotation/citation verification, semantic interpretation, or UI merely because one explicit human-owned choice is now representable. Each such capability needs its own concrete researcher pressure, authority boundary, and proof.
+17A proves one caller-owned single-paragraph selection from a verified loaded capture. Do not generalize it into multi-selection sets, a generic evidence-family selection registry, persisted selections, relevance ranking, quotation/citation verification, semantic interpretation, or UI merely because one explicit human-owned choice is representable.
+
+17B proves one immutable caller-authored note record over one exact 17A selection. Do not treat the note as page/source evidence or generalize one note into persistence, edit/delete/history semantics, multi-note/notebook abstractions, tags/types/questions/claims, inferred author/time, generated notes, LLM interpretation, or researcher UI. Each direction needs its own concrete pressure and proof.
 
 ## Why the older central status lines are not being rewritten now
 
