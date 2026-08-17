@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 18A / D135 (2026-08-16).**
+**Continuity front door — Pyxis current through Milestone 18B / D136 (2026-08-16).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, `docs/MILESTONE_17D.md`, and `docs/MILESTONE_18A.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, `docs/MILESTONE_17D.md`, `docs/MILESTONE_18A.md`, and `docs/MILESTONE_18B.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, one verified durable-note relinking boundary, and one exact paragraph-text refinement boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches, and 18A lets the caller refine one exact 17A paragraph choice to exact already-returned Unicode code-point coordinates without copying source text or claiming quotation authority:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, one verified durable-note relinking boundary, one exact paragraph-text refinement boundary, and one exact-range human-note boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches, 18A lets the caller refine one exact 17A paragraph choice to exact already-returned Unicode code-point coordinates without copying source text or claiming quotation authority, and 18B lets the caller attach exact verbatim human interpretation to one exact 18A range while reusing 18A range validation and preserving the source/interpretation boundary:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -70,6 +70,8 @@ deterministic durable human-note sidecar
 verified durable human-note relinking
             +
 human-owned exact paragraph-text range selection
+            +
+human-authored exact-range note record
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -123,6 +125,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 17D accepts one explicit caller-supplied 16C loaded capture plus one note-sidecar path. It freshly re-verifies the sidecar, requires its source capture format + bundle SHA-256 to match the exact 16B verification evidence retained by the supplied loaded capture, and only then delegates reconstruction to the existing 17A selector and 17B note constructor. The reconstructed note therefore retains the exact supplied source object and exact already-returned paragraph object. Source path is not attachment identity, no capture is discovered by digest, and a note ordinal cannot expand a previously bounded paragraph prefix. Successful digest agreement is durable reference matching only; it does not authenticate either artifact, identify the human author, verify source provenance, establish chain of custody, or prove truth/citation authority.
 
 18A refines one exact 17A paragraph selection using caller-supplied zero-based half-open Unicode code-point coordinates wholly inside the paragraph's already-returned `text_prefix`. The resulting frozen selection retains the exact 17A parent object, records the offset unit explicitly, and derives `selected_text` from the source rather than storing a copied string field. A truncated paragraph's complete returned prefix remains selectable, but unreturned characters cannot be addressed merely because `text_character_count` says they existed. Exact text choice remains human-choice provenance only; it does not verify a quotation, stabilize a citation, rank relevance, authenticate a source, or add browser-control authority.
+
+18B lets the caller attach one exact nonblank human-authored note to one exact 18A text-range selection. The note retains the exact caller-supplied range object and preserves note text verbatim. Range validity remains owned by 18A: 18B requires the established range mode and Unicode offset unit and reuses `select_chromium_research_paragraph_text()` to re-establish parent/range validity rather than creating a second coordinate/source validator. The selected source range itself may contain whitespace or punctuation; Pyxis records the human action without deciding whether those characters are meaningful. The note remains human interpretation distinct from source evidence and gains no relevance, truth, claim-support, quotation/citation, source-authenticity, provenance, inferred authorship/time, or machine-interpretation authority. 18B adds no range-note persistence.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -684,7 +688,7 @@ The public result retains both the exact `ChromiumPageResearchCaptureVerificatio
 
 The real-browser acceptance proof now extends the complete durable lifecycle. Pyxis acquires a genuine 16A bundle, persists/verifies it through 16B, explicitly terminates the Chromium process, and only then loads the capture through 16C. The new typed bundle is value-equal to the original live evidence while remaining a distinct new object. Actions #547 on `fd3c16682d6e0c88cf77a09c1aa429ae3049f78d` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log collected **268 tests**, passed all eight research-capture tests and the browser-terminated integration, and finished **268 passed in 40.32s**.
 
-D130 therefore establishes: **an integrity-verified durable Chromium research capture may be reopened as typed application evidence only when the complete persisted nested payload passes exact structural/domain validation and lossless reconstruction. Rehydration must retain the 16B file-verification evidence that authorized the load; the reconstructed bundle is not fresh browser observation and gains no stronger authenticity, source-provenance, temporal, citation, quotation, or atomic-snapshot authority.**
+D130 therefore establishes: **an integrity-verified durable Chromium research capture may be reopened as typed application evidence only when the complete persisted nested payload passes exact structural/domain validation and lossless reconstruction. Rehydration must retain the 16B file-verification evidence that authorized reopening; the reconstructed bundle is not fresh browser observation and gains no stronger authenticity, source-provenance, temporal, citation, quotation, or atomic-snapshot authority.**
 
 ## Human-owned verified-capture paragraph selection — 17A / D131
 
@@ -846,6 +850,40 @@ Actions #593 on `c0edfb3dacfde1c5733d3cc35b32766a0d2e883d` passed on Python 3.11
 
 D135 therefore establishes: **one exact 17A paragraph selection may be refined by the caller into one non-empty zero-based half-open Unicode code-point range wholly contained in the paragraph's already-returned `text_prefix`. The refined selection must retain the exact 17A selection object and derive selected text from that source rather than store a second copy of source text. Equal-by-value replacement of the selected paragraph is insufficient; the exact paragraph object retained by the supplied 17A source must remain present. A range may cover the complete returned prefix of truncated paragraph evidence but must not address, reacquire, expand, search for, or synthesize unreturned characters merely because the complete character count says more text existed. Exact range selection records human choice only and adds no relevance, importance, truth, claim-support, quotation-verification, citation-stability, source-authenticity, provenance, temporal, or browser-control authority.**
 
+## Human-owned exact-range note — 18B / D136
+
+18B asks whether one exact 18A text-range selection can carry one human-authored note without widening the range, duplicating coordinate/source validation, interpreting the selected characters, or turning human interpretation into source authority.
+
+The boundary is pure application composition:
+
+```text
+ChromiumPageResearchParagraphTextSelectionEvidence
+    ↓
+caller supplies one exact nonblank note string
+    ↓
+require established range mode + Unicode offset unit
+    ↓
+reuse public 18A selection validation
+    ↓
+preserve exact caller-supplied 18A object
+    ↓
+preserve note text verbatim
+    ↓
+ChromiumPageResearchParagraphTextSelectionNoteRecord
+```
+
+`pyxis.app.create_chromium_research_paragraph_text_selection_note()` performs no Chromium acquisition, capture-file read, persistence, ranking, summarization, claim modeling, quotation/citation/source verification, timestamp or author inference, LLM interpretation, or mutation. It requires the established 18A selection mode and `unicode_code_point` offset unit, then delegates parent/range validation to `select_chromium_research_paragraph_text()` rather than creating another range-validation authority.
+
+The validation result is temporary: the note retains the exact caller-supplied 18A selection object. The caller's `note_text` must contain at least one non-whitespace character, but its stored value is not stripped or normalized. Leading/trailing spaces, line breaks, Unicode, punctuation, capitalization, spelling, and wording remain exact.
+
+The selected source characters are not interpreted. A valid non-empty 18A range may consist only of whitespace or punctuation and still receive a human note. Pyxis records that the caller chose the range and wrote the note; it does not decide that the range is meaningful, important, relevant, or evidentiary.
+
+Forged public dataclass state does not bypass upstream authority. A range extended into a truncated/unreturned suffix is rejected through 18A's bounded-prefix rule, and an equal-by-value replacement of the selected paragraph is rejected through 18A's exact-object identity rule.
+
+Actions #602 on `25328976800b7c94db6b41fff9e9bafac0d67763` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log checked out that exact head, collected **304 tests**, passed all six focused 18B tests, and finished **304 passed in 30.63s**.
+
+D136 therefore establishes: **one exact 18A paragraph-text selection may be linked to one immutable caller-authored note record whose text is preserved verbatim. Note creation must require the established 18A selection mode and Unicode code-point offset unit and must re-establish parent/range validity through the existing public 18A selection operation rather than creating a second coordinate/source-validation authority. The resulting note must retain the exact caller-supplied 18A selection object; validation may construct temporary 18A evidence but must not replace the caller's selection or copy the selected source text into a second representation. A non-empty selected source range may contain any already-returned characters, including whitespace or punctuation; Pyxis does not decide whether those characters are semantically meaningful. The note remains human interpretation distinct from page/source evidence and adds no relevance, importance, truth, claim-support, quotation-verification, citation-stability, source-authenticity, provenance, authorship, temporal, machine-interpretation, or browser-control authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -972,7 +1010,13 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Text-range offsets are zero-based half-open Unicode code-point coordinates and Python bool values are not accepted as integers.
 - Exact text refinement may use the complete returned prefix of truncated paragraph evidence but may not address, reacquire, expand, search for, or synthesize unreturned suffix text.
 - Derived selected text remains selected source evidence, not verified quotation, stable citation, relevance ranking, claim support, source authentication, or truth proof.
-- One concrete paragraph-text refinement does not justify a generic selection registry, multi-range abstraction, or note schema change.
+- One concrete paragraph-text refinement does not justify a generic selection registry or multi-range abstraction.
+- An exact-range note retains the exact caller-supplied 18A selection object; validation may construct temporary 18A evidence but must not replace the caller's range object.
+- Exact-range note validation delegates parent/range validity to the public 18A selector rather than introducing a second coordinate/source-validation authority.
+- Exact-range note text is preserved verbatim; validation may refuse a blank note but does not normalize stored wording.
+- A selected source range may contain whitespace or punctuation; Pyxis does not infer semantic importance from the selected characters before allowing a human note.
+- An exact-range note is human interpretation linked to exact selected source evidence, not page/source evidence, relevance, truth, claim support, verified quotation/citation, source authenticity/provenance, inferred authorship/time, or machine interpretation.
+- One concrete exact-range note does not justify generic annotation, range-note persistence, edit/history semantics, or multi-note/notebook abstractions.
 
 ## Current development discipline
 
@@ -1010,7 +1054,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 17D proves one explicit relink of a freshly verified 17C sidecar to one caller-supplied matching 16C loaded capture, while preserving exact source/paragraph identity and bounded evidence. Do not generalize this into automatic capture discovery, capture indexing/search, a generic durable-reference resolver, multi-note/notebook abstractions, edit/history semantics, tags/questions/claims, inferred author/time, HMAC/signature/authentication systems, source verification, quotation/citation authority, machine interpretation, autonomous workflow, or researcher UI merely because one durable relationship can now be reconstructed.
 
-18A proves one exact caller-owned Unicode code-point range inside one already-returned 17A paragraph. Do not generalize that proof into a generic highlight/selection framework, text search, fuzzy matching, semantic passage extraction, multiple ranges, persistence, notes-on-ranges, quotation/citation verification, source authentication, machine-selected highlights, or UI merely because exact coordinates are now representable. Each requires separate product pressure and proof.
+18A proves one exact caller-owned Unicode code-point range inside one already-returned 17A paragraph. Do not generalize that proof into a generic highlight/selection framework, text search, fuzzy matching, semantic passage extraction, multiple ranges, independent range persistence, quotation/citation verification, source authentication, machine-selected highlights, or UI merely because exact coordinates are now representable. Each requires separate product pressure and proof.
+
+18B proves one immutable caller-authored note over one exact 18A range while reusing 18A as the range-validity authority. Do not generalize that proof into range-note persistence, note editing/deletion/history, multi-note or notebook abstractions, generic annotation frameworks, tags/questions/claims/categories, source-authentication or quotation/citation systems, inferred authorship/time, generated notes, machine interpretation, autonomous workflow, or researcher UI. Each direction needs its own concrete product pressure and proof.
 
 ## Why the older central status lines are not being rewritten now
 
