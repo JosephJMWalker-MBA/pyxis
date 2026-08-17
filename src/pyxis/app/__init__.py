@@ -65,6 +65,10 @@ from .chromium_research_capture_load import (
     ChromiumPageResearchLoadedCaptureEvidence,
     load_chromium_page_research_capture,
 )
+from .chromium_research_paragraph_text_selection import (
+    ChromiumPageResearchParagraphTextSelectionEvidence,
+    select_chromium_research_paragraph_text,
+)
 from .chromium_research_passage_selection import (
     ChromiumPageResearchParagraphSelectionEvidence,
     select_chromium_research_capture_paragraph,
@@ -221,6 +225,7 @@ __all__ = [
     "ChromiumPageResearchParagraphNoteRecord",
     "ChromiumPageResearchParagraphNoteVerificationEvidence",
     "ChromiumPageResearchParagraphSelectionEvidence",
+    "ChromiumPageResearchParagraphTextSelectionEvidence",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
@@ -301,6 +306,7 @@ __all__ = [
     "refresh_workspace_export",
     "rerun_workspace",
     "select_chromium_research_capture_paragraph",
+    "select_chromium_research_paragraph_text",
     "verify_chromium_page_research_capture",
     "verify_chromium_research_paragraph_note",
 ]
