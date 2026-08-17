@@ -73,6 +73,13 @@ from .chromium_research_paragraph_text_selection_note import (
     ChromiumPageResearchParagraphTextSelectionNoteRecord,
     create_chromium_research_paragraph_text_selection_note,
 )
+from .chromium_research_paragraph_text_selection_note_persistence import (
+    ChromiumPageResearchParagraphTextSelectionNotePersistenceEvidence,
+    ChromiumPageResearchParagraphTextSelectionNoteVerificationEvidence,
+    ChromiumResearchParagraphTextSelectionNoteIntegrityError,
+    persist_chromium_research_paragraph_text_selection_note,
+    verify_chromium_research_paragraph_text_selection_note,
+)
 from .chromium_research_passage_selection import (
     ChromiumPageResearchParagraphSelectionEvidence,
     select_chromium_research_capture_paragraph,
@@ -230,7 +237,9 @@ __all__ = [
     "ChromiumPageResearchParagraphNoteVerificationEvidence",
     "ChromiumPageResearchParagraphSelectionEvidence",
     "ChromiumPageResearchParagraphTextSelectionEvidence",
+    "ChromiumPageResearchParagraphTextSelectionNotePersistenceEvidence",
     "ChromiumPageResearchParagraphTextSelectionNoteRecord",
+    "ChromiumPageResearchParagraphTextSelectionNoteVerificationEvidence",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
@@ -238,6 +247,7 @@ __all__ = [
     "ChromiumResearchCaptureIntegrityError",
     "ChromiumResearchParagraphNoteIntegrityError",
     "ChromiumResearchParagraphNoteSourceMismatchError",
+    "ChromiumResearchParagraphTextSelectionNoteIntegrityError",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -302,6 +312,7 @@ __all__ = [
     "partition_build_and_run_measurement_stage_samples",
     "persist_chromium_page_research_capture",
     "persist_chromium_research_paragraph_note",
+    "persist_chromium_research_paragraph_text_selection_note",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
     "preview_restore_normalize_text",
@@ -315,4 +326,5 @@ __all__ = [
     "select_chromium_research_paragraph_text",
     "verify_chromium_page_research_capture",
     "verify_chromium_research_paragraph_note",
+    "verify_chromium_research_paragraph_text_selection_note",
 ]
