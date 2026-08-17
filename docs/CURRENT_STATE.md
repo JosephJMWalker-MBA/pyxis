@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 17C / D133 (2026-08-16).**
+**Continuity front door — Pyxis current through Milestone 17D / D134 (2026-08-16).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, and `docs/MILESTONE_17C.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, and `docs/MILESTONE_17D.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, and one deterministic durable human-note sidecar boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, and 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, and one verified durable-note relinking boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, and 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -66,6 +66,8 @@ human-owned verified-capture paragraph selection
 human-authored exact-selection note record
             +
 deterministic durable human-note sidecar
+            +
+verified durable human-note relinking
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -115,6 +117,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 17B lets the caller attach one exact nonblank human-authored note to one exact 17A selection. The note record retains the exact selection object, requires the selected paragraph to remain the exact object inside its loaded source, and preserves note text verbatim. The result is deliberately a note record rather than page evidence: human interpretation stays distinct from source evidence and gains no inferred author, timestamp, truth, relevance, claim-support, quotation/citation, or machine-interpretation authority.
 
 17C persists one exact 17B note as deterministic no-overwrite sidecar JSON using the source capture format + bundle SHA-256, the paragraph ordinal/selection mode, and the exact note mode/text. It does not duplicate source evidence or persist the source path. Verification reads only the sidecar, and its SHA-256 is self-integrity evidence rather than authorship, authentication, source verification, or proof that the reference has already been relinked.
+
+17D accepts one explicit caller-supplied 16C loaded capture plus one note-sidecar path. It freshly re-verifies the sidecar, requires its source capture format + bundle SHA-256 to match the exact 16B verification evidence retained by the supplied loaded capture, and only then delegates reconstruction to the existing 17A selector and 17B note constructor. The reconstructed note therefore retains the exact supplied source object and exact already-returned paragraph object. Source path is not attachment identity, no capture is discovered by digest, and a note ordinal cannot expand a previously bounded paragraph prefix. Successful digest agreement is durable reference matching only; it does not authenticate either artifact, identify the human author, verify source provenance, establish chain of custody, or prove truth/citation authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -770,6 +774,39 @@ Actions #575 on `10b5e13641d5a92b7b3de14c496296bfa92ec4c5` passed on Python 3.11
 
 D133 therefore establishes: **one immutable 17B paragraph-note record may be persisted as deterministic no-overwrite sidecar JSON containing only the established durable source-capture content reference (`capture_format` + `bundle_sha256`), the explicit paragraph ordinal/selection mode, and the exact note mode/verbatim caller text. Persistence must not copy the selected paragraph, page, loaded capture, source path, or other browser evidence into a second source representation. The sidecar SHA-256 covers the complete source-reference + human-action payload and is self-integrity evidence only, not authorship, authentication, source verification, claim support, or trusted provenance. Sidecar verification reads only the sidecar; relinking the durable reference to a caller-supplied verified capture is a separate future authority boundary.**
 
+## Verified durable human-note relinking — 17D / D134
+
+17D asks whether one verified 17C sidecar can be reconnected to one explicit caller-supplied 16C loaded capture without turning durable identity into automatic discovery or stronger provenance.
+
+The boundary is deliberately compositional:
+
+```text
+caller-supplied 16C loaded capture
++ caller-supplied note sidecar path
+    ↓
+fresh 17C sidecar verification
+    ↓
+format + bundle SHA-256 reference match
+    ↓
+existing public 17A paragraph selection
+    ↓
+existing public 17B note creation
+    ↓
+ChromiumPageResearchLoadedParagraphNoteRecord
+    ├── exact fresh sidecar verification evidence
+    └── reconstructed human note
+```
+
+`pyxis.app.load_chromium_research_paragraph_note()` accepts the note file path rather than a caller-constructed sidecar-verification dataclass, so the established 17C integrity boundary is always exercised. The caller also supplies the exact `ChromiumPageResearchLoadedCaptureEvidence`; Pyxis does not search for a source by path, URL, digest, or browser state.
+
+The verified sidecar's source capture format and bundle SHA-256 must match the exact 16B verification evidence retained by the supplied 16C capture. The match uses content identity rather than source path identity: a copied or moved capture with the same retained content identity may relink, while a different bundle SHA is rejected through `ChromiumResearchParagraphNoteSourceMismatchError`.
+
+After that narrow match, 17D delegates to `select_chromium_research_capture_paragraph()` and `create_chromium_research_paragraph_note()` rather than manually constructing their dataclasses. The new note therefore retains the exact supplied loaded-capture object and exact paragraph object already present in that source. All 17A bounds remain active: an ordinal known only through a truncated paragraph count is still unavailable, and relinking does not reread the capture, reconnect to Chromium, enlarge a limit, or synthesize missing text.
+
+Actions #584 on `b8b51d4cd70e1da5a64aaa1400616f96f0541a40` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log checked out that exact head, collected **292 tests**, passed all six focused 17D tests, and finished **292 passed in 27.72s**.
+
+D134 therefore establishes: **one durable 17C paragraph-note sidecar may re-enter the typed application layer only against one explicit caller-supplied 16C loaded capture. The relinking operation must freshly verify the sidecar from its file path, require its source capture format and bundle SHA-256 to match the exact 16B verification evidence retained by the supplied loaded capture, and then reconstruct the human action through the existing public 17A paragraph-selection and 17B note-creation boundaries. The reconstructed note must retain the exact supplied loaded-capture object and exact already-returned paragraph object, so durable relinking cannot reacquire or expand bounded evidence. Source path is not attachment identity, and digest agreement proves only durable content-reference matching; it does not authenticate either artifact, identify the human author, verify source provenance, establish chain of custody, prove truth or claim support, or strengthen quotation/citation authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -887,6 +924,11 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - In-memory Python object identity is not claimed to survive persistence; 17C uses explicit durable source-content reference identity instead.
 - A note-sidecar SHA-256 is self-integrity evidence only, not authorship, authentication, source verification, or trusted provenance.
 - Sidecar verification does not relink, reopen, or verify the referenced source capture; that authority remains separate.
+- Durable note relinking begins with fresh 17C sidecar verification from the file path; a caller-constructed verification dataclass is not accepted as file-integrity proof.
+- The capture used for relinking is explicit caller-supplied 16C evidence; Pyxis does not discover captures by path, URL, browser state, or bundle digest.
+- Capture format + bundle SHA-256 agreement is durable content-reference matching only, not authentication, source verification, authorship, truth, or trusted provenance.
+- Durable note relinking delegates paragraph selection and note construction to the established 17A/17B boundaries and therefore must not reacquire or expand bounded returned evidence.
+- A reconstructed durable note retains the exact supplied loaded-capture object and exact already-returned paragraph object rather than creating a second source representation.
 
 ## Current development discipline
 
@@ -920,7 +962,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 17B proves one immutable caller-authored note record over one exact 17A selection. Do not treat the note as page/source evidence or generalize one note into edit/delete/history semantics, multi-note/notebook abstractions, tags/types/questions/claims, inferred author/time, generated notes, LLM interpretation, or researcher UI. Each direction needs its own concrete pressure and proof.
 
-17C proves one deterministic no-overwrite durable note sidecar that references source capture content by format + bundle SHA-256 and paragraph ordinal without copying source evidence. Do not treat sidecar verification as relinking, authenticity/authorship, source verification, trusted provenance, or permission for edit/history, multi-note/notebook, indexing/search, or UI. Typed reopening/relinking to a caller-supplied verified capture requires its own concrete boundary and proof.
+17C proves one deterministic no-overwrite durable note sidecar that references source capture content by format + bundle SHA-256 and paragraph ordinal without copying source evidence. Its verifier remains file-local and its digest remains self-integrity only; do not reinterpret 17C as authorship, source authentication, or trusted provenance.
+
+17D proves one explicit relink of a freshly verified 17C sidecar to one caller-supplied matching 16C loaded capture, while preserving exact source/paragraph identity and bounded evidence. Do not generalize this into automatic capture discovery, capture indexing/search, a generic durable-reference resolver, multi-note/notebook abstractions, edit/history semantics, tags/questions/claims, inferred author/time, HMAC/signature/authentication systems, source verification, quotation/citation authority, machine interpretation, autonomous workflow, or researcher UI merely because one durable relationship can now be reconstructed.
 
 ## Why the older central status lines are not being rewritten now
 

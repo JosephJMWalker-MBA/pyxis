@@ -73,6 +73,11 @@ from .chromium_research_selection_note import (
     ChromiumPageResearchParagraphNoteRecord,
     create_chromium_research_paragraph_note,
 )
+from .chromium_research_selection_note_load import (
+    ChromiumPageResearchLoadedParagraphNoteRecord,
+    ChromiumResearchParagraphNoteSourceMismatchError,
+    load_chromium_research_paragraph_note,
+)
 from .chromium_research_selection_note_persistence import (
     ChromiumPageResearchParagraphNotePersistenceEvidence,
     ChromiumPageResearchParagraphNoteVerificationEvidence,
@@ -211,6 +216,7 @@ __all__ = [
     "ChromiumPageResearchCaptureVerificationEvidence",
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageResearchLoadedCaptureEvidence",
+    "ChromiumPageResearchLoadedParagraphNoteRecord",
     "ChromiumPageResearchParagraphNotePersistenceEvidence",
     "ChromiumPageResearchParagraphNoteRecord",
     "ChromiumPageResearchParagraphNoteVerificationEvidence",
@@ -221,6 +227,7 @@ __all__ = [
     "ChromiumPageTablesEvidence",
     "ChromiumResearchCaptureIntegrityError",
     "ChromiumResearchParagraphNoteIntegrityError",
+    "ChromiumResearchParagraphNoteSourceMismatchError",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -271,6 +278,7 @@ __all__ = [
     "create_workspace_presentation",
     "export_workspace",
     "load_chromium_page_research_capture",
+    "load_chromium_research_paragraph_note",
     "measure_build_and_run_workspace",
     "observe_chromium_page",
     "observe_chromium_page_headings",
