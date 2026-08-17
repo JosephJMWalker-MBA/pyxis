@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 17D / D134 (2026-08-16).**
+**Continuity front door — Pyxis current through Milestone 18A / D135 (2026-08-16).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, and `docs/MILESTONE_17D.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, `docs/MILESTONE_17D.md`, and `docs/MILESTONE_18A.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, and one verified durable-note relinking boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, and 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, one verified durable-note relinking boundary, and one exact paragraph-text refinement boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches, and 18A lets the caller refine one exact 17A paragraph choice to exact already-returned Unicode code-point coordinates without copying source text or claiming quotation authority:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -68,6 +68,8 @@ human-authored exact-selection note record
 deterministic durable human-note sidecar
             +
 verified durable human-note relinking
+            +
+human-owned exact paragraph-text range selection
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -119,6 +121,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 17C persists one exact 17B note as deterministic no-overwrite sidecar JSON using the source capture format + bundle SHA-256, the paragraph ordinal/selection mode, and the exact note mode/text. It does not duplicate source evidence or persist the source path. Verification reads only the sidecar, and its SHA-256 is self-integrity evidence rather than authorship, authentication, source verification, or proof that the reference has already been relinked.
 
 17D accepts one explicit caller-supplied 16C loaded capture plus one note-sidecar path. It freshly re-verifies the sidecar, requires its source capture format + bundle SHA-256 to match the exact 16B verification evidence retained by the supplied loaded capture, and only then delegates reconstruction to the existing 17A selector and 17B note constructor. The reconstructed note therefore retains the exact supplied source object and exact already-returned paragraph object. Source path is not attachment identity, no capture is discovered by digest, and a note ordinal cannot expand a previously bounded paragraph prefix. Successful digest agreement is durable reference matching only; it does not authenticate either artifact, identify the human author, verify source provenance, establish chain of custody, or prove truth/citation authority.
+
+18A refines one exact 17A paragraph selection using caller-supplied zero-based half-open Unicode code-point coordinates wholly inside the paragraph's already-returned `text_prefix`. The resulting frozen selection retains the exact 17A parent object, records the offset unit explicitly, and derives `selected_text` from the source rather than storing a copied string field. A truncated paragraph's complete returned prefix remains selectable, but unreturned characters cannot be addressed merely because `text_character_count` says they existed. Exact text choice remains human-choice provenance only; it does not verify a quotation, stabilize a citation, rank relevance, authenticate a source, or add browser-control authority.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -807,6 +811,41 @@ Actions #584 on `b8b51d4cd70e1da5a64aaa1400616f96f0541a40` passed on Python 3.11
 
 D134 therefore establishes: **one durable 17C paragraph-note sidecar may re-enter the typed application layer only against one explicit caller-supplied 16C loaded capture. The relinking operation must freshly verify the sidecar from its file path, require its source capture format and bundle SHA-256 to match the exact 16B verification evidence retained by the supplied loaded capture, and then reconstruct the human action through the existing public 17A paragraph-selection and 17B note-creation boundaries. The reconstructed note must retain the exact supplied loaded-capture object and exact already-returned paragraph object, so durable relinking cannot reacquire or expand bounded evidence. Source path is not attachment identity, and digest agreement proves only durable content-reference matching; it does not authenticate either artifact, identify the human author, verify source provenance, establish chain of custody, prove truth or claim support, or strengthen quotation/citation authority.**
 
+## Human-owned exact paragraph text selection — 18A / D135
+
+18A asks whether one exact 17A paragraph choice can be refined to the exact already-visible characters that matter without Pyxis searching text, copying source text into a second representation, expanding bounded evidence, or implying quotation verification.
+
+The boundary is pure application refinement:
+
+```text
+ChromiumPageResearchParagraphSelectionEvidence
+    ↓
+caller supplies start_offset + end_offset
+    ↓
+zero-based half-open Unicode code-point coordinates
+    ↓
+require exact 17A paragraph identity
+    ↓
+require range wholly inside returned text_prefix
+    ↓
+ChromiumPageResearchParagraphTextSelectionEvidence
+    ├── exact 17A parent selection
+    ├── explicit coordinates
+    └── derived selected_text
+```
+
+`pyxis.app.select_chromium_research_paragraph_text()` performs no Chromium call, browser discovery, file read, digest verification, persistence, substring search, semantic segmentation, ranking, interpretation, quotation verification, or citation resolution. The caller supplies both coordinates directly.
+
+The result records `selection_mode="caller_explicit_returned_paragraph_text_range"` and `offset_unit="unicode_code_point"`. Its source is the exact supplied 17A selection object. `selected_text` is a property derived from the parent paragraph's already-returned `text_prefix`; it is intentionally absent from the dataclass fields so 18A does not create a second stored source-text representation.
+
+The parent selection remains identity-sensitive. An equal-by-value copy of the selected paragraph is rejected if it is not the exact paragraph object retained by the loaded capture. The paragraph's text count/limit/truncation facts must also remain coherent before a range is emitted.
+
+Bounded text remains bounded. If a paragraph returns `text_prefix="Alpha"`, reports a larger complete character count, and records `truncated=True`, 18A permits selecting `0:5` but refuses `0:6`. The complete count proves more characters existed; it does not grant authority to address, reacquire, expand, search for, or synthesize those characters.
+
+Actions #593 on `c0edfb3dacfde1c5733d3cc35b32766a0d2e883d` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log checked out that exact head, collected **298 tests**, passed all six focused 18A tests, and finished **298 passed in 38.79s**.
+
+D135 therefore establishes: **one exact 17A paragraph selection may be refined by the caller into one non-empty zero-based half-open Unicode code-point range wholly contained in the paragraph's already-returned `text_prefix`. The refined selection must retain the exact 17A selection object and derive selected text from that source rather than store a second copy of source text. Equal-by-value replacement of the selected paragraph is insufficient; the exact paragraph object retained by the supplied 17A source must remain present. A range may cover the complete returned prefix of truncated paragraph evidence but must not address, reacquire, expand, search for, or synthesize unreturned characters merely because the complete character count says more text existed. Exact range selection records human choice only and adds no relevance, importance, truth, claim-support, quotation-verification, citation-stability, source-authenticity, provenance, temporal, or browser-control authority.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -929,6 +968,11 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Capture format + bundle SHA-256 agreement is durable content-reference matching only, not authentication, source verification, authorship, truth, or trusted provenance.
 - Durable note relinking delegates paragraph selection and note construction to the established 17A/17B boundaries and therefore must not reacquire or expand bounded returned evidence.
 - A reconstructed durable note retains the exact supplied loaded-capture object and exact already-returned paragraph object rather than creating a second source representation.
+- Exact paragraph-text refinement retains the exact 17A parent selection and explicit coordinates rather than copying selected source text into a stored field.
+- Text-range offsets are zero-based half-open Unicode code-point coordinates and Python bool values are not accepted as integers.
+- Exact text refinement may use the complete returned prefix of truncated paragraph evidence but may not address, reacquire, expand, search for, or synthesize unreturned suffix text.
+- Derived selected text remains selected source evidence, not verified quotation, stable citation, relevance ranking, claim support, source authentication, or truth proof.
+- One concrete paragraph-text refinement does not justify a generic selection registry, multi-range abstraction, or note schema change.
 
 ## Current development discipline
 
@@ -965,6 +1009,8 @@ Do **not** continue the 11-series by adding another statistic merely because one
 17C proves one deterministic no-overwrite durable note sidecar that references source capture content by format + bundle SHA-256 and paragraph ordinal without copying source evidence. Its verifier remains file-local and its digest remains self-integrity only; do not reinterpret 17C as authorship, source authentication, or trusted provenance.
 
 17D proves one explicit relink of a freshly verified 17C sidecar to one caller-supplied matching 16C loaded capture, while preserving exact source/paragraph identity and bounded evidence. Do not generalize this into automatic capture discovery, capture indexing/search, a generic durable-reference resolver, multi-note/notebook abstractions, edit/history semantics, tags/questions/claims, inferred author/time, HMAC/signature/authentication systems, source verification, quotation/citation authority, machine interpretation, autonomous workflow, or researcher UI merely because one durable relationship can now be reconstructed.
+
+18A proves one exact caller-owned Unicode code-point range inside one already-returned 17A paragraph. Do not generalize that proof into a generic highlight/selection framework, text search, fuzzy matching, semantic passage extraction, multiple ranges, persistence, notes-on-ranges, quotation/citation verification, source authentication, machine-selected highlights, or UI merely because exact coordinates are now representable. Each requires separate product pressure and proof.
 
 ## Why the older central status lines are not being rewritten now
 
