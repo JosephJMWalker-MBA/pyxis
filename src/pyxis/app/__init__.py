@@ -73,6 +73,11 @@ from .chromium_research_paragraph_text_selection_note import (
     ChromiumPageResearchParagraphTextSelectionNoteRecord,
     create_chromium_research_paragraph_text_selection_note,
 )
+from .chromium_research_paragraph_text_selection_note_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord,
+    ChromiumResearchParagraphTextSelectionNoteSourceMismatchError,
+    load_chromium_research_paragraph_text_selection_note,
+)
 from .chromium_research_paragraph_text_selection_note_persistence import (
     ChromiumPageResearchParagraphTextSelectionNotePersistenceEvidence,
     ChromiumPageResearchParagraphTextSelectionNoteVerificationEvidence,
@@ -232,6 +237,7 @@ __all__ = [
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageResearchLoadedCaptureEvidence",
     "ChromiumPageResearchLoadedParagraphNoteRecord",
+    "ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord",
     "ChromiumPageResearchParagraphNotePersistenceEvidence",
     "ChromiumPageResearchParagraphNoteRecord",
     "ChromiumPageResearchParagraphNoteVerificationEvidence",
@@ -248,6 +254,7 @@ __all__ = [
     "ChromiumResearchParagraphNoteIntegrityError",
     "ChromiumResearchParagraphNoteSourceMismatchError",
     "ChromiumResearchParagraphTextSelectionNoteIntegrityError",
+    "ChromiumResearchParagraphTextSelectionNoteSourceMismatchError",
     "CompilerArtifactPresentation",
     "ExecutionEnvironmentComparisonEvidence",
     "ExecutionEnvironmentEvidence",
@@ -300,6 +307,7 @@ __all__ = [
     "export_workspace",
     "load_chromium_page_research_capture",
     "load_chromium_research_paragraph_note",
+    "load_chromium_research_paragraph_text_selection_note",
     "measure_build_and_run_workspace",
     "observe_chromium_page",
     "observe_chromium_page_headings",
