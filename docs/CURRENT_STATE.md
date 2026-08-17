@@ -1,6 +1,6 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 18B / D136 (2026-08-16).**
+**Continuity front door — Pyxis current through Milestone 18C / D137 (2026-08-16).**
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
@@ -15,13 +15,13 @@ For a new development session, read in this order:
 3. `docs/ARCHITECTURE.md`
 4. `docs/DECISIONS.md`
 5. `docs/DEVELOPMENT_ARCHIVE.md`
-6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, `docs/MILESTONE_17D.md`, `docs/MILESTONE_18A.md`, and `docs/MILESTONE_18B.md`
+6. `docs/MILESTONE_11K_CONTINUITY.md`, `docs/MILESTONE_11L.md` through `docs/MILESTONE_11T.md`, then `docs/MILESTONE_12A.md`, `docs/MILESTONE_12B.md`, `docs/MILESTONE_13A.md`, `docs/MILESTONE_13B.md`, `docs/MILESTONE_14A.md`, `docs/MILESTONE_15A.md`, `docs/MILESTONE_15B.md`, `docs/MILESTONE_15C.md`, `docs/MILESTONE_15D.md`, `docs/MILESTONE_15E.md`, `docs/MILESTONE_15F.md`, `docs/MILESTONE_15G.md`, `docs/MILESTONE_16A.md`, `docs/MILESTONE_16B.md`, `docs/MILESTONE_16C.md`, `docs/MILESTONE_17A.md`, `docs/MILESTONE_17B.md`, `docs/MILESTONE_17C.md`, `docs/MILESTONE_17D.md`, `docs/MILESTONE_18A.md`, `docs/MILESTONE_18B.md`, and `docs/MILESTONE_18C.md`
 
 The large central documents remain intact historical/current foundations. Their status headers lag later implementation because the connector could not safely patch them in place. This file makes those later deltas explicit in one place rather than requiring a future session to rediscover the gap.
 
 ## Current Pyxis checkpoint
 
-Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, one verified durable-note relinking boundary, one exact paragraph-text refinement boundary, and one exact-range human-note boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches, 18A lets the caller refine one exact 17A paragraph choice to exact already-returned Unicode code-point coordinates without copying source text or claiming quotation authority, and 18B lets the caller attach exact verbatim human interpretation to one exact 18A range while reusing 18A range validation and preserving the source/interpretation boundary:
+Pyxis retains fifteen proven evidence families and now adds one explicit browser-research composition boundary, one durable capture boundary, one verified typed-rehydration boundary, one explicit human-owned passage-selection boundary, one human-authored selection-note boundary, one deterministic durable human-note sidecar boundary, one verified durable-note relinking boundary, one exact paragraph-text refinement boundary, one exact-range human-note boundary, and one deterministic durable exact-range-note sidecar boundary. The first eight families remain the Repository Zero reference spine; 15A through 15G add seven concrete browser-facing evidence boundaries without changing that spine, 16A composes those seven existing browser families without creating a new source of truth, 16B persists the completed bundle without reacquiring or reinterpreting the page, 16C can reopen that durable evidence as typed application evidence without requiring Chromium to remain alive, 17A lets the caller point to one exact already-returned paragraph without semantic promotion, 17B lets the caller attach exact human-authored interpretation while keeping it distinct from page/source evidence, 17C preserves that human action durably through a minimal source-content reference rather than copying source evidence or claiming authorship, 17D explicitly relinks that durable human action only to a caller-supplied loaded capture whose retained durable content identity matches, 18A lets the caller refine one exact 17A paragraph choice to exact already-returned Unicode code-point coordinates without copying source text or claiming quotation authority, 18B lets the caller attach exact verbatim human interpretation to one exact 18A range while reusing 18A range validation and preserving the source/interpretation boundary, and 18C preserves that exact-range human action durably through source-content identity + layered paragraph/range coordinates without storing selected source text or treating file integrity as source-range proof:
 
 ```text
 compiler / runtime / revision / export lifecycle
@@ -72,6 +72,8 @@ verified durable human-note relinking
 human-owned exact paragraph-text range selection
             +
 human-authored exact-range note record
+            +
+deterministic durable exact-range-note sidecar
 ```
 
 The permanent Repository Zero authority chain remains:
@@ -127,6 +129,8 @@ The first local Textual Workspace UI is complete for the current Repository Zero
 18A refines one exact 17A paragraph selection using caller-supplied zero-based half-open Unicode code-point coordinates wholly inside the paragraph's already-returned `text_prefix`. The resulting frozen selection retains the exact 17A parent object, records the offset unit explicitly, and derives `selected_text` from the source rather than storing a copied string field. A truncated paragraph's complete returned prefix remains selectable, but unreturned characters cannot be addressed merely because `text_character_count` says they existed. Exact text choice remains human-choice provenance only; it does not verify a quotation, stabilize a citation, rank relevance, authenticate a source, or add browser-control authority.
 
 18B lets the caller attach one exact nonblank human-authored note to one exact 18A text-range selection. The note retains the exact caller-supplied range object and preserves note text verbatim. Range validity remains owned by 18A: 18B requires the established range mode and Unicode offset unit and reuses `select_chromium_research_paragraph_text()` to re-establish parent/range validity rather than creating a second coordinate/source validator. The selected source range itself may contain whitespace or punctuation; Pyxis records the human action without deciding whether those characters are meaningful. The note remains human interpretation distinct from source evidence and gains no relevance, truth, claim-support, quotation/citation, source-authenticity, provenance, inferred authorship/time, or machine-interpretation authority. 18B adds no range-note persistence.
+
+18C persists one exact 18B range note as deterministic no-overwrite sidecar JSON using the source capture format + bundle SHA-256, the 17A paragraph selection mode/ordinal, the 18A text-selection mode/Unicode offset unit/start/end coordinates, and the exact 18B note mode/text. Persistence reuses the existing 18B constructor, which reuses 18A range validation, and retains the exact supplied 18B note object in runtime evidence. It does not persist selected source text, paragraph/page evidence, element ID, source path, loaded-capture state, or other browser evidence. File-only verification validates exact shape, coordinate semantics, canonical bytes, and SHA-256 but deliberately does not read the source capture or claim that the coordinates address it. A self-consistent sidecar with rewritten coordinates and a recomputed digest may therefore remain file-valid; explicit source relinking is a separate future authority boundary.
 
 ## Second concrete architecture operation — 12A / D116
 
@@ -884,6 +888,44 @@ Actions #602 on `25328976800b7c94db6b41fff9e9bafac0d67763` passed on Python 3.11
 
 D136 therefore establishes: **one exact 18A paragraph-text selection may be linked to one immutable caller-authored note record whose text is preserved verbatim. Note creation must require the established 18A selection mode and Unicode code-point offset unit and must re-establish parent/range validity through the existing public 18A selection operation rather than creating a second coordinate/source-validation authority. The resulting note must retain the exact caller-supplied 18A selection object; validation may construct temporary 18A evidence but must not replace the caller's selection or copy the selected source text into a second representation. A non-empty selected source range may contain any already-returned characters, including whitespace or punctuation; Pyxis does not decide whether those characters are semantically meaningful. The note remains human interpretation distinct from page/source evidence and adds no relevance, importance, truth, claim-support, quotation-verification, citation-stability, source-authenticity, provenance, authorship, temporal, machine-interpretation, or browser-control authority.**
 
+## Durable exact-range note sidecar — 18C / D137
+
+18C asks whether one exact 18B human-authored text-range note can become durable without copying selected source text, recursively serializing the loaded capture, pretending in-memory object identity survives a process boundary, or allowing file integrity to masquerade as proof that persisted coordinates still address source evidence.
+
+The boundary is deliberately downstream of the live 18B/18A authority:
+
+```text
+ChromiumPageResearchParagraphTextSelectionNoteRecord
+    ↓
+re-establish live 18B / 18A validity
+    ↓
+source capture format + bundle SHA-256
++ paragraph selection mode + ordinal
++ text selection mode + Unicode offset unit
++ start_offset + end_offset
++ note mode + verbatim caller text
+    ↓
+canonical deterministic JSON
+    ↓
+SHA-256 over complete durable reference + human action
+    ↓
+exclusive-create exact-range-note sidecar
+```
+
+`pyxis.app.persist_chromium_research_paragraph_text_selection_note()` retains the exact caller-supplied 18B note object in runtime persistence evidence. Before writing, it calls the established 18B constructor with the retained 18A selection and exact note text; 18B in turn delegates range validity to 18A. Persistence therefore does not create a second coordinate/source validator and still refuses forged ranges outside an already-returned bounded prefix.
+
+The durable identity changes honestly at the process boundary. Python object identity is replaced on disk by the already-established source capture format + bundle SHA-256, the explicit 17A paragraph selection mode/ordinal, and the explicit 18A text-selection mode/Unicode offsets. The sidecar stores the human note mode and note text verbatim.
+
+Selected source text is deliberately absent. The sidecar does not persist `selected_text`, paragraph text, paragraph element ID, URL, endpoint, target ID, source path, loaded-capture state, or any other browser evidence. Source evidence remains owned by the 16B capture; the sidecar stores only enough durable identity for future explicit relinking.
+
+`pyxis.app.verify_chromium_research_paragraph_text_selection_note()` reads only the sidecar. It validates exact UTF-8/JSON shape, supported formats/modes, SHA shape, positive paragraph ordinal, Unicode offset-unit identity, start/end coordinate shape, nonblank exact human text, digest agreement, and canonical bytes. It does not locate/read/verify the source capture, prove the paragraph exists in that capture, prove the range fits its returned text prefix, derive selected text, or recreate 17A/18A/18B typed objects.
+
+A focused falsifiability test rewrites `end_offset` from 4 to 999, changes the note text, recomputes the digest, and writes canonical bytes. File-only verification accepts that new self-consistent sidecar. That is intentional evidence that SHA-256 and canonical-file verification are self-integrity only; without reading an explicit source, 18C has no authority to claim source-range validity. A future relinking boundary must re-establish that relationship through the existing 17A → 18A → 18B operations.
+
+Actions #612 on `542bc83dafce254f9cd1f5323b0421ac8570bf02` passed on Python 3.11, 3.12, 3.13, and 3.14. The inspected Python 3.11 log checked out that exact behavior head, collected **311 tests**, passed all seven focused 18C tests, and finished **311 passed in 30.83s**.
+
+D137 therefore establishes: **one immutable 18B exact-range note may be persisted as deterministic no-overwrite sidecar JSON containing only the established durable source-capture content reference (`capture_format` + `bundle_sha256`), the layered human selection identity (17A paragraph selection mode + ordinal and 18A text-selection mode + Unicode offset unit + zero-based half-open start/end offsets), and the exact 18B note mode/verbatim caller text. Persistence must re-establish the live note/range contract through the existing 18B/18A boundaries and retain the exact supplied 18B note object in runtime persistence evidence, but it must not copy selected source text, paragraph/page evidence, loaded-capture state, source path, or other browser evidence into the sidecar. The sidecar SHA-256 covers the complete durable reference + human-action payload and is self-integrity evidence only, not authorship, authentication, source verification, quotation/citation proof, or proof that persisted coordinates address the referenced source. Sidecar verification reads only the sidecar and may validate coordinate shape but must not claim source-range validity without an explicit caller-supplied matching capture; typed relinking is a separate future authority boundary.**
+
 ## Measurement state through 11T
 
 The measurement sequence is intentionally descriptive and provenance-heavy:
@@ -1016,7 +1058,12 @@ While no measurement snapshot is mounted, an already-produced caller-supplied me
 - Exact-range note text is preserved verbatim; validation may refuse a blank note but does not normalize stored wording.
 - A selected source range may contain whitespace or punctuation; Pyxis does not infer semantic importance from the selected characters before allowing a human note.
 - An exact-range note is human interpretation linked to exact selected source evidence, not page/source evidence, relevance, truth, claim support, verified quotation/citation, source authenticity/provenance, inferred authorship/time, or machine interpretation.
-- One concrete exact-range note does not justify generic annotation, range-note persistence, edit/history semantics, or multi-note/notebook abstractions.
+- Durable exact-range-note persistence stores only established source-content identity, layered paragraph/range coordinates, and exact human note text; it does not store selected source text, source path, or loaded browser evidence.
+- Live exact-range-note persistence delegates note/range validity through the established 18B/18A operations instead of creating another coordinate/source validator.
+- Exact-range-note sidecar SHA-256 is self-integrity evidence only; recomputing the digest after changing a coordinate can create another file-valid sidecar without proving the coordinate addresses source evidence.
+- File-only exact-range-note verification may validate coordinate shape but does not read the source and therefore cannot establish source-range validity.
+- Typed exact-range-note relinking to an explicit caller-supplied loaded capture remains a separate authority boundary.
+- One concrete exact-range-note persistence format does not justify generic annotation, edit/history semantics, multiple-note/notebook abstractions, capture discovery, or a generic durable-reference resolver.
 
 ## Current development discipline
 
@@ -1056,7 +1103,9 @@ Do **not** continue the 11-series by adding another statistic merely because one
 
 18A proves one exact caller-owned Unicode code-point range inside one already-returned 17A paragraph. Do not generalize that proof into a generic highlight/selection framework, text search, fuzzy matching, semantic passage extraction, multiple ranges, independent range persistence, quotation/citation verification, source authentication, machine-selected highlights, or UI merely because exact coordinates are now representable. Each requires separate product pressure and proof.
 
-18B proves one immutable caller-authored note over one exact 18A range while reusing 18A as the range-validity authority. Do not generalize that proof into range-note persistence, note editing/deletion/history, multi-note or notebook abstractions, generic annotation frameworks, tags/questions/claims/categories, source-authentication or quotation/citation systems, inferred authorship/time, generated notes, machine interpretation, autonomous workflow, or researcher UI. Each direction needs its own concrete product pressure and proof.
+18B proves one immutable caller-authored note over one exact 18A range while reusing 18A as the range-validity authority. Do not generalize that proof into note editing/deletion/history, multi-note or notebook abstractions, generic annotation frameworks, tags/questions/claims/categories, source-authentication or quotation/citation systems, inferred authorship/time, generated notes, machine interpretation, autonomous workflow, or researcher UI. Each direction needs its own concrete product pressure and proof.
+
+18C proves one deterministic no-overwrite durable exact-range-note sidecar that records source-content identity + explicit paragraph/range coordinates + verbatim human text without copying selected source evidence. Its verifier remains file-local and intentionally cannot prove those coordinates fit an unread source; a recomputed digest can protect a different self-consistent record without authenticating its source relationship. Do not generalize this into automatic source discovery, generic durable-reference resolution, edit/history semantics, multiple-note/notebook abstractions, quotation/citation authority, source authentication, inferred authorship/time, machine interpretation, autonomous workflow, or researcher UI. The next concrete question is explicit exact-range-note relinking/rehydration against one caller-supplied matching 16C loaded capture.
 
 ## Why the older central status lines are not being rewritten now
 
