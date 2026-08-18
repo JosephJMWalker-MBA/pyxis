@@ -292,3 +292,12 @@ Seven focused tests cover:
 ## Decision — D143
 
 **Pyxis may create one immutable human-owned research working set from a non-empty caller-supplied ordered iterable containing only the established 17D relinked paragraph-note, 18D relinked exact-range-note, and 19D relinked comparison-note record families. The working set must snapshot caller membership into an immutable tuple while retaining each exact supplied loaded record object, preserving caller order and intentional duplicates without sorting, ranking, discovery, deduplication, or semantic inference. Membership validation must re-establish each member's in-memory human-action contract through the existing public 17B, 18B, or 19B constructor chain and require the retained verification facts to agree with the nested reconstructed source/selection/note objects, but it must not reread sidecar files or pretend to perform fresh 17D/18D/19D relinking. A previously relinked record may therefore remain eligible even when its sidecar path no longer exists, while an in-memory verification/note or verification/source mismatch must be rejected. Successful creation proves only explicit working-set membership over coherent loaded application evidence; it does not establish semantic relation, relevance, priority, completeness, source authenticity, reliability, truth, note correctness, quotation/citation validity, authorship, trusted time, chain of custody, or machine agreement. Loaded evidence, human organizational membership, and semantic relationship remain separate authority layers.**
+
+## Validation
+
+Behavior/public-API proof:
+
+- draft PR #30 Actions **#670** completed successfully on Python 3.11, 3.12, 3.13, and 3.14 for behavior head `c51b4bab298c4f772513ce9e2f86b1b6799d4407`;
+- Python 3.11 collected **354 tests / 354 passed in 30.16s**;
+- all seven focused 20A tests passed, including mixed-family order/identity retention, duplicate preservation, successful creation after all three sidecar files were deleted, in-memory mismatch rejection, empty/unsupported refusal, and public `pyxis.app` exposure;
+- PR-context Actions checked the merge result of that exact head against current `main`, preserving the established independent review-context validation pattern.
