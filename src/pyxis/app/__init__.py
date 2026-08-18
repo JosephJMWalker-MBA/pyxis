@@ -77,6 +77,11 @@ from .chromium_research_paragraph_text_selection_comparison_note import (
     ChromiumPageResearchParagraphTextSelectionComparisonNoteRecord,
     create_chromium_research_paragraph_text_selection_comparison_note,
 )
+from .chromium_research_paragraph_text_selection_comparison_note_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord,
+    ChromiumResearchParagraphTextSelectionComparisonNoteSourceMismatchError,
+    load_chromium_research_paragraph_text_selection_comparison_note,
+)
 from .chromium_research_paragraph_text_selection_comparison_note_persistence import (
     ChromiumPageResearchParagraphTextSelectionComparisonNotePersistenceEvidence,
     ChromiumPageResearchParagraphTextSelectionComparisonNoteVerificationEvidence,
@@ -252,6 +257,7 @@ __all__ = [
     "ChromiumPageResearchEvidenceBundle",
     "ChromiumPageResearchLoadedCaptureEvidence",
     "ChromiumPageResearchLoadedParagraphNoteRecord",
+    "ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord",
     "ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord",
     "ChromiumPageResearchParagraphNotePersistenceEvidence",
     "ChromiumPageResearchParagraphNoteRecord",
@@ -273,6 +279,7 @@ __all__ = [
     "ChromiumResearchParagraphNoteIntegrityError",
     "ChromiumResearchParagraphNoteSourceMismatchError",
     "ChromiumResearchParagraphTextSelectionComparisonNoteIntegrityError",
+    "ChromiumResearchParagraphTextSelectionComparisonNoteSourceMismatchError",
     "ChromiumResearchParagraphTextSelectionNoteIntegrityError",
     "ChromiumResearchParagraphTextSelectionNoteSourceMismatchError",
     "CompilerArtifactPresentation",
@@ -329,6 +336,7 @@ __all__ = [
     "export_workspace",
     "load_chromium_page_research_capture",
     "load_chromium_research_paragraph_note",
+    "load_chromium_research_paragraph_text_selection_comparison_note",
     "load_chromium_research_paragraph_text_selection_note",
     "measure_build_and_run_workspace",
     "observe_chromium_page",
