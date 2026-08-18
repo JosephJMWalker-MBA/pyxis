@@ -249,6 +249,15 @@ Eight focused tests cover:
 7. same-selection comparison persistence without significance judgment;
 8. public `pyxis.app` exposure.
 
+## Validation
+
+Behavior/public-API proof:
+
+- draft PR #28 Actions **#652** completed successfully on Python 3.11, 3.12, 3.13, and 3.14 for review head `2c5106e03edd2b2b290513a5a50bf2e97a8c0288`;
+- Python 3.11 collected **340 tests / 340 passed in 31.29s**;
+- all eight focused 19C tests passed alongside the complete established Repository Zero/browser/capture/selection/note/durability/relinking/comparison suite;
+- the PR-context checkout merged that exact head into current `main` before running the suite, preserving the independent review-context pattern used by prior milestones.
+
 ## Explicit non-goals
 
 19C adds no:
