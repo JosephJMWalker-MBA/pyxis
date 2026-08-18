@@ -73,6 +73,10 @@ from .chromium_research_paragraph_text_selection_comparison import (
     ChromiumPageResearchParagraphTextSelectionComparisonRecord,
     create_chromium_research_paragraph_text_selection_comparison,
 )
+from .chromium_research_paragraph_text_selection_comparison_note import (
+    ChromiumPageResearchParagraphTextSelectionComparisonNoteRecord,
+    create_chromium_research_paragraph_text_selection_comparison_note,
+)
 from .chromium_research_paragraph_text_selection_note import (
     ChromiumPageResearchParagraphTextSelectionNoteRecord,
     create_chromium_research_paragraph_text_selection_note,
@@ -246,6 +250,7 @@ __all__ = [
     "ChromiumPageResearchParagraphNoteRecord",
     "ChromiumPageResearchParagraphNoteVerificationEvidence",
     "ChromiumPageResearchParagraphSelectionEvidence",
+    "ChromiumPageResearchParagraphTextSelectionComparisonNoteRecord",
     "ChromiumPageResearchParagraphTextSelectionComparisonRecord",
     "ChromiumPageResearchParagraphTextSelectionEvidence",
     "ChromiumPageResearchParagraphTextSelectionNotePersistenceEvidence",
@@ -308,6 +313,7 @@ __all__ = [
     "create_build_and_run_measurement_median",
     "create_chromium_research_paragraph_note",
     "create_chromium_research_paragraph_text_selection_comparison",
+    "create_chromium_research_paragraph_text_selection_comparison_note",
     "create_chromium_research_paragraph_text_selection_note",
     "create_workspace_presentation",
     "export_workspace",
