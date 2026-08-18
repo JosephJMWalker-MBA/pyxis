@@ -125,6 +125,11 @@ from .chromium_research_selection_note_persistence import (
     persist_chromium_research_paragraph_note,
     verify_chromium_research_paragraph_note,
 )
+from .chromium_research_working_set import (
+    ChromiumPageResearchWorkingSetItem,
+    ChromiumPageResearchWorkingSetRecord,
+    create_chromium_research_working_set,
+)
 from .chromium_tables import (
     ChromiumPageTableCellEvidence,
     ChromiumPageTableEvidence,
@@ -271,6 +276,8 @@ __all__ = [
     "ChromiumPageResearchParagraphTextSelectionNotePersistenceEvidence",
     "ChromiumPageResearchParagraphTextSelectionNoteRecord",
     "ChromiumPageResearchParagraphTextSelectionNoteVerificationEvidence",
+    "ChromiumPageResearchWorkingSetItem",
+    "ChromiumPageResearchWorkingSetRecord",
     "ChromiumPageTableCellEvidence",
     "ChromiumPageTableEvidence",
     "ChromiumPageTableRowEvidence",
@@ -332,6 +339,7 @@ __all__ = [
     "create_chromium_research_paragraph_text_selection_comparison",
     "create_chromium_research_paragraph_text_selection_comparison_note",
     "create_chromium_research_paragraph_text_selection_note",
+    "create_chromium_research_working_set",
     "create_workspace_presentation",
     "export_workspace",
     "load_chromium_page_research_capture",
