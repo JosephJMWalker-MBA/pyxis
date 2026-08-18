@@ -207,6 +207,15 @@ Seven focused tests cover:
 6. revalidation without replacement of an equal-by-value but distinct supplied comparison object;
 7. exposure through the public `pyxis.app` surface.
 
+## Validation
+
+Behavior/public-API proof:
+
+- draft PR #27 Actions **#643** completed successfully on Python 3.11, 3.12, 3.13, and 3.14 for review head `49689930c145cc63af4874b122b1378cc68c7a53`;
+- Python 3.11 collected **332 tests / 332 passed in 38.68s**;
+- all seven focused 19B tests passed alongside the complete established Repository Zero/browser/capture/selection/note/durability/relinking/comparison suite;
+- the PR-context checkout merged that exact head into current `main` before running the suite, preserving the independent review-context pattern used by prior milestones.
+
 ## Explicit non-goals
 
 19B adds no:
