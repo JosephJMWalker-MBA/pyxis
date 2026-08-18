@@ -77,6 +77,13 @@ from .chromium_research_paragraph_text_selection_comparison_note import (
     ChromiumPageResearchParagraphTextSelectionComparisonNoteRecord,
     create_chromium_research_paragraph_text_selection_comparison_note,
 )
+from .chromium_research_paragraph_text_selection_comparison_note_persistence import (
+    ChromiumPageResearchParagraphTextSelectionComparisonNotePersistenceEvidence,
+    ChromiumPageResearchParagraphTextSelectionComparisonNoteVerificationEvidence,
+    ChromiumResearchParagraphTextSelectionComparisonNoteIntegrityError,
+    persist_chromium_research_paragraph_text_selection_comparison_note,
+    verify_chromium_research_paragraph_text_selection_comparison_note,
+)
 from .chromium_research_paragraph_text_selection_note import (
     ChromiumPageResearchParagraphTextSelectionNoteRecord,
     create_chromium_research_paragraph_text_selection_note,
@@ -250,7 +257,9 @@ __all__ = [
     "ChromiumPageResearchParagraphNoteRecord",
     "ChromiumPageResearchParagraphNoteVerificationEvidence",
     "ChromiumPageResearchParagraphSelectionEvidence",
+    "ChromiumPageResearchParagraphTextSelectionComparisonNotePersistenceEvidence",
     "ChromiumPageResearchParagraphTextSelectionComparisonNoteRecord",
+    "ChromiumPageResearchParagraphTextSelectionComparisonNoteVerificationEvidence",
     "ChromiumPageResearchParagraphTextSelectionComparisonRecord",
     "ChromiumPageResearchParagraphTextSelectionEvidence",
     "ChromiumPageResearchParagraphTextSelectionNotePersistenceEvidence",
@@ -263,6 +272,7 @@ __all__ = [
     "ChromiumResearchCaptureIntegrityError",
     "ChromiumResearchParagraphNoteIntegrityError",
     "ChromiumResearchParagraphNoteSourceMismatchError",
+    "ChromiumResearchParagraphTextSelectionComparisonNoteIntegrityError",
     "ChromiumResearchParagraphTextSelectionNoteIntegrityError",
     "ChromiumResearchParagraphTextSelectionNoteSourceMismatchError",
     "CompilerArtifactPresentation",
@@ -332,6 +342,7 @@ __all__ = [
     "partition_build_and_run_measurement_stage_samples",
     "persist_chromium_page_research_capture",
     "persist_chromium_research_paragraph_note",
+    "persist_chromium_research_paragraph_text_selection_comparison_note",
     "persist_chromium_research_paragraph_text_selection_note",
     "preview_add_split_lines",
     "preview_remove_normalize_text",
@@ -346,5 +357,6 @@ __all__ = [
     "select_chromium_research_paragraph_text",
     "verify_chromium_page_research_capture",
     "verify_chromium_research_paragraph_note",
+    "verify_chromium_research_paragraph_text_selection_comparison_note",
     "verify_chromium_research_paragraph_text_selection_note",
 ]
