@@ -183,7 +183,12 @@ Seven focused tests cover:
 
 ## Validation
 
-Milestone acceptance requires the complete established Repository Zero/browser/capture/selection/note/durability/relinking suite plus the seven focused 19A tests to pass on every supported Python lane (3.11–3.14) at the final frozen review head.
+Behavior/public-API proof:
+
+- draft PR #26 Actions **#633** completed successfully on Python 3.11, 3.12, 3.13, and 3.14 for review head `d7fe5498752c4e06d7019f16eb4872ff5101e919`;
+- Python 3.11 collected **325 tests / 325 passed in 35.94s**;
+- all seven focused 19A tests passed alongside the complete established Repository Zero/browser/capture/selection/note/durability/relinking suite;
+- the PR-context checkout merged that exact head into current `main` before running the suite, preserving the same independent review-context pattern used by prior milestones.
 
 ## Explicit non-goals
 
