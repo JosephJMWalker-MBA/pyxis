@@ -249,6 +249,15 @@ Seven focused tests cover:
 6. successful same-selection comparison relinking when the same capture is explicitly supplied twice;
 7. public `pyxis.app` exposure.
 
+## Validation
+
+Behavior/public-API proof:
+
+- draft PR #29 Actions **#661** completed successfully on Python 3.11, 3.12, 3.13, and 3.14 for review head `9a2c31dfa87d5909458453c74ea6f5cfa8e950f3`;
+- Python 3.11 collected **347 tests / 347 passed in 31.05s**;
+- all seven focused 19D tests passed alongside the complete established Repository Zero/browser/capture/selection/note/durability/relinking/comparison suite;
+- the PR-context checkout merged that exact head into current `main` before running the suite, preserving the independent review-context pattern used by prior milestones.
+
 ## Explicit non-goals
 
 19D adds no:
