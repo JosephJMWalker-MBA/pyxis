@@ -1,6 +1,7 @@
 # Pyxis Current State
 
-**Continuity front door — Pyxis current through Milestone 18C / D137 (2026-08-16).**
+> **Continuity status — current implementation through Milestone 25A / D158 (2026-08-19).**  
+> This central document remains complete through **Milestone 18C / D137**. Milestones **19A through 25A / D158** are implemented on `main` and preserved in their dedicated milestone documents. Start with `README.md` for the current high-level map; use this file as the detailed central state through 18C, then continue through the later milestone records.
 
 This file exists because the GitHub connector cannot safely apply line-level edits to the already-large `ARCHITECTURE.md` and `DEVELOPMENT_ARCHIVE.md`. A prior attempt to replace those files wholesale produced a deletion-heavy diff and was deliberately abandoned rather than normalize a historical rewrite.
 
