@@ -202,7 +202,7 @@ def test_sequence_rejects_skipped_predecessor_at_exact_position_zero(tmp_path: P
 
 
 def test_sequence_does_not_reorder_or_treat_siblings_as_a_chain(tmp_path: Path) -> None:
-    _, _, _, loaded_v4, _, _ = _durable_successor(
+    _, _, loaded_v4, _, _, _ = _durable_successor(
         tmp_path,
         v4_text="v4 shared predecessor",
         v5_text="unused first successor",
@@ -338,7 +338,7 @@ def test_sequence_does_not_recursively_audit_ancestry_below_start(tmp_path: Path
 
 
 def test_sequence_rejects_invalid_start_empty_sequence_and_single_path(tmp_path: Path) -> None:
-    _, _, _, loaded_v4, _, _ = _durable_successor(tmp_path)
+    _, _, loaded_v4, _, _, _ = _durable_successor(tmp_path)
     path = tmp_path / "one-edge.json"
 
     with pytest.raises(TypeError, match="starting_predecessor must be"):
