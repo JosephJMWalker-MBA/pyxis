@@ -1,6 +1,40 @@
 # Pyxis
 
-Pyxis turns software architecture into executable, inspectable systems—connecting human intent to generated code through a transparent compiler, with measurable consequences and portable output.
+Pyxis is an **evidence-first Python research system** with two proven, connected spines:
+
+1. a transparent architecture-to-code compiler/runtime that keeps human intent, canonical state, generated products, runtime evidence, revisions, and export boundaries inspectable; and
+2. a read-only Chromium research workflow that preserves observation, human selection, comparison, rationale, and revision history without silently promoting any layer into stronger authority.
+
+## Current status — through Milestone 25A / D158
+
+Pyxis currently proves:
+
+- **Architecture → code → runtime → portable output:** canonical Workspace authoring, RIR, deterministic compilation, generated Workspace execution, governed architecture preview/Apply, append-only revision evidence, incremental recompilation, proposed-vs-observed consequence reconciliation, export verification, conventional source output, and a verified wheel path.
+- **Evidence-preserving UI and measurement:** a Textual Workspace shell renders application-owned evidence; descriptive measurement remains provenance-heavy and explicitly non-causal.
+- **Read-only Chromium research:** caller-owned Chromium pages can be observed through an explicit DevTools endpoint for bounded page text, links, headings, metadata, paragraphs, tables, and lists. Pyxis does not infer an active tab when multiple pages exist and does not acquire navigation or interaction authority from observation capability.
+- **Durable research evidence:** the seven browser evidence families can be composed sequentially into a non-atomic research bundle, persisted deterministically with SHA-256 self-integrity evidence, verified, and rehydrated without Chromium remaining alive.
+- **Human-owned research actions:** a caller can explicitly select paragraphs and exact Unicode text ranges, attach verbatim notes, compare exact ranges, group already-loaded records into ordered working sets, and attach rationale to those working sets while keeping human interpretation distinct from source evidence.
+- **Durable and revisable human rationale:** comparison notes, working sets, working-set notes, note revisions, revision continuations, and generalized revision edges have explicit persistence/relinking boundaries. Milestone 25A adds an in-memory human extension of one exact already-loaded revision edge while deliberately adding no global current-head, chronology, branch/merge, semantic-diff, or whole-history authority.
+- **Bounded compatibility:** package metadata declares Python `>=3.11,<3.15`, and the supported lanes are exercised across Python 3.11, 3.12, 3.13, and 3.14.
+
+The detailed narrative below was written as the central README proof trail through **Milestone 18C / D137** and is preserved rather than rewritten. Milestones **19A through 25A / D158** extend that foundation and are recorded in their dedicated milestone documents. Any older “current” or “next milestone” wording below should therefore be read in its historical 18C context; this section is the repository’s current high-level front door.
+
+## Authority boundaries
+
+Pyxis deliberately does **not** treat implementation convenience as authority. In particular:
+
+- generated code is not a second canonical source;
+- proposed architecture evidence is not observed post-Apply evidence;
+- descriptive timing is not causal performance evidence;
+- DOM order is not relevance or recommendation;
+- page-declared metadata is not verified provenance;
+- SHA-256 self-integrity is not authentication, authorship, or trusted time;
+- researcher selection is provenance about human choice, not truth, quotation, or citation proof;
+- human notes and comparisons are interpretation attached to evidence, not source evidence themselves;
+- durable reference matching is not source discovery or chain-of-custody proof;
+- exact-text differences are not semantic differences;
+- a loaded revision edge is not a globally validated history, current head, or linear-chain authority; and
+- read-only browser observation does not imply navigation, interaction, autonomous research, or arbitrary DevTools authority.
 
 ## Current focus
 
