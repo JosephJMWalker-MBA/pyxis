@@ -101,17 +101,21 @@ async def test_context_button_reveals_and_hides_exact_three_layer_evidence(
         assert not detail.has_class("research-context-collapsed")
         assert detail.presentation is first
 
+        static_widgets = tuple(detail.query(Static))
         source_texts = tuple(
             str(widget.content)
-            for widget in detail.query(".research-source-excerpt-text", Static)
+            for widget in static_widgets
+            if widget.has_class("research-source-excerpt-text")
         )
         note_texts = tuple(
             str(widget.content)
-            for widget in detail.query(".research-working-set-note-text", Static)
+            for widget in static_widgets
+            if widget.has_class("research-working-set-note-text")
         )
         rationale_texts = tuple(
             str(widget.content)
-            for widget in detail.query(".research-rationale-context-text", Static)
+            for widget in static_widgets
+            if widget.has_class("research-rationale-context-text")
         )
         assert source_texts == (
             "Alpha evidence paragraph",
