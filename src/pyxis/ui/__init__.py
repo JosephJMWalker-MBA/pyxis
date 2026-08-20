@@ -7,7 +7,7 @@ from .textual_shell import (
     ArchitecturePreviewDetail,
     WorkspaceDetail,
 )
-from .workspace_shell import (
+from .research_workspace_shell import (
     WorkspaceShell,
     create_workspace_shell,
 )
