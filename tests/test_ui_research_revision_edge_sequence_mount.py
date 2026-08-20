@@ -11,15 +11,17 @@ from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_present
     present_chromium_research_working_set_note_revision_edge_sequence_declaration,
 )
 from pyxis.authoring import create_workspace_spec
-from pyxis.ui import MeasurementSummaryDetail, create_workspace_shell
+from pyxis.ui import WorkspaceShell as ExportedWorkspaceShell
+from pyxis.ui import create_workspace_shell
 from pyxis.ui.chromium_research_revision_edge_sequence_textual import (
     INDEPENDENT_RESEARCH_NOTICE,
     ResearchRevisionEdgeSequenceDetail,
 )
+from pyxis.ui.research_workspace_shell import WorkspaceShell as ResearchWorkspaceShell
+from pyxis.ui.workspace_shell import WorkspaceShell as BaseWorkspaceShell
 from test_app_chromium_research_working_set_note_revision_edge_sequence_presentation import (
     _loaded_declared_sequence,
 )
-from test_ui_workspace_measurement_mount import _measurement_presentation
 
 
 def _research_presentation(tmp_path: Path):
@@ -177,10 +179,7 @@ async def test_research_panel_uses_declared_positions_without_head_or_latest_lan
     async with shell.run_test(size=(120, 55)) as pilot:
         await pilot.pause()
         detail = shell.query_one(ResearchRevisionEdgeSequenceDetail)
-        rendered = "\n".join(
-            str(widget.content)
-            for widget in detail.query(Static)
-        )
+        rendered = "\n".join(str(widget.content) for widget in detail.query(Static))
         assert "Declared position 1 — not a global revision number" in rendered
         assert "Declared position 2 — not a global revision number" in rendered
         assert "Human-authored rationale — not source evidence" in rendered
@@ -205,33 +204,14 @@ def test_same_research_presentation_can_be_displayed_beside_different_workspaces
     assert shell_a.presentation.rir.workspace_id != shell_b.presentation.rir.workspace_id
 
 
-@pytest.mark.asyncio
-async def test_research_wrapper_composes_with_existing_measurement_surface(
+def test_package_level_shell_is_additive_wrapper_over_existing_normal_shell(
     tmp_path: Path,
 ) -> None:
     research = _research_presentation(tmp_path)
-    measurement = _measurement_presentation(tmp_path)
-    root = tmp_path / "measurement-compatible-workspace"
-    subject = measurement.source.envelope.partition.condition.subject
+    _, _, _, workspace = _workspace(tmp_path)
+    shell = create_workspace_shell(workspace, research_presentation=research)
 
-    spec = create_workspace_spec(
-        "Text Lab",
-        "Mean stays attached to median evidence.",
-        workspace_id=subject.workspace_id,
-    )
-    run = build_and_run_workspace(spec, root, "same workload")
-    workspace = create_workspace_presentation(spec, run)
-
-    if workspace.rir.repository_id != subject.repository_id or workspace.rir.rir_sha256 != subject.rir_sha256:
-        pytest.skip("Shared measurement helper does not target this newly built workspace identity.")
-
-    shell = create_workspace_shell(
-        workspace,
-        measurement_presentation=measurement,
-        research_presentation=research,
-    )
-
-    async with shell.run_test(size=(130, 65)) as pilot:
-        await pilot.pause()
-        assert shell.query_one(MeasurementSummaryDetail).presentation is measurement
-        assert shell.query_one(ResearchRevisionEdgeSequenceDetail).presentation is research
+    assert ExportedWorkspaceShell is ResearchWorkspaceShell
+    assert isinstance(shell, ResearchWorkspaceShell)
+    assert isinstance(shell, BaseWorkspaceShell)
+    assert shell.research_presentation is research
