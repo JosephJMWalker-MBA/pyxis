@@ -73,7 +73,7 @@ class WorkspaceShell(_WorkspaceShell):
         margin-top: 1;
     }
 
-    Button[id^="research-context-toggle-"] {
+    .research-context-toggle {
         margin-top: 1;
     }
     """
