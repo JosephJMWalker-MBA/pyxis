@@ -1,12 +1,22 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from textual.app import ComposeResult
 from textual.containers import Vertical
-from textual.widgets import Static
+from textual.widgets import Button, Static
 
+from pyxis.app.chromium_research_revision_edge_working_set_presentation import (
+    ChromiumPageResearchRationaleWorkingSetPresentation,
+)
 from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_presentation import (
     ChromiumPageResearchRevisionEdgeSequenceMemberPresentation,
     ChromiumPageResearchRevisionEdgeSequencePresentation,
+)
+
+from .chromium_research_rationale_working_set_textual import (
+    ResearchRationaleWorkingSetDetail,
+    _require_rationale_working_set_presentation,
 )
 
 
@@ -60,6 +70,38 @@ def _require_member(
         raise ValueError("Research sequence member edge format is unsupported.")
 
 
+def _snapshot_working_set_contexts(
+    presentation: ChromiumPageResearchRevisionEdgeSequencePresentation,
+    contexts: Iterable[ChromiumPageResearchRationaleWorkingSetPresentation],
+) -> tuple[ChromiumPageResearchRationaleWorkingSetPresentation, ...]:
+    try:
+        frozen = tuple(contexts)
+    except TypeError as exc:
+        raise TypeError("working_set_contexts must be an iterable of 27C presentations.") from exc
+
+    seen_positions: set[int] = set()
+    for context in frozen:
+        _require_rationale_working_set_presentation(context)
+        position = context.declared_position
+        if position in seen_positions:
+            raise ValueError("Working-set context declared positions must be unique.")
+        if position > len(presentation.members):
+            raise ValueError("Working-set context position is outside the displayed segment.")
+
+        member = presentation.members[position - 1]
+        if context.declaration_record_sha256 != presentation.declaration_record_sha256:
+            raise ValueError("Working-set context references a different declaration.")
+        if context.edge_format != member.edge_format:
+            raise ValueError("Working-set context edge format does not match the displayed rationale.")
+        if context.edge_record_sha256 != member.edge_record_sha256:
+            raise ValueError("Working-set context edge identity does not match the displayed rationale.")
+        if context.rationale_text != member.note_text:
+            raise ValueError("Working-set context rationale text does not match the displayed rationale.")
+        seen_positions.add(position)
+
+    return frozen
+
+
 def _format_identity(label: str, record_format: str, record_sha256: str) -> str:
     return "\n".join(
         (
@@ -70,22 +112,33 @@ def _format_identity(label: str, record_format: str, record_sha256: str) -> str:
 
 
 class ResearchRevisionEdgeSequenceDetail(Vertical):
-    """Read-only Textual rendering of one already-produced 27A presentation.
+    """Read-only Textual rendering of 27A with optional explicit 27C context views.
 
-    This widget consumes presentation evidence only. It performs no file reads,
-    browser acquisition, persistence, mutation, chronology inference, head
-    selection, source validation, or semantic analysis. The surrounding Workspace
-    shell does not imply that this independently supplied research segment belongs
-    to the rendered Workspace.
+    Context controls only reveal or hide already-produced presentation records. They
+    perform no file reads, browser acquisition, research relinking, persistence,
+    evidence mutation, chronology inference, semantic support analysis, or Workspace
+    provenance association.
     """
 
     def __init__(
         self,
         presentation: ChromiumPageResearchRevisionEdgeSequencePresentation,
+        *,
+        working_set_contexts: Iterable[
+            ChromiumPageResearchRationaleWorkingSetPresentation
+        ] = (),
     ) -> None:
         _require_research_sequence_presentation(presentation)
+        frozen_contexts = _snapshot_working_set_contexts(
+            presentation,
+            working_set_contexts,
+        )
         super().__init__(id="research-revision-edge-sequence")
         self.presentation = presentation
+        self.working_set_contexts = frozen_contexts
+        self._contexts_by_position = {
+            context.declared_position: context for context in frozen_contexts
+        }
 
     def compose(self) -> ComposeResult:
         presentation = self.presentation
@@ -151,3 +204,36 @@ class ResearchRevisionEdgeSequenceDetail(Vertical):
                     classes="research-sequence-note-text",
                     markup=False,
                 )
+
+                context = self._contexts_by_position.get(member.declared_position)
+                if context is not None:
+                    yield Button(
+                        "Inspect attached working set",
+                        id=f"research-context-toggle-{member.declared_position}",
+                    )
+                    yield ResearchRationaleWorkingSetDetail(
+                        context,
+                        collapsed=True,
+                    )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Reveal or hide one already-supplied 27C context presentation."""
+
+        button_id = event.button.id
+        prefix = "research-context-toggle-"
+        if button_id is None or not button_id.startswith(prefix):
+            return
+
+        try:
+            position = int(button_id[len(prefix) :])
+        except ValueError:
+            return
+
+        detail = self.query_one(
+            f"#research-rationale-working-set-{position}",
+            ResearchRationaleWorkingSetDetail,
+        )
+        if detail.has_class("research-context-collapsed"):
+            detail.remove_class("research-context-collapsed")
+        else:
+            detail.add_class("research-context-collapsed")
