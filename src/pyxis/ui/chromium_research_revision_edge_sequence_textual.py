@@ -210,6 +210,7 @@ class ResearchRevisionEdgeSequenceDetail(Vertical):
                     yield Button(
                         "Inspect attached working set",
                         id=f"research-context-toggle-{member.declared_position}",
+                        classes="research-context-toggle",
                     )
                     yield ResearchRationaleWorkingSetDetail(
                         context,
