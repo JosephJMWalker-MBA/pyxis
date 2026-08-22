@@ -255,7 +255,7 @@ async def test_controller_with_prior_success_mounts_locked_receipt(tmp_path: Pat
         assert shell.query_one("#research-endpoint-destination", Input).disabled
         status = str(shell.query_one("#research-endpoint-revision-status", Static).content)
         assert result.persistence.edge_record_sha256 in status
-        assert "Reopen and explicitly redeclare" in status
+        assert "Explicitly continue from this displayed successor" in status
 
 
 @pytest.mark.asyncio
