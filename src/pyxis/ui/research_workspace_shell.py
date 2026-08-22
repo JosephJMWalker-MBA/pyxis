@@ -215,12 +215,11 @@ class WorkspaceShell(_WorkspaceShell):
             )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Route explicit research mutation only through the supplied 29A controller."""
+        """Route only the 29B button; inherited handlers remain Textual-owned."""
 
         if event.button.id == "persist-research-endpoint-revision":
+            event.stop()
             self.call_after_refresh(self._persist_research_endpoint_revision)
-            return
-        super().on_button_pressed(event)
 
     async def _persist_research_endpoint_revision(self) -> None:
         if self.research_controller is None:
