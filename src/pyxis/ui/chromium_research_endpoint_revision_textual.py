@@ -24,7 +24,8 @@ def _success_receipt(
         "Successor is not adopted/current/head.\n"
         f"Successor edge SHA-256: {persistence.edge_record_sha256}\n"
         f"Destination: {persistence.path}\n"
-        "Reopen and explicitly redeclare before authoring another successor from the UI."
+        "Explicitly continue from this displayed successor before authoring another "
+        "successor from the UI."
     )
 
 
