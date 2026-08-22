@@ -7,6 +7,9 @@ from textual.app import ComposeResult
 from pyxis.app.chromium_research_revision_edge_working_set_presentation import (
     ChromiumPageResearchRationaleWorkingSetPresentation,
 )
+from pyxis.app.chromium_research_session_presentation import (
+    ChromiumPageResearchSessionPresentation,
+)
 from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_presentation import (
     ChromiumPageResearchRevisionEdgeSequencePresentation,
 )
@@ -24,14 +27,18 @@ from .chromium_research_revision_edge_sequence_textual import (
 from .workspace_shell import WorkspaceShell as _WorkspaceShell
 
 
+_RESEARCH_SESSION_PRESENTATION_MODE = "read_only_complete_declared_research_session"
+
+
 class WorkspaceShell(_WorkspaceShell):
     """Normal Pyxis shell with optional independently supplied research evidence.
 
     Research rationale and working-set context presentations mounted here remain
-    deliberately independent of Repository Zero Workspace provenance. Context
-    controls reveal or hide already-produced presentation evidence only; this
-    wrapper performs no browser/file acquisition, research relinking, semantic
-    analysis, or evidence mutation.
+    deliberately independent of Repository Zero Workspace provenance. Callers may
+    supply either one complete 28A research-session presentation or the older split
+    27A/27C presentation form. Context controls reveal or hide already-produced
+    presentation evidence only; this wrapper performs no browser/file acquisition,
+    research relinking, semantic analysis, or evidence mutation.
     """
 
     CSS = (
@@ -85,22 +92,50 @@ class WorkspaceShell(_WorkspaceShell):
         *,
         controller: WorkspaceController | None = None,
         measurement_presentation: BuildAndRunMeasurementSummaryPresentation | None = None,
+        research_session: ChromiumPageResearchSessionPresentation | None = None,
         research_presentation: ChromiumPageResearchRevisionEdgeSequencePresentation | None = None,
         research_working_set_contexts: Iterable[
             ChromiumPageResearchRationaleWorkingSetPresentation
         ] = (),
     ) -> None:
-        if research_presentation is None:
-            frozen_contexts = tuple(research_working_set_contexts)
-            if frozen_contexts:
+        explicit_contexts = tuple(research_working_set_contexts)
+
+        if research_session is not None:
+            if research_presentation is not None or explicit_contexts:
+                raise ValueError(
+                    "research_session cannot be combined with split research presentation inputs."
+                )
+            if not isinstance(research_session, ChromiumPageResearchSessionPresentation):
+                raise TypeError(
+                    "research_session must be ChromiumPageResearchSessionPresentation."
+                )
+            if research_session.presentation_mode != _RESEARCH_SESSION_PRESENTATION_MODE:
+                raise ValueError("Research session presentation mode is unsupported.")
+
+            session_sequence = research_session.sequence
+            _require_research_sequence_presentation(session_sequence)
+            session_contexts = _snapshot_working_set_contexts(
+                session_sequence,
+                research_session.working_set_contexts,
+            )
+            if len(session_contexts) != len(session_sequence.members):
+                raise ValueError(
+                    "Complete research session must contain one context per declared position."
+                )
+
+            research_presentation = session_sequence
+            frozen_contexts = session_contexts
+        elif research_presentation is None:
+            if explicit_contexts:
                 raise ValueError(
                     "research_working_set_contexts require a research_presentation."
                 )
+            frozen_contexts = ()
         else:
             _require_research_sequence_presentation(research_presentation)
             frozen_contexts = _snapshot_working_set_contexts(
                 research_presentation,
-                research_working_set_contexts,
+                explicit_contexts,
             )
 
         super().__init__(
@@ -108,6 +143,7 @@ class WorkspaceShell(_WorkspaceShell):
             controller=controller,
             measurement_presentation=measurement_presentation,
         )
+        self.research_session = research_session
         self.research_presentation = research_presentation
         self.research_working_set_contexts = frozen_contexts
 
@@ -125,6 +161,7 @@ def create_workspace_shell(
     *,
     controller: WorkspaceController | None = None,
     measurement_presentation: BuildAndRunMeasurementSummaryPresentation | None = None,
+    research_session: ChromiumPageResearchSessionPresentation | None = None,
     research_presentation: ChromiumPageResearchRevisionEdgeSequencePresentation | None = None,
     research_working_set_contexts: Iterable[
         ChromiumPageResearchRationaleWorkingSetPresentation
@@ -136,6 +173,7 @@ def create_workspace_shell(
         presentation,
         controller=controller,
         measurement_presentation=measurement_presentation,
+        research_session=research_session,
         research_presentation=research_presentation,
         research_working_set_contexts=research_working_set_contexts,
     )
