@@ -16,6 +16,10 @@ from pyxis.app.chromium_research_session_presentation import (
     ChromiumPageResearchSessionPresentation,
     present_chromium_research_session,
 )
+from pyxis.app.chromium_research_session_rollover import (
+    ChromiumResearchSessionRolloverResult,
+    rollover_chromium_research_session_to_persisted_successor,
+)
 from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_presentation import (
     ChromiumPageResearchRevisionEdgeSequencePresentation,
 )
@@ -33,6 +37,10 @@ from .chromium_research_revision_edge_sequence_textual import (
     _require_research_sequence_presentation,
     _snapshot_working_set_contexts,
 )
+from .chromium_research_session_rollover_textual import (
+    ResearchSessionRolloverControls,
+    rollover_success_receipt,
+)
 from .workspace_shell import WorkspaceShell as _WorkspaceShell
 
 
@@ -44,20 +52,23 @@ class WorkspaceShell(_WorkspaceShell):
 
     Research rationale and working-set context presentations mounted here remain
     deliberately independent of Repository Zero Workspace provenance. Callers may
-    supply one 29A research controller for explicit declared-endpoint mutation, one
-    complete 28A read-only research-session presentation, or the older split 27A/27C
-    presentation form. The three forms are mutually exclusive.
+    supply one governed research controller, one complete read-only research-session
+    presentation, or the older split 27A/27C presentation form. The three forms are
+    mutually exclusive.
 
-    Research mutation remains bounded to the 29A controller. A successful successor
-    write does not advance, replace, or otherwise adopt the displayed declared
-    session.
+    A controller may first write one explicit successor through 29A/29B and then,
+    only after a separate explicit 30A/30B rollover choice, replace this shell's
+    research surface with a new declared continuation session. That local adoption
+    does not create global latest/current/head semantics or Workspace provenance.
     """
 
     CSS = (
         _WorkspaceShell.CSS
         + """
     #research-revision-edge-sequence,
-    #research-endpoint-revision-controls {
+    #research-endpoint-revision-controls,
+    #research-session-rollover-controls,
+    #research-rollover-success-receipt {
         width: 94%;
         height: auto;
         padding: 1 2;
@@ -73,7 +84,12 @@ class WorkspaceShell(_WorkspaceShell):
     #research-endpoint-revised-note-label,
     #research-endpoint-prior-edge-source-label,
     #research-endpoint-destination-label,
-    #research-endpoint-revision-status {
+    #research-endpoint-revision-status,
+    #research-session-rollover-authority-notice,
+    #research-session-rollover-candidate,
+    #research-session-rollover-successor-source-label,
+    #research-session-rollover-declaration-destination-label,
+    #research-session-rollover-status {
         margin-top: 1;
     }
 
@@ -89,7 +105,10 @@ class WorkspaceShell(_WorkspaceShell):
     #research-endpoint-revision-title,
     #research-endpoint-revised-note-label,
     #research-endpoint-prior-edge-source-label,
-    #research-endpoint-destination-label {
+    #research-endpoint-destination-label,
+    #research-session-rollover-title,
+    #research-session-rollover-successor-source-label,
+    #research-session-rollover-declaration-destination-label {
         text-style: bold;
     }
 
@@ -103,7 +122,8 @@ class WorkspaceShell(_WorkspaceShell):
     }
 
     .research-context-toggle,
-    #persist-research-endpoint-revision {
+    #persist-research-endpoint-revision,
+    #rollover-research-session {
         margin-top: 1;
     }
 
@@ -201,6 +221,7 @@ class WorkspaceShell(_WorkspaceShell):
         self.research_session = research_session
         self.research_presentation = research_presentation
         self.research_working_set_contexts = frozen_contexts
+        self.last_research_rollover: ChromiumResearchSessionRolloverResult | None = None
 
     def compose(self) -> ComposeResult:
         yield from super().compose()
@@ -213,13 +234,20 @@ class WorkspaceShell(_WorkspaceShell):
             yield ResearchEndpointRevisionControls(
                 self.research_controller.last_endpoint_revision
             )
+            yield ResearchSessionRolloverControls(
+                self.research_controller.last_endpoint_revision
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Route only the 29B button; inherited handlers remain Textual-owned."""
+        """Route only governed research buttons; inherited handlers remain Textual-owned."""
 
         if event.button.id == "persist-research-endpoint-revision":
             event.stop()
             self.call_after_refresh(self._persist_research_endpoint_revision)
+            return
+        if event.button.id == "rollover-research-session":
+            event.stop()
+            self.call_after_refresh(self._rollover_research_session)
 
     async def _persist_research_endpoint_revision(self) -> None:
         if self.research_controller is None:
@@ -252,6 +280,124 @@ class WorkspaceShell(_WorkspaceShell):
             ResearchEndpointRevisionControls,
         )
         controls.lock_after_success(result)
+        self.query_one(
+            "#research-session-rollover-controls",
+            ResearchSessionRolloverControls,
+        ).enable_for_revision(result)
+
+    async def _rollover_research_session(self) -> None:
+        controller = self.research_controller
+        if controller is None:
+            return
+
+        controls = self.query_one(
+            "#research-session-rollover-controls",
+            ResearchSessionRolloverControls,
+        )
+        status = self.query_one("#research-session-rollover-status", Static)
+        chosen_revision = controls.candidate_revision
+        if chosen_revision is None:
+            status.update("Continuation failed: no displayed successor has been selected.")
+            return
+
+        successor_source = self.query_one(
+            "#research-session-rollover-successor-source", Input
+        )
+        declaration_destination = self.query_one(
+            "#research-session-rollover-declaration-destination", Input
+        )
+        if not successor_source.value.strip():
+            status.update("Continuation failed: explicit successor edge path is required.")
+            return
+        if not declaration_destination.value.strip():
+            status.update(
+                "Continuation failed: explicit continuation declaration destination is required."
+            )
+            return
+
+        try:
+            result = rollover_chromium_research_session_to_persisted_successor(
+                controller,
+                chosen_revision,
+                successor_edge_source=Path(successor_source.value),
+                declaration_destination=Path(declaration_destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Continuation failed: {exc}")
+            return
+
+        await self._mount_research_rollover(result)
+
+    async def _mount_research_rollover(
+        self,
+        result: ChromiumResearchSessionRolloverResult,
+    ) -> None:
+        """Replace only the research surface with one successful explicit continuation."""
+
+        prior_controller = self.research_controller
+        if prior_controller is None or result.prior_controller is not prior_controller:
+            raise ValueError(
+                "Research rollover result does not belong to the shell's exact prior controller."
+            )
+
+        continuation = result.continuation_controller
+        rebuilt_session = present_chromium_research_session(continuation.loaded)
+        if rebuilt_session != continuation.presentation:
+            raise ValueError(
+                "Continuation controller presentation is incoherent with retained loaded evidence."
+            )
+
+        new_session = continuation.presentation
+        _require_research_sequence_presentation(new_session.sequence)
+        new_contexts = _snapshot_working_set_contexts(
+            new_session.sequence,
+            new_session.working_set_contexts,
+        )
+        if len(new_contexts) != len(new_session.sequence.members):
+            raise ValueError(
+                "Continuation session must contain one context per declared position."
+            )
+
+        old_detail = self.query_one(
+            "#research-revision-edge-sequence",
+            ResearchRevisionEdgeSequenceDetail,
+        )
+        old_revision_controls = self.query_one(
+            "#research-endpoint-revision-controls",
+            ResearchEndpointRevisionControls,
+        )
+        old_rollover_controls = self.query_one(
+            "#research-session-rollover-controls",
+            ResearchSessionRolloverControls,
+        )
+
+        if len(self.query("#research-rollover-success-receipt")) != 0:
+            await self.query_one("#research-rollover-success-receipt", Static).remove()
+        await old_detail.remove()
+        await old_revision_controls.remove()
+        await old_rollover_controls.remove()
+
+        self.research_controller = continuation
+        self.research_session = new_session
+        self.research_presentation = new_session.sequence
+        self.research_working_set_contexts = new_contexts
+        self.last_research_rollover = result
+
+        await self.mount(
+            Static(
+                rollover_success_receipt(result),
+                id="research-rollover-success-receipt",
+                markup=False,
+            )
+        )
+        await self.mount(
+            ResearchRevisionEdgeSequenceDetail(
+                new_session.sequence,
+                working_set_contexts=new_contexts,
+            )
+        )
+        await self.mount(ResearchEndpointRevisionControls())
+        await self.mount(ResearchSessionRolloverControls())
 
 
 def create_workspace_shell(
