@@ -21,6 +21,7 @@ from test_app_chromium_research_session_controller import _session
 
 
 def _written_successor(tmp_path: Path, *, text: str = "v7 chosen continuation"):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     _, _, _, v6_path, old_declaration, loaded = _session(tmp_path)
     controller = ChromiumResearchSessionController(loaded)
     successor = tmp_path / "v7.json"
@@ -62,7 +63,6 @@ def test_rollover_creates_new_one_edge_declared_session_from_exact_successor(
         result.continuation_controller.declared_endpoint
         is result.loaded_declaration.sequence.edges[0]
     )
-    assert result.continuation_controller.presentation.members if False else True
     assert result.continuation_controller.presentation.sequence.members[0].note_text == (
         revision.extension.revision.revised_note.note_text
     )
