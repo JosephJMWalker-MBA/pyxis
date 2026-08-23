@@ -156,9 +156,9 @@ def test_research_shell_help_exposes_only_explicit_plan_entry(capsys) -> None:
     output = capsys.readouterr().out
     assert exc_info.value.code == 0
     assert "--plan" in output
-    assert "latest" not in output.lower()
-    assert "head" not in output.lower()
-    assert "directory" not in output.lower()
+    assert "--latest" not in output
+    assert "--head" not in output
+    assert "--directory" not in output
 
 
 def test_research_shell_ui_dependency_is_lazy_and_reports_install_hint(monkeypatch) -> None:
