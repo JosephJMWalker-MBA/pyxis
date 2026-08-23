@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -44,7 +45,12 @@ _ROOT_FORMAT = (
 _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
 
 
-def _loaded_root(tmp_path: Path, *, stem: str = "bridge"):
+def _loaded_root(
+    tmp_path: Path,
+    *,
+    stem: str = "bridge",
+    root_note_text: str = "First rationale revision after the evidence-basis change.",
+):
     (
         fixture,
         reentry,
@@ -53,7 +59,11 @@ def _loaded_root(tmp_path: Path, *, stem: str = "bridge"):
         _,
         _,
         root_persistence,
-    ) = _persist_root(tmp_path, stem=stem)
+    ) = _persist_root(
+        tmp_path,
+        stem=stem,
+        revised_note_text=root_note_text,
+    )
     loaded_root = load_chromium_research_session_working_set_transition_revision_root(
         reentry.controller.declared_endpoint,
         prepared.working_set.items,
@@ -158,12 +168,23 @@ def test_wrong_current_root_file_rejects_without_writing(tmp_path: Path) -> None
     document = json.loads(other_root_persistence.path.read_text(encoding="utf-8"))
     document["root_record"]["root"]["revision"]["revised_note"]["text"] = "Different root wording."
     payload = document["root_record"]
-    import hashlib
-
-    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
     document["root_record_sha256"] = hashlib.sha256(encoded).hexdigest()
     other_root_persistence.path.write_text(
-        json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n",
+        json.dumps(
+            document,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+        + "\n",
         encoding="utf-8",
     )
 
@@ -228,12 +249,13 @@ def test_root_specific_loader_rejects_different_loaded_root(tmp_path: Path) -> N
     first.mkdir()
     second.mkdir()
     *_, persistence, _ = _first_edge(first, stem="first")
-    *_, other_loaded_root = _loaded_root(second, stem="second")
+    *_, other_loaded_root = _loaded_root(
+        second,
+        stem="second",
+        root_note_text="A genuinely different first root rationale.",
+    )
 
-    # Different directory alone is not identity. Make a distinct second root through
-    # a distinct first root revision before testing relinking mismatch.
-    assert other_loaded_root.verification.root_record_sha256 != ""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="different predecessor root"):
         load_chromium_research_session_working_set_transition_revision_root_edge(
             other_loaded_root,
             persistence.path,
