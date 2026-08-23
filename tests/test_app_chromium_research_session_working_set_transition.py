@@ -359,9 +359,6 @@ def test_unadopted_endpoint_write_does_not_become_transition_prior_authority(tmp
     assert transition.prior_endpoint is reentry.controller.declared_endpoint
     assert (
         transition.prior_endpoint.verification.edge_record_sha256
-        != unadopted.persistence.verification.edge_record_sha256
-        if hasattr(unadopted.persistence, "verification")
-        else transition.prior_endpoint.verification.edge_record_sha256
         != unadopted.persistence.edge_record_sha256
     )
 
