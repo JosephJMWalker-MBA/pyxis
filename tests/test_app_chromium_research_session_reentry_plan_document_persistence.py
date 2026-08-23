@@ -18,10 +18,16 @@ from pyxis.app.chromium_research_session_reentry_plan_document import (
 from test_app_chromium_research_session_reentry import _durable_fixture
 
 
+def _fixture(tmp_path: Path):
+    root = tmp_path / "evidence"
+    root.mkdir()
+    return _durable_fixture(root)
+
+
 def test_persisted_locator_plan_round_trips_with_destination_relative_paths(
     tmp_path: Path,
 ) -> None:
-    fixture = _durable_fixture(tmp_path / "evidence")
+    fixture = _fixture(tmp_path)
     destination = tmp_path / "plans" / "next.plan.json"
     destination.parent.mkdir()
 
@@ -42,7 +48,7 @@ def test_persisted_locator_plan_round_trips_with_destination_relative_paths(
 
 
 def test_plan_document_persistence_is_no_overwrite(tmp_path: Path) -> None:
-    fixture = _durable_fixture(tmp_path / "evidence")
+    fixture = _fixture(tmp_path)
     destination = tmp_path / "existing.plan.json"
     destination.write_text("keep me\n", encoding="utf-8")
 
@@ -58,7 +64,7 @@ def test_plan_document_persistence_is_no_overwrite(tmp_path: Path) -> None:
 def test_persisted_plan_contains_locations_and_order_but_no_authority_registry(
     tmp_path: Path,
 ) -> None:
-    fixture = _durable_fixture(tmp_path / "evidence")
+    fixture = _fixture(tmp_path)
     destination = tmp_path / "plan.json"
 
     persist_chromium_research_session_reentry_plan_document(fixture.plan, destination)
@@ -117,7 +123,7 @@ def test_plan_document_persistence_does_not_read_referenced_artifacts(
 
 
 def test_forged_plan_shape_rejects_before_document_write(tmp_path: Path) -> None:
-    fixture = _durable_fixture(tmp_path / "evidence")
+    fixture = _fixture(tmp_path)
     forged = object.__new__(type(fixture.plan))
     object.__setattr__(forged, "working_set_members", fixture.plan.working_set_members)
     object.__setattr__(forged, "working_set_source", "not-a-path")
