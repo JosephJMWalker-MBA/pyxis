@@ -52,10 +52,10 @@ class ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(ValueError):
 class ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord:
     """One verified 24B edge relinked to one explicit already-loaded predecessor.
 
-    `predecessor` is retained by exact object identity and may be one loaded 23C
-    continuation, one loaded 34A cross-working-set revision root, or another loaded
-    24C edge. `revision` is freshly reconstructed through public 22A over exactly
-    that predecessor's endpoint note.
+    Generic public 24C still accepts only one loaded 23C continuation or another
+    loaded 24C edge. A standard loaded edge returned by the 34B root-specific bridge
+    may retain a loaded 34A root as its exact predecessor; downstream ordinary edge
+    validation can preserve that local fact without making roots generic 24C inputs.
 
     This record establishes only one explicit local predecessor relationship. It
     does not discover predecessors, recursively load files, establish a global
@@ -75,37 +75,29 @@ def load_chromium_research_working_set_note_revision_edge(
     predecessor: (
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
         | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
-        | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     ),
     edge_source: Path,
 ) -> ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord:
-    """Relink one 24B edge to one explicit already-loaded predecessor.
+    """Relink one 24B edge to one explicit ordinary already-loaded predecessor.
 
-    The caller chooses and supplies the predecessor object. Pyxis freshly verifies
-    only `edge_source`; it performs no digest search, directory scan, predecessor
-    discovery, recursive file loading, chain traversal, current-head selection,
-    revision numbering, timestamp inference, or semantic comparison.
+    The caller chooses and supplies one loaded 23C continuation or 24C edge. Pyxis
+    freshly verifies only `edge_source`; it performs no digest search, directory
+    scan, predecessor discovery, recursive file loading, chain traversal, current-
+    head selection, revision numbering, timestamp inference, or semantic comparison.
 
-    Since 34B, the predecessor may also be one already-loaded 34A cross-working-set
-    revision root. That widens only this local edge relationship; it does not make
-    the root a 26A sequence start or a declared/current session head.
+    A 34A root remains intentionally outside this generic public input contract.
+    The first edge after a basis change is handled by the explicit 34B bridge.
     """
-
-    from .chromium_research_session_working_set_transition_revision_root_load import (
-        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-    )
 
     if not isinstance(
         predecessor,
         (
             ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
             ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
-            ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
         ),
     ):
         raise TypeError(
-            "predecessor must be an already-loaded 23C continuation, 24C revision "
-            "edge, or 34A cross-working-set revision root."
+            "predecessor must be an already-loaded 23C continuation or 24C revision edge."
         )
 
     verification = verify_chromium_research_working_set_note_revision_edge(edge_source)
@@ -169,10 +161,6 @@ def load_chromium_research_working_set_note_revision_edge(
 
 
 def _validate_loaded_predecessor(predecessor):
-    from .chromium_research_session_working_set_transition_revision_root_load import (
-        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-    )
-
     if isinstance(
         predecessor,
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
@@ -180,14 +168,8 @@ def _validate_loaded_predecessor(predecessor):
         return _validate_loaded_continuation_predecessor(predecessor)
     if isinstance(predecessor, ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord):
         return _validate_loaded_edge_predecessor(predecessor)
-    if isinstance(
-        predecessor,
-        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-    ):
-        return _validate_loaded_root_predecessor(predecessor)
     raise TypeError(
-        "loaded predecessor must be an already-loaded 23C continuation, 24C edge, "
-        "or 34A cross-working-set revision root."
+        "loaded predecessor must be an already-loaded 23C continuation or 24C edge."
     )
 
 
