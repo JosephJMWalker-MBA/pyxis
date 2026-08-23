@@ -109,8 +109,8 @@ def test_research_shell_command_freshly_reenters_plan_and_never_builds_workspace
     def fail_workspace_build(*args, **kwargs):
         raise AssertionError("research-shell must not fabricate Repository Zero state")
 
-    def fake_run_research_session_shell(controller) -> None:
-        observed["controller"] = controller
+    def fake_run_research_session_shell(reentry) -> None:
+        observed["reentry"] = reentry
 
     monkeypatch.setattr(cli, "build_and_run_workspace", fail_workspace_build)
     monkeypatch.setattr(
@@ -122,11 +122,12 @@ def test_research_shell_command_freshly_reenters_plan_and_never_builds_workspace
     exit_code = cli.main(["research-shell", "--plan", str(plan_path)])
 
     assert exit_code == 0
-    controller = observed["controller"]
-    assert controller.presentation.sequence.members[-1].note_text == (
+    reentry = observed["reentry"]
+    assert reentry.plan.declaration_source == fixture.plan.declaration_source
+    assert reentry.controller.presentation.sequence.members[-1].note_text == (
         "v6 exact human wording\nStill tentative."
     )
-    assert controller.loaded.verification.path == fixture.declaration_path.resolve()
+    assert reentry.controller.loaded.verification.path == fixture.declaration_path.resolve()
 
 
 def test_research_shell_command_reports_invalid_plan_as_cli_usage_error(
