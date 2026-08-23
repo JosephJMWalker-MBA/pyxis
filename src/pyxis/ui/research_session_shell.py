@@ -5,8 +5,13 @@ from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Input, Static, TextArea
 
+from pyxis.app.chromium_research_session_continuation_reentry_plan import (
+    ChromiumResearchSessionContinuationReentryPlanResult,
+    persist_chromium_research_session_continuation_reentry_plan,
+)
 from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
 from pyxis.app.chromium_research_session_presentation import present_chromium_research_session
+from pyxis.app.chromium_research_session_reentry import ChromiumResearchSessionReentryResult
 from pyxis.app.chromium_research_session_rollover import (
     ChromiumResearchSessionRolloverResult,
     rollover_chromium_research_session_to_persisted_successor,
@@ -17,6 +22,9 @@ from .chromium_research_revision_edge_sequence_textual import (
     ResearchRevisionEdgeSequenceDetail,
     _require_research_sequence_presentation,
     _snapshot_working_set_contexts,
+)
+from .chromium_research_session_restart_plan_textual import (
+    ResearchSessionRestartPlanControls,
 )
 from .chromium_research_session_rollover_textual import (
     ResearchSessionRolloverControls,
@@ -30,6 +38,9 @@ class ResearchSessionShell(App[None]):
     This shell intentionally contains no Repository Zero Workspace presentation or
     Workspace controller. Research evidence and mutation authority come only from
     the supplied, freshly validated `ChromiumResearchSessionController`.
+
+    An optional exact 31A re-entry result adds restart-lineage authority for the
+    standalone product path. That lineage is never inferred from the controller.
     """
 
     TITLE = "Pyxis"
@@ -38,6 +49,7 @@ class ResearchSessionShell(App[None]):
     #research-revision-edge-sequence,
     #research-endpoint-revision-controls,
     #research-session-rollover-controls,
+    #research-session-restart-plan-controls,
     #research-rollover-success-receipt {
         width: 94%;
         height: auto;
@@ -59,7 +71,13 @@ class ResearchSessionShell(App[None]):
     #research-session-rollover-candidate,
     #research-session-rollover-successor-source-label,
     #research-session-rollover-declaration-destination-label,
-    #research-session-rollover-status {
+    #research-session-rollover-status,
+    #research-session-restart-plan-authority-notice,
+    #research-session-restart-plan-candidate,
+    #research-session-restart-plan-successor-source-label,
+    #research-session-restart-plan-declaration-source-label,
+    #research-session-restart-plan-destination-label,
+    #research-session-restart-plan-status {
         margin-top: 1;
     }
 
@@ -78,7 +96,11 @@ class ResearchSessionShell(App[None]):
     #research-endpoint-destination-label,
     #research-session-rollover-title,
     #research-session-rollover-successor-source-label,
-    #research-session-rollover-declaration-destination-label {
+    #research-session-rollover-declaration-destination-label,
+    #research-session-restart-plan-title,
+    #research-session-restart-plan-successor-source-label,
+    #research-session-restart-plan-declaration-source-label,
+    #research-session-restart-plan-destination-label {
         text-style: bold;
     }
 
@@ -93,7 +115,8 @@ class ResearchSessionShell(App[None]):
 
     .research-context-toggle,
     #persist-research-endpoint-revision,
-    #rollover-research-session {
+    #rollover-research-session,
+    #save-research-session-restart-plan {
         margin-top: 1;
     }
 
@@ -104,7 +127,12 @@ class ResearchSessionShell(App[None]):
     }
     """
 
-    def __init__(self, controller: ChromiumResearchSessionController) -> None:
+    def __init__(
+        self,
+        controller: ChromiumResearchSessionController,
+        *,
+        reentry: ChromiumResearchSessionReentryResult | None = None,
+    ) -> None:
         if not isinstance(controller, ChromiumResearchSessionController):
             raise TypeError("controller must be ChromiumResearchSessionController.")
 
@@ -120,9 +148,12 @@ class ResearchSessionShell(App[None]):
             raise ValueError(
                 "Research controller prior successful revision is incoherent with its retained session."
             )
+        if reentry is not None:
+            _require_reentry_coherence(controller, reentry)
 
         super().__init__()
         self.research_controller = controller
+        self.research_reentry = reentry
         self.research_session = controller.presentation
         self.research_presentation = controller.presentation.sequence
         self.research_working_set_contexts = _snapshot_working_set_contexts(
@@ -136,6 +167,9 @@ class ResearchSessionShell(App[None]):
                 "Complete research session must contain one context per declared position."
             )
         self.last_research_rollover: ChromiumResearchSessionRolloverResult | None = None
+        self.last_research_restart_plan: (
+            ChromiumResearchSessionContinuationReentryPlanResult | None
+        ) = None
 
     def compose(self) -> ComposeResult:
         yield ResearchRevisionEdgeSequenceDetail(
@@ -150,7 +184,7 @@ class ResearchSessionShell(App[None]):
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Route only the two governed research mutation actions."""
+        """Route only the governed standalone research mutation/checkpoint actions."""
 
         if event.button.id == "persist-research-endpoint-revision":
             event.stop()
@@ -159,6 +193,10 @@ class ResearchSessionShell(App[None]):
         if event.button.id == "rollover-research-session":
             event.stop()
             self.call_after_refresh(self._rollover_research_session)
+            return
+        if event.button.id == "save-research-session-restart-plan":
+            event.stop()
+            self.call_after_refresh(self._save_research_restart_plan)
 
     async def _persist_research_endpoint_revision(self) -> None:
         revised_note = self.query_one("#research-endpoint-revised-note", TextArea)
@@ -231,6 +269,87 @@ class ResearchSessionShell(App[None]):
 
         await self._mount_research_rollover(result)
 
+    async def _save_research_restart_plan(self) -> None:
+        controls = self.query_one(
+            "#research-session-restart-plan-controls",
+            ResearchSessionRestartPlanControls,
+        )
+        status = self.query_one("#research-session-restart-plan-status", Static)
+        if self.research_reentry is None:
+            status.update(
+                "Restart-plan save failed: this shell was not supplied an explicit re-entry lineage."
+            )
+            return
+        if self.last_research_rollover is None:
+            status.update(
+                "Restart-plan save failed: no explicit continuation rollover is awaiting a checkpoint."
+            )
+            return
+        if controls.rollover is not self.last_research_rollover:
+            status.update(
+                "Restart-plan save failed: displayed checkpoint does not match the shell's exact rollover."
+            )
+            return
+
+        successor_source = self.query_one(
+            "#research-session-restart-plan-successor-source", Input
+        )
+        declaration_source = self.query_one(
+            "#research-session-restart-plan-declaration-source", Input
+        )
+        destination = self.query_one(
+            "#research-session-restart-plan-destination", Input
+        )
+        if not successor_source.value.strip():
+            status.update(
+                "Restart-plan save failed: explicit current successor edge path is required."
+            )
+            return
+        if not declaration_source.value.strip():
+            status.update(
+                "Restart-plan save failed: explicit current continuation declaration path is required."
+            )
+            return
+        if not destination.value.strip():
+            status.update(
+                "Restart-plan save failed: explicit no-overwrite restart plan destination is required."
+            )
+            return
+
+        prior_reentry = self.research_reentry
+        try:
+            result = persist_chromium_research_session_continuation_reentry_plan(
+                prior_reentry,
+                self.last_research_rollover,
+                successor_edge_source=Path(successor_source.value),
+                continuation_declaration_source=Path(declaration_source.value),
+                destination=Path(destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Restart-plan save failed: {exc}")
+            return
+
+        if result.prior_reentry is not prior_reentry:
+            raise ValueError(
+                "Restart-plan result did not retain the shell's exact prior re-entry lineage."
+            )
+        if result.rollover is not self.last_research_rollover:
+            raise ValueError(
+                "Restart-plan result did not retain the shell's exact continuation rollover."
+            )
+        if result.fresh_reentry.controller.presentation != self.research_controller.presentation:
+            raise ValueError(
+                "Restart-plan fresh re-entry does not describe the shell's mounted continuation."
+            )
+
+        self.research_reentry = result.fresh_reentry
+        self.last_research_restart_plan = result
+        controls.lock_after_success(result)
+        self.query_one(
+            "#research-endpoint-revision-controls",
+            ResearchEndpointRevisionControls,
+        ).unlock_after_restart_plan()
+
     async def _mount_research_rollover(
         self,
         result: ChromiumResearchSessionRolloverResult,
@@ -276,15 +395,22 @@ class ResearchSessionShell(App[None]):
 
         if len(self.query("#research-rollover-success-receipt")) != 0:
             await self.query_one("#research-rollover-success-receipt", Static).remove()
+        if len(self.query("#research-session-restart-plan-controls")) != 0:
+            await self.query_one(
+                "#research-session-restart-plan-controls",
+                ResearchSessionRestartPlanControls,
+            ).remove()
         await old_detail.remove()
         await old_revision_controls.remove()
         await old_rollover_controls.remove()
 
+        checkpoint_required = self.research_reentry is not None
         self.research_controller = continuation
         self.research_session = new_session
         self.research_presentation = new_session.sequence
         self.research_working_set_contexts = new_contexts
         self.last_research_rollover = result
+        self.last_research_restart_plan = None
 
         await self.mount(
             Static(
@@ -299,13 +425,47 @@ class ResearchSessionShell(App[None]):
                 working_set_contexts=new_contexts,
             )
         )
-        await self.mount(ResearchEndpointRevisionControls())
+        await self.mount(
+            ResearchEndpointRevisionControls(
+                restart_checkpoint_required=checkpoint_required,
+            )
+        )
         await self.mount(ResearchSessionRolloverControls())
+        if checkpoint_required:
+            await self.mount(ResearchSessionRestartPlanControls(result))
+
+
+def _require_reentry_coherence(
+    controller: ChromiumResearchSessionController,
+    reentry: ChromiumResearchSessionReentryResult,
+) -> None:
+    if not isinstance(reentry, ChromiumResearchSessionReentryResult):
+        raise TypeError("reentry must be ChromiumResearchSessionReentryResult.")
+    if reentry.controller.presentation != controller.presentation:
+        raise ValueError(
+            "Research re-entry lineage does not describe the supplied controller presentation."
+        )
+    if (
+        reentry.controller.presentation.sequence.declaration_record_sha256
+        != controller.presentation.sequence.declaration_record_sha256
+    ):
+        raise ValueError(
+            "Research re-entry lineage declaration identity does not match the supplied controller."
+        )
+    if (
+        reentry.controller.declared_endpoint.verification.edge_record_sha256
+        != controller.declared_endpoint.verification.edge_record_sha256
+    ):
+        raise ValueError(
+            "Research re-entry lineage endpoint identity does not match the supplied controller."
+        )
 
 
 def create_research_session_shell(
     controller: ChromiumResearchSessionController,
+    *,
+    reentry: ChromiumResearchSessionReentryResult | None = None,
 ) -> ResearchSessionShell:
     """Create the standalone governed research shell from one exact controller."""
 
-    return ResearchSessionShell(controller)
+    return ResearchSessionShell(controller, reentry=reentry)

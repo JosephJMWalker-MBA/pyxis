@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 
 from pyxis.app import build_and_run_workspace
-from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
-from pyxis.app.chromium_research_session_reentry import reenter_chromium_research_session
+from pyxis.app.chromium_research_session_reentry import (
+    ChromiumResearchSessionReentryResult,
+    reenter_chromium_research_session,
+)
 from pyxis.app.chromium_research_session_reentry_plan_document import (
     load_chromium_research_session_reentry_plan_document,
 )
@@ -79,8 +81,8 @@ def _run_workspace_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_research_session_shell(controller: ChromiumResearchSessionController) -> None:
-    """Lazily import the optional UI dependency and run one exact research controller."""
+def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
+    """Lazily import the optional UI and run one exact re-entry-aware research shell."""
 
     try:
         from pyxis.ui.research_session_shell import create_research_session_shell
@@ -92,7 +94,13 @@ def _run_research_session_shell(controller: ChromiumResearchSessionController) -
             ) from exc
         raise
 
-    create_research_session_shell(controller).run()
+    if not isinstance(reentry, ChromiumResearchSessionReentryResult):
+        raise TypeError("reentry must be ChromiumResearchSessionReentryResult.")
+
+    create_research_session_shell(
+        reentry.controller,
+        reentry=reentry,
+    ).run()
 
 
 def _run_research_shell_command(
@@ -102,7 +110,7 @@ def _run_research_shell_command(
     try:
         plan = load_chromium_research_session_reentry_plan_document(args.plan)
         result = reenter_chromium_research_session(plan)
-        _run_research_session_shell(result.controller)
+        _run_research_session_shell(result)
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
         parser.error(f"research-shell failed: {exc}")
     return 0

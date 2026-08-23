@@ -13,6 +13,10 @@ REVISION_AUTHORITY_NOTICE = (
     "Revise only the declared segment endpoint. A successful write creates one durable "
     "successor but does not adopt it as current, latest, head, or part of this displayed session."
 )
+_RESTART_CHECKPOINT_NOTICE = (
+    "Further revision is locked until a proven restart locator plan is saved for this "
+    "mounted continuation. Restartability is an operational checkpoint, not a latest/head claim."
+)
 
 
 def _success_receipt(
@@ -35,12 +39,28 @@ class ResearchEndpointRevisionControls(Vertical):
     def __init__(
         self,
         prior_result: ChromiumResearchSessionEndpointRevisionPersistenceResult | None = None,
+        *,
+        restart_checkpoint_required: bool = False,
     ) -> None:
+        if not isinstance(restart_checkpoint_required, bool):
+            raise TypeError("restart_checkpoint_required must be bool.")
+        if prior_result is not None and restart_checkpoint_required:
+            raise ValueError(
+                "A prior successful endpoint revision and a restart checkpoint cannot both own the controls."
+            )
         super().__init__(id="research-endpoint-revision-controls")
         self.prior_result = prior_result
+        self.restart_checkpoint_required = restart_checkpoint_required
 
     def compose(self) -> ComposeResult:
-        locked = self.prior_result is not None
+        locked = self.prior_result is not None or self.restart_checkpoint_required
+        if self.prior_result is not None:
+            status_text = _success_receipt(self.prior_result)
+        elif self.restart_checkpoint_required:
+            status_text = _RESTART_CHECKPOINT_NOTICE
+        else:
+            status_text = ""
+
         yield Static(
             "Revise declared endpoint rationale",
             id="research-endpoint-revision-title",
@@ -83,7 +103,7 @@ class ResearchEndpointRevisionControls(Vertical):
             disabled=locked,
         )
         yield Static(
-            _success_receipt(self.prior_result) if self.prior_result is not None else "",
+            status_text,
             id="research-endpoint-revision-status",
             markup=False,
         )
@@ -95,10 +115,30 @@ class ResearchEndpointRevisionControls(Vertical):
         """Lock this declared endpoint after one successful UI successor write."""
 
         self.prior_result = result
+        self.restart_checkpoint_required = False
         self.query_one("#research-endpoint-revised-note", TextArea).disabled = True
         self.query_one("#research-endpoint-prior-edge-source", Input).disabled = True
         self.query_one("#research-endpoint-destination", Input).disabled = True
         self.query_one("#persist-research-endpoint-revision", Button).disabled = True
         self.query_one("#research-endpoint-revision-status", Static).update(
             _success_receipt(result)
+        )
+
+    def unlock_after_restart_plan(self) -> None:
+        """Unlock a continuation endpoint after its explicit restart checkpoint succeeds."""
+
+        if self.prior_result is not None:
+            raise ValueError(
+                "Cannot unlock restart checkpoint after this endpoint already wrote a successor."
+            )
+        if not self.restart_checkpoint_required:
+            raise ValueError("No restart checkpoint is currently locking these controls.")
+
+        self.restart_checkpoint_required = False
+        self.query_one("#research-endpoint-revised-note", TextArea).disabled = False
+        self.query_one("#research-endpoint-prior-edge-source", Input).disabled = False
+        self.query_one("#research-endpoint-destination", Input).disabled = False
+        self.query_one("#persist-research-endpoint-revision", Button).disabled = False
+        self.query_one("#research-endpoint-revision-status", Static).update(
+            "Restart checkpoint satisfied. This mounted continuation may now author one explicit successor."
         )
