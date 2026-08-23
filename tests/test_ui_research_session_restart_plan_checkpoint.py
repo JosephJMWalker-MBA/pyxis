@@ -387,22 +387,14 @@ async def test_checkpoint_repeats_v7_then_v8_restart_lineage_without_head_state(
         assert not shell.query_one("#persist-research-endpoint-revision", Button).disabled
 
 
-def test_reentry_lineage_for_different_session_rejects_before_shell_mount(tmp_path: Path) -> None:
+def test_forged_reentry_lineage_rejects_before_shell_mount(tmp_path: Path) -> None:
     first_root = tmp_path / "first"
     second_root = tmp_path / "second"
     first_root.mkdir()
     second_root.mkdir()
     first = reenter_chromium_research_session(_durable_fixture(first_root).plan)
-    second_fixture = _durable_fixture(second_root)
-    second = reenter_chromium_research_session(second_fixture.plan)
-
-    second_fixture.v6_path.write_text(
-        second_fixture.v6_path.read_text(encoding="utf-8").replace(
-            "v6 exact human wording\\nStill tentative.",
-            "v6 second independent wording",
-        ),
-        encoding="utf-8",
-    )
+    second = reenter_chromium_research_session(_durable_fixture(second_root).plan)
+    second.controller._presentation = object()  # type: ignore[attr-defined]
 
     with pytest.raises(ValueError, match="does not describe"):
         create_research_session_shell(first.controller, reentry=second)
