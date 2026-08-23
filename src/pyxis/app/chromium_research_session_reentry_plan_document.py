@@ -54,10 +54,11 @@ def persist_chromium_research_session_reentry_plan_document(
 ) -> ChromiumResearchSessionReentryPlanDocumentPersistenceResult:
     """Persist one strict locator-only plan document without overwriting.
 
-    Paths are written relative to the destination document directory when the
-    platform can represent that relation, otherwise as absolute paths. This is
-    locator convenience only: serialization performs no evidence reads, digest
-    discovery, history traversal, source verification, or head selection.
+    Paths inside the destination document's directory tree are written relative to
+    that directory. Paths outside that tree remain explicit absolute locations;
+    Pyxis does not synthesize ``..`` traversal. Serialization performs no evidence
+    reads, digest discovery, history traversal, source verification, or head
+    selection.
     """
 
     validated = _validated_plan_copy(plan)
@@ -262,9 +263,9 @@ def _encode_member(
 
 
 def _encode_path(path: Path, base: Path) -> str:
-    resolved = path.resolve()
+    resolved = Path(os.path.abspath(path))
     try:
-        return os.path.relpath(resolved, base)
+        return str(resolved.relative_to(base))
     except ValueError:
         return str(resolved)
 
