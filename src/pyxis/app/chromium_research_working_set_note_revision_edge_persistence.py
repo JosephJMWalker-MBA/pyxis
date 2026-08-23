@@ -20,7 +20,12 @@ _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
 _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
 )
-_SUPPORTED_PREDECESSOR_FORMATS = frozenset({_CONTINUATION_FORMAT, _EDGE_FORMAT})
+_ROOT_FORMAT = (
+    "pyxis.chromium.research_session_working_set_transition_revision_root.v1"
+)
+_SUPPORTED_PREDECESSOR_FORMATS = frozenset(
+    {_CONTINUATION_FORMAT, _EDGE_FORMAT, _ROOT_FORMAT}
+)
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 _EXTENSION_MODE = (
@@ -55,10 +60,10 @@ class ChromiumPageResearchWorkingSetNoteRevisionEdgeVerificationEvidence:
     """Verified file-local facts for one 24B general revision-edge sidecar.
 
     Verification proves canonical structure and self-integrity only. It does not
-    open or relink the referenced predecessor. The predecessor may be either one
-    23B continuation record or another 24B edge record. Accepting the latter shape
-    makes repeated revision edges representable without granting traversal,
-    existence, ancestry, chronology, or semantic authority.
+    open or relink the referenced predecessor. The predecessor may be one 23B
+    continuation record, one 34A cross-working-set revision root, or another 24B
+    edge record. Accepting those shapes grants no traversal, existence, ancestry,
+    chronology, sequence-start, or semantic authority by itself.
     """
 
     path: Path
@@ -89,11 +94,11 @@ def persist_chromium_research_working_set_note_revision_edge(
     freshly relinks the predecessor through public 23C using the exact already-
     loaded member sequence retained by the extension.
 
-    The persisted schema is deliberately more general than this creator: a
-    predecessor reference may name either the 23B continuation format or another
-    24B edge format. This reserves repeated edge representation without adding
-    predecessor discovery, recursive loading, chain traversal, a current head,
-    revision numbers, timestamps, or global ordering.
+    The persisted schema is deliberately more general than this original creator:
+    a predecessor reference may name a 23B continuation, a 34A cross-working-set
+    revision root, or another 24B edge. Root-backed edge creation is supplied by the
+    separate 34B persistence boundary; this function's own input contract remains
+    unchanged.
     """
 
     if not isinstance(
@@ -223,9 +228,9 @@ def verify_chromium_research_working_set_note_revision_edge(
 
     A self-consistent file may therefore contain a structurally valid but wrong
     predecessor digest and still pass verification. It may also contain new wording
-    equal to the real predecessor wording. A same-format predecessor reference is
-    accepted structurally without proving that such an edge exists or can be
-    relinked. Those relationships belong to later explicit boundaries.
+    equal to the real predecessor wording. Supported predecessor format is only a
+    structural fact; actual relinking requires a separate explicit application
+    boundary.
     """
 
     path = Path(source).expanduser().resolve()

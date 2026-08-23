@@ -57,14 +57,15 @@ def persist_chromium_research_working_set_note_revision_edge_extension(
 
     The caller explicitly supplies the current durable file for the exact loaded
     edge retained by `extension`. Before writing, Pyxis re-establishes the live 25A
-    application contract, freshly reopens that predecessor edge through public 24C
-    using its already-loaded predecessor object, and requires the freshly observed
-    edge content identity to match the exact edge retained by the extension.
+    application contract and freshly reopens that predecessor edge.
 
-    No digest search, directory scan, recursive file loading, automatic ancestry
-    traversal, current-head selection, revision numbering, timestamp inference, or
-    semantic comparison occurs. Older predecessor sidecars are not required; the
-    only durable predecessor input is `prior_edge_source`.
+    Ordinary edge-backed predecessors use public 24C exactly as before. If the prior
+    edge is the first edge after a 34A basis-change root, 34B dispatches through the
+    explicit root-edge loader once so that the root-backed predecessor identity can
+    be re-established without widening generic 24C itself.
+
+    No digest search, directory scan, automatic ancestry traversal, current-head
+    selection, revision numbering, timestamp inference, or semantic comparison occurs.
     """
 
     if not isinstance(
@@ -116,10 +117,29 @@ def persist_chromium_research_working_set_note_revision_edge_extension(
             "loaded-edge extension revised note must retain the exact predecessor working set."
         )
 
-    loaded_prior = load_chromium_research_working_set_note_revision_edge(
-        extension.prior_edge.predecessor,
-        prior_edge_source,
+    prior_predecessor = extension.prior_edge.predecessor
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
     )
+
+    if isinstance(
+        prior_predecessor,
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    ):
+        from .chromium_research_session_working_set_transition_revision_root_edge_load import (
+            load_chromium_research_session_working_set_transition_revision_root_edge,
+        )
+
+        loaded_prior = load_chromium_research_session_working_set_transition_revision_root_edge(
+            prior_predecessor,
+            prior_edge_source,
+        )
+    else:
+        loaded_prior = load_chromium_research_working_set_note_revision_edge(
+            prior_predecessor,
+            prior_edge_source,
+        )
+
     if loaded_prior.verification.edge_format != _EDGE_FORMAT:
         raise ValueError("durable loaded-edge predecessor format is unsupported.")
     if extension.prior_edge.verification.edge_format != _EDGE_FORMAT:

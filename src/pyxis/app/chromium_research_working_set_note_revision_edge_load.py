@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hmac
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .chromium_research_working_set_note_revision import (
     ChromiumPageResearchWorkingSetNoteRevisionRecord,
@@ -19,10 +20,21 @@ from .chromium_research_working_set_note_revision_edge_persistence import (
     verify_chromium_research_working_set_note_revision_edge,
 )
 
+if TYPE_CHECKING:
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
+
 
 _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
 _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
+)
+_ROOT_FORMAT = (
+    "pyxis.chromium.research_session_working_set_transition_revision_root.v1"
+)
+_ROOT_MODE = (
+    "caller_authored_revision_root_after_changed_research_working_set_transition"
 )
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
@@ -40,9 +52,10 @@ class ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(ValueError):
 class ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord:
     """One verified 24B edge relinked to one explicit already-loaded predecessor.
 
-    `predecessor` is retained by exact object identity and may be either one loaded
-    23C continuation or another already-loaded 24C edge. `revision` is freshly
-    reconstructed through public 22A over exactly that predecessor's endpoint note.
+    Generic public 24C still accepts only one loaded 23C continuation or another
+    loaded 24C edge. A standard loaded edge returned by the 34B root-specific bridge
+    may retain a loaded 34A root as its exact predecessor; downstream ordinary edge
+    validation can preserve that local fact without making roots generic 24C inputs.
 
     This record establishes only one explicit local predecessor relationship. It
     does not discover predecessors, recursively load files, establish a global
@@ -53,6 +66,7 @@ class ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord:
     predecessor: (
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
         | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
+        | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     )
     revision: ChromiumPageResearchWorkingSetNoteRevisionRecord
 
@@ -64,17 +78,15 @@ def load_chromium_research_working_set_note_revision_edge(
     ),
     edge_source: Path,
 ) -> ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord:
-    """Relink one 24B edge to one explicit already-loaded predecessor.
+    """Relink one 24B edge to one explicit ordinary already-loaded predecessor.
 
-    The caller chooses and supplies the predecessor object. Pyxis freshly verifies
-    only `edge_source`; it performs no digest search, directory scan, predecessor
-    discovery, recursive file loading, chain traversal, current-head selection,
-    revision numbering, timestamp inference, or semantic comparison.
+    The caller chooses and supplies one loaded 23C continuation or 24C edge. Pyxis
+    freshly verifies only `edge_source`; it performs no digest search, directory
+    scan, predecessor discovery, recursive file loading, chain traversal, current-
+    head selection, revision numbering, timestamp inference, or semantic comparison.
 
-    The edge's persisted predecessor format + content identity must match the
-    supplied predecessor. Only then is public 22A used to reconstruct the new human
-    revision over that predecessor's exact endpoint note, re-establishing exact-text
-    non-no-op behavior for the edge being loaded.
+    A 34A root remains intentionally outside this generic public input contract.
+    The first edge after a basis change is handled by the explicit 34B bridge.
     """
 
     if not isinstance(
@@ -148,18 +160,17 @@ def load_chromium_research_working_set_note_revision_edge(
     )
 
 
-def _validate_loaded_predecessor(
-    predecessor: (
-        ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
-        | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
-    ),
-):
+def _validate_loaded_predecessor(predecessor):
     if isinstance(
         predecessor,
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
     ):
         return _validate_loaded_continuation_predecessor(predecessor)
-    return _validate_loaded_edge_predecessor(predecessor)
+    if isinstance(predecessor, ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord):
+        return _validate_loaded_edge_predecessor(predecessor)
+    raise TypeError(
+        "loaded predecessor must be an already-loaded 23C continuation or 24C edge."
+    )
 
 
 def _validate_loaded_continuation_predecessor(
@@ -231,6 +242,96 @@ def _validate_loaded_continuation_predecessor(
     )
 
 
+def _validate_loaded_root_predecessor(predecessor):
+    from .chromium_research_session_working_set_transition_revision_root import (
+        create_chromium_research_session_working_set_transition_revision_root,
+    )
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
+
+    if not isinstance(
+        predecessor,
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    ):
+        raise TypeError(
+            "root predecessor must be "
+            "ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord."
+        )
+
+    verification = predecessor.verification
+    transition = predecessor.transition
+    root = predecessor.root
+    if verification.root_format != _ROOT_FORMAT:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor uses an unsupported format."
+        )
+    if verification.root_mode != _ROOT_MODE:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor uses an unsupported mode."
+        )
+    if verification.revision_mode != _REVISION_MODE:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retains an unsupported revision mode."
+        )
+    if verification.revised_note_mode != _NOTE_MODE:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retains an unsupported note mode."
+        )
+    if verification.transition_format != transition.verification.transition_format:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retained an incoherent transition format."
+        )
+    if not hmac.compare_digest(
+        verification.transition_record_sha256,
+        transition.verification.transition_record_sha256,
+    ):
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retained an incoherent transition identity."
+        )
+    if root.transition is not transition:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor does not retain its exact transition object."
+        )
+
+    try:
+        rebuilt = create_chromium_research_session_working_set_transition_revision_root(
+            transition,
+            revised_note_text=verification.revised_note_text,
+        )
+    except ValueError as exc:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor cannot be re-established as an actual root revision."
+        ) from exc
+
+    if root.root_mode != rebuilt.root_mode:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retained an incoherent root mode."
+        )
+    if root.revision.prior_note is not transition.successor_note.note:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor does not retain the exact transition successor note."
+        )
+    if root.revision.revised_note.working_set is not transition.successor_note.note.working_set:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor does not retain the exact changed working set."
+        )
+    if root.revision.revised_note.note_mode != verification.revised_note_mode:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retained an incoherent revised-note mode."
+        )
+    if root.revision.revised_note.note_text != verification.revised_note_text:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded root predecessor retained incoherent endpoint text."
+        )
+
+    return (
+        verification.root_format,
+        verification.root_record_sha256,
+        root.revision.revised_note,
+    )
+
+
 def _validate_loaded_edge_predecessor(
     predecessor: ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
 ):
@@ -242,7 +343,7 @@ def _validate_loaded_edge_predecessor(
         )
     if verification.edge_mode != _EDGE_MODE:
         raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
-            "Loaded edge predecessor uses an unsupported edge mode."
+            "Loaded edge predecessor uses an unsupported mode."
         )
     if verification.revision_mode != _REVISION_MODE:
         raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
@@ -286,10 +387,7 @@ def _validate_loaded_edge_predecessor(
         raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
             "Loaded edge predecessor does not retain its exact local predecessor note."
         )
-    if (
-        predecessor.revision.revised_note.working_set
-        is not nested_note.working_set
-    ):
+    if predecessor.revision.revised_note.working_set is not nested_note.working_set:
         raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
             "Loaded edge predecessor does not retain the exact working set."
         )
@@ -309,13 +407,12 @@ def _validate_loaded_edge_predecessor(
     )
 
 
-def _reported_predecessor_facts(
-    predecessor: (
-        ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
-        | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
-    ),
-):
+def _reported_predecessor_facts(predecessor):
     """Return already-loaded predecessor facts without recursive ancestry validation."""
+
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
 
     if isinstance(
         predecessor,
@@ -331,6 +428,15 @@ def _reported_predecessor_facts(
             predecessor.verification.edge_format,
             predecessor.verification.edge_record_sha256,
             predecessor.revision.revised_note,
+        )
+    if isinstance(
+        predecessor,
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    ):
+        return (
+            predecessor.verification.root_format,
+            predecessor.verification.root_record_sha256,
+            predecessor.root.revision.revised_note,
         )
     raise TypeError(
         "loaded edge predecessor must itself retain a supported already-loaded predecessor."
