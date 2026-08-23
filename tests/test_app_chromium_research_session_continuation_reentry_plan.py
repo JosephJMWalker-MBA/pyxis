@@ -21,7 +21,9 @@ from test_app_chromium_research_session_reentry import _durable_fixture
 
 
 def _prior_and_rollover(tmp_path: Path, *, text: str = "v7 explicit continuation"):
-    fixture = _durable_fixture(tmp_path / "base")
+    base = tmp_path / "base"
+    base.mkdir()
+    fixture = _durable_fixture(base)
     prior = reenter_chromium_research_session(fixture.plan)
     controller = prior.controller
     successor = tmp_path / "v7-edge.json"
