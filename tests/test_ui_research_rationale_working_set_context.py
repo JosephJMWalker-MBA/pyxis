@@ -133,9 +133,7 @@ async def test_context_button_reveals_and_hides_exact_three_layer_evidence(
         assert source_texts[0] not in note_texts
         assert rationale_texts[0] not in source_texts
 
-        button.focus()
-        await pilot.pause()
-        await pilot.press("enter")
+        assert await pilot.click("#research-context-toggle-1")
         await pilot.pause()
         assert detail.has_class("research-context-collapsed")
 
