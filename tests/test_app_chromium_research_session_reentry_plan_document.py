@@ -195,7 +195,9 @@ def test_duplicate_keys_and_unsupported_member_kind_reject_before_31a(
     with pytest.raises(ChromiumResearchSessionReentryPlanDocumentError, match="Duplicate"):
         load_chromium_research_session_reentry_plan_document(duplicate_path)
 
-    fixture = _durable_fixture(tmp_path / "unsupported")
+    unsupported_root = tmp_path / "unsupported"
+    unsupported_root.mkdir()
+    fixture = _durable_fixture(unsupported_root)
     unsupported_path = tmp_path / "unsupported-kind.plan.json"
     document = _document_for(fixture.plan, unsupported_path.parent, relative=False)
     member = dict(document["working_set_members"][0])  # type: ignore[index]
