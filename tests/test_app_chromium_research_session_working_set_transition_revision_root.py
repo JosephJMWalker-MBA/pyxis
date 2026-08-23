@@ -6,8 +6,14 @@ from pathlib import Path
 
 import pytest
 
+from pyxis.app.chromium_research_session_working_set_transition import (
+    create_chromium_research_session_working_set_transition,
+)
 from pyxis.app.chromium_research_session_working_set_transition_load import (
     load_chromium_research_session_working_set_transition,
+)
+from pyxis.app.chromium_research_session_working_set_transition_persistence import (
+    persist_chromium_research_session_working_set_transition,
 )
 from pyxis.app.chromium_research_session_working_set_transition_revision_root import (
     ChromiumResearchSessionWorkingSetTransitionRevisionRootRecord,
@@ -28,6 +34,11 @@ from pyxis.app.chromium_research_working_set_note_revision_edge_load import (
 from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_load import (
     load_chromium_research_working_set_note_revision_edge_sequence,
 )
+from test_app_chromium_research_session_working_set_extension import (
+    _new_paragraph_member,
+    _persist_extension,
+    _session,
+)
 from test_app_chromium_research_session_working_set_transition import (
     _persist_transition,
 )
@@ -37,6 +48,43 @@ def _loaded_transition(tmp_path: Path, *, stem: str = "bridge"):
     fixture, reentry, _, prepared, _, persistence = _persist_transition(
         tmp_path,
         stem=stem,
+    )
+    loaded = load_chromium_research_session_working_set_transition(
+        reentry.controller.declared_endpoint,
+        prepared.working_set.items,
+        prior_edge_source=fixture.v6_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        transition_source=persistence.path,
+    )
+    return fixture, reentry, prepared, persistence, loaded
+
+
+def _different_loaded_transition(tmp_path: Path, *, stem: str = "different"):
+    fixture, reentry = _session(tmp_path)
+    member, _ = _new_paragraph_member(
+        tmp_path,
+        stem=f"{stem}-member",
+        paragraph_text=f"Different evidence paragraph for {stem}.",
+        note_text=f"Different explicit source note for {stem}.",
+    )
+    prepared = _persist_extension(
+        tmp_path,
+        reentry,
+        (member,),
+        rationale_text=f"Different changed-basis rationale for {stem}.",
+        stem=stem,
+    )
+    transition = create_chromium_research_session_working_set_transition(
+        reentry.controller,
+        prepared,
+    )
+    persistence = persist_chromium_research_session_working_set_transition(
+        transition,
+        prior_edge_source=fixture.v6_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        destination=tmp_path / f"{stem}-transition.json",
     )
     loaded = load_chromium_research_session_working_set_transition(
         reentry.controller.declared_endpoint,
@@ -206,7 +254,10 @@ def test_wrong_transition_rejects_root_persistence_without_write(tmp_path: Path)
     first_root.mkdir()
     second_root.mkdir()
     fixture, _, prepared, _, loaded_transition = _loaded_transition(first_root, stem="first")
-    _, _, _, other_transition_persistence, _ = _loaded_transition(second_root, stem="second")
+    _, _, _, other_transition_persistence, _ = _different_loaded_transition(
+        second_root,
+        stem="second",
+    )
     root = create_chromium_research_session_working_set_transition_revision_root(
         loaded_transition,
         revised_note_text="First-session revision.",
@@ -235,7 +286,7 @@ def test_wrong_successor_basis_rejects_root_persistence_without_write(tmp_path: 
         first_root,
         stem="first",
     )
-    _, _, other_prepared, _, _ = _loaded_transition(second_root, stem="second")
+    _, _, other_prepared, _, _ = _different_loaded_transition(second_root, stem="second")
     root = create_chromium_research_session_working_set_transition_revision_root(
         loaded_transition,
         revised_note_text="First-session revision.",
@@ -340,7 +391,10 @@ def test_fresh_load_rejects_a_different_valid_transition(tmp_path: Path) -> None
         _,
         root_persistence,
     ) = _persist_root(first_root, stem="first")
-    _, _, _, other_transition_persistence, _ = _loaded_transition(second_root, stem="second")
+    _, _, _, other_transition_persistence, _ = _different_loaded_transition(
+        second_root,
+        stem="second",
+    )
 
     with pytest.raises(ValueError):
         load_chromium_research_session_working_set_transition_revision_root(
