@@ -84,9 +84,6 @@ def _run_workspace_command(args: argparse.Namespace) -> int:
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
     """Lazily import the optional UI and run one exact re-entry-aware research shell."""
 
-    if not isinstance(reentry, ChromiumResearchSessionReentryResult):
-        raise TypeError("reentry must be ChromiumResearchSessionReentryResult.")
-
     try:
         from pyxis.ui.research_session_shell import create_research_session_shell
     except ModuleNotFoundError as exc:
@@ -96,6 +93,9 @@ def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
+
+    if not isinstance(reentry, ChromiumResearchSessionReentryResult):
+        raise TypeError("reentry must be ChromiumResearchSessionReentryResult.")
 
     create_research_session_shell(
         reentry.controller,
