@@ -28,8 +28,7 @@ def test_persisted_locator_plan_round_trips_with_destination_relative_paths(
     tmp_path: Path,
 ) -> None:
     fixture = _fixture(tmp_path)
-    destination = tmp_path / "plans" / "next.plan.json"
-    destination.parent.mkdir()
+    destination = tmp_path / "next.plan.json"
 
     result = persist_chromium_research_session_reentry_plan_document(
         fixture.plan,
@@ -45,6 +44,8 @@ def test_persisted_locator_plan_round_trips_with_destination_relative_paths(
     assert document["format"] == "pyxis.chromium.research_session_reentry_locator_plan.v1"
     assert not Path(document["working_set_source"]).is_absolute()
     assert not Path(document["declaration_source"]).is_absolute()
+    assert ".." not in Path(document["working_set_source"]).parts
+    assert ".." not in Path(document["declaration_source"]).parts
 
 
 def test_plan_document_persistence_is_no_overwrite(tmp_path: Path) -> None:
