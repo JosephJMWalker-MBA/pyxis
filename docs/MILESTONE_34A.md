@@ -359,7 +359,7 @@ Focused 34A coverage proves:
 17. today's ordinary edge loader rejects a loaded 34A root;
 18. today's ordered sequence loader rejects a loaded 34A root.
 
-The test module contains 15 collected tests; several tests cover multiple related assertions above.
+The test module contains 16 collected tests; several tests cover multiple related assertions above.
 
 ## Scope
 
