@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +31,64 @@ _ROOT_KEYS = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class ChromiumResearchSessionReentryPlanDocumentPersistenceResult:
+    """One no-overwrite write of locator-only operational configuration.
+
+    `plan` is the exact validated 31A plan serialized at `path`. The result stores
+    no digest, timestamp, current/latest/head marker, or evidence-strength claim.
+    The document remains operational configuration only.
+    """
+
+    plan: ChromiumResearchSessionReentryPlan
+    path: Path
+
+
 class ChromiumResearchSessionReentryPlanDocumentError(ValueError):
     """Raised when one operational re-entry locator document is malformed."""
+
+
+def persist_chromium_research_session_reentry_plan_document(
+    plan: ChromiumResearchSessionReentryPlan,
+    destination: Path,
+) -> ChromiumResearchSessionReentryPlanDocumentPersistenceResult:
+    """Persist one strict locator-only plan document without overwriting.
+
+    Paths inside the destination document's directory tree are written relative to
+    that directory. Paths outside that tree remain explicit absolute locations;
+    Pyxis does not synthesize ``..`` traversal. Serialization performs no evidence
+    reads, digest discovery, history traversal, source verification, or head
+    selection.
+    """
+
+    validated = _validated_plan_copy(plan)
+    if not isinstance(destination, Path):
+        raise TypeError("destination must be pathlib.Path.")
+    path = destination.resolve()
+    document = _encode_plan(validated, base=path.parent)
+    payload = json.dumps(
+        document,
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=False,
+    ) + "\n"
+
+    try:
+        with path.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(payload)
+    except FileExistsError as exc:
+        raise ChromiumResearchSessionReentryPlanDocumentError(
+            "Research-session re-entry plan destination already exists."
+        ) from exc
+    except OSError as exc:
+        raise ChromiumResearchSessionReentryPlanDocumentError(
+            "Research-session re-entry plan document could not be written."
+        ) from exc
+
+    return ChromiumResearchSessionReentryPlanDocumentPersistenceResult(
+        plan=validated,
+        path=path,
+    )
 
 
 def load_chromium_research_session_reentry_plan_document(
@@ -124,6 +182,92 @@ def load_chromium_research_session_reentry_plan_document(
         raise ChromiumResearchSessionReentryPlanDocumentError(
             "Research-session re-entry plan document cannot form a valid explicit 31A locator plan."
         ) from exc
+
+
+def _validated_plan_copy(
+    plan: ChromiumResearchSessionReentryPlan,
+) -> ChromiumResearchSessionReentryPlan:
+    if not isinstance(plan, ChromiumResearchSessionReentryPlan):
+        raise TypeError("plan must be ChromiumResearchSessionReentryPlan.")
+    try:
+        return create_chromium_research_session_reentry_plan(
+            plan.working_set_members,
+            working_set_source=plan.working_set_source,
+            prior_note_source=plan.prior_note_source,
+            prior_revision_source=plan.prior_revision_source,
+            continuation_source=plan.continuation_source,
+            starting_predecessor_edge_sources=plan.starting_predecessor_edge_sources,
+            declared_edge_sources=plan.declared_edge_sources,
+            declaration_source=plan.declaration_source,
+        )
+    except (TypeError, ValueError) as exc:
+        raise ChromiumResearchSessionReentryPlanDocumentError(
+            "Research-session re-entry plan cannot be serialized as valid locator configuration."
+        ) from exc
+
+
+def _encode_plan(
+    plan: ChromiumResearchSessionReentryPlan,
+    *,
+    base: Path,
+) -> dict[str, object]:
+    return {
+        "format": _PLAN_FORMAT,
+        "working_set_members": [
+            _encode_member(member, base=base)
+            for member in plan.working_set_members
+        ],
+        "working_set_source": _encode_path(plan.working_set_source, base),
+        "prior_note_source": _encode_path(plan.prior_note_source, base),
+        "prior_revision_source": _encode_path(plan.prior_revision_source, base),
+        "continuation_source": _encode_path(plan.continuation_source, base),
+        "starting_predecessor_edge_sources": [
+            _encode_path(path, base)
+            for path in plan.starting_predecessor_edge_sources
+        ],
+        "declared_edge_sources": [
+            _encode_path(path, base)
+            for path in plan.declared_edge_sources
+        ],
+        "declaration_source": _encode_path(plan.declaration_source, base),
+    }
+
+
+def _encode_member(
+    member: ChromiumResearchWorkingSetMemberReentryLocator,
+    *,
+    base: Path,
+) -> dict[str, str]:
+    if isinstance(member, ChromiumResearchParagraphNoteReentryLocator):
+        return {
+            "kind": "paragraph_note",
+            "capture_source": _encode_path(member.capture_source, base),
+            "note_source": _encode_path(member.note_source, base),
+        }
+    if isinstance(member, ChromiumResearchExactRangeNoteReentryLocator):
+        return {
+            "kind": "exact_range_note",
+            "capture_source": _encode_path(member.capture_source, base),
+            "note_source": _encode_path(member.note_source, base),
+        }
+    if isinstance(member, ChromiumResearchComparisonNoteReentryLocator):
+        return {
+            "kind": "comparison_note",
+            "first_capture_source": _encode_path(member.first_capture_source, base),
+            "second_capture_source": _encode_path(member.second_capture_source, base),
+            "note_source": _encode_path(member.note_source, base),
+        }
+    raise ChromiumResearchSessionReentryPlanDocumentError(
+        "Research-session re-entry plan contains an unsupported member locator."
+    )
+
+
+def _encode_path(path: Path, base: Path) -> str:
+    resolved = Path(os.path.abspath(path))
+    try:
+        return str(resolved.relative_to(base))
+    except ValueError:
+        return str(resolved)
 
 
 def _decode_member(
