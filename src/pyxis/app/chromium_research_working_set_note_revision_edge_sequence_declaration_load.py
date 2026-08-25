@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hmac
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from .chromium_research_working_set_note_revision_continuation_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
@@ -23,6 +23,11 @@ from .chromium_research_working_set_note_revision_edge_sequence_persistence impo
     _retained_edge_reference,
     verify_chromium_research_working_set_note_revision_edge_sequence,
 )
+
+if TYPE_CHECKING:
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
 
 
 _SEQUENCE_FORMAT = (
@@ -47,6 +52,11 @@ class ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceDeclarationRec
     `sequence` is a fresh 26A relinking from the exact caller-supplied starting
     predecessor and exact caller-supplied ordered edge paths.
 
+    35A permits the explicit starting predecessor to be a 34A cross-working-set
+    revision root. In that case public 26A uses the 34B bridge exactly once for the
+    first edge and ordinary 24C thereafter. The durable declaration records that
+    explicit root identity but does not make the root a generic 24C predecessor.
+
     Successful creation establishes only that the durable declaration names the
     same starting content identity and the same ordered edge content identities as
     that freshly relinked explicit sequence. It does not discover files, select a
@@ -62,6 +72,7 @@ def load_chromium_research_working_set_note_revision_edge_sequence_declaration(
     starting_predecessor: (
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
         | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
+        | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     ),
     edge_sources: Iterable[Path],
     declaration_source: Path,
@@ -75,9 +86,13 @@ def load_chromium_research_working_set_note_revision_edge_sequence_declaration(
     content identities to the freshly relinked application evidence position by
     position.
 
-    Thus 26C re-establishes declaration attachment without adding directory scans,
-    digest search, path inference, automatic traversal, head selection, chronology,
-    branch semantics, completeness claims, or semantic interpretation.
+    The 34A root type is annotation-only at module import time. Runtime root
+    validation remains owned by public 26A and the bounded persistence helpers,
+    avoiding any new controller/presentation import cycle.
+
+    Thus 26C/35A re-establishes declaration attachment without adding directory
+    scans, digest search, path inference, automatic traversal, head selection,
+    chronology, branch semantics, completeness claims, or semantic interpretation.
     """
 
     verification = verify_chromium_research_working_set_note_revision_edge_sequence(
