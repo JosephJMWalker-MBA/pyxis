@@ -150,6 +150,34 @@ Only after all checks succeed is the continuation overlay written.
 The persisted document is then round-trip decoded and must equal the exact candidate
 plan.
 
+## Path-distinct records may still represent the same durable identity
+
+The first CI pass falsified one test assumption: two independently generated fixtures
+with different directory paths and stems were expected to represent different prior
+sessions.
+
+They did not. Their persisted content was byte/content-equivalent, producing the same
+relevant durable edge identities and the same governed presentations.
+
+35D therefore follows the existing Pyxis rule:
+
+```text
+different path
+!=
+different durable content identity
+```
+
+A path-distinct rollover whose prior endpoint and chosen continuation match by the
+already-established content/coherence evidence is not rejected merely because its
+files live elsewhere.
+
+Conversely, a genuinely different chosen continuation — different human text and edge
+content identity — must reject when the explicit continuation locators reconstruct a
+different result.
+
+This distinction prevents filesystem location from being silently promoted into
+session identity.
+
 ## Why the 30A declaration is not consolidated back to the root
 
 35D does not generate a replacement declaration spanning:
@@ -236,13 +264,16 @@ Focused 35D coverage proves:
    ordinary continuation;
 5. loading a 35D document succeeds even while its referenced 35C overlay is
    temporarily unavailable, proving document decode is locator-only;
-6. a different valid prior 35C overlay rejects before write;
-7. a rollover from another root-backed session rejects before write;
-8. a wrong explicit successor is not replaced by a decoy file;
-9. tampered prior root-backed evidence rejects during mandatory fresh proof;
-10. an existing 35D destination is not overwritten;
-11. duplicate/missing/unknown JSON fields reject; and
-12. the overlay stores no evidence digest or head/chronology/semantic authority.
+6. a different valid prior 35C overlay whose typed plan differs rejects before write;
+7. path-distinct but content-identical prior/rollover evidence is accepted rather
+   than falsely treating location as identity;
+8. a genuinely different chosen continuation content identity rejects when the
+   supplied locators reconstruct another continuation;
+9. a wrong explicit successor is not replaced by a decoy file;
+10. tampered prior root-backed evidence rejects during mandatory fresh proof;
+11. an existing 35D destination is not overwritten;
+12. duplicate/missing/unknown JSON fields reject; and
+13. the overlay stores no evidence digest or head/chronology/semantic authority.
 
 ## Scope
 
@@ -277,4 +308,5 @@ Successful 35D establishes only:
 > root-backed overlay and one explicit ordinary continuation declaration, Pyxis can
 > freshly reconstruct the prior 33B→34A ancestry and then the chosen first ordinary
 > continuation session, with proof-gated no-overwrite checkpointing and without
-> flattening ancestry or claiming global head/chronology/semantic authority.
+> flattening ancestry, confusing path with identity, or claiming global
+> head/chronology/semantic authority.
