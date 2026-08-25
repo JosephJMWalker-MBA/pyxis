@@ -97,12 +97,16 @@ def test_second_epoch_first_shell_runner_returns_exact_typed_handoff_from_textua
 ) -> None:
     import pyxis.ui.second_basis_epoch_cumulative_handoff_shell as shell_module
 
-    _, earned, overlay, _ = _persist_valid_overlay(tmp_path / "first", stem="38f-runner")
+    first_dir = tmp_path / "first"
+    first_dir.mkdir(parents=True, exist_ok=True)
+    _, earned, overlay, _ = _persist_valid_overlay(first_dir, stem="38f-runner")
     lineage = prove_chromium_research_second_basis_epoch_shell_lineage(
         earned,
         overlay_source=overlay,
     )
-    values = _persist_valid_continuation(tmp_path / "cont", stem="38f-handoff")
+    continuation_dir = tmp_path / "cont"
+    continuation_dir.mkdir(parents=True, exist_ok=True)
+    values = _persist_valid_continuation(continuation_dir, stem="38f-handoff")
     handoff = values[8].fresh_reentry
 
     class FakeShell:
