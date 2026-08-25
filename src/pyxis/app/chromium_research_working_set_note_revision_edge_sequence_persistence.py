@@ -7,6 +7,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .chromium_research_session_working_set_transition_revision_root_load import (
+    ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+)
+from .chromium_research_session_working_set_transition_revision_root_persistence import (
+    _validate_document as _validate_root_persisted_document,
+)
 from .chromium_research_working_set_note_revision_continuation_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
 )
@@ -17,6 +23,7 @@ from .chromium_research_working_set_note_revision_edge_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
     _validate_loaded_edge_predecessor,
     _validate_loaded_predecessor,
+    _validate_loaded_root_predecessor,
 )
 from .chromium_research_working_set_note_revision_edge_persistence import (
     _validate_persisted_document as _validate_edge_persisted_document,
@@ -36,7 +43,12 @@ _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
 )
 _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
-_SUPPORTED_STARTING_FORMATS = frozenset({_CONTINUATION_FORMAT, _EDGE_FORMAT})
+_ROOT_FORMAT = (
+    "pyxis.chromium.research_session_working_set_transition_revision_root.v1"
+)
+_SUPPORTED_STARTING_FORMATS = frozenset(
+    {_CONTINUATION_FORMAT, _EDGE_FORMAT, _ROOT_FORMAT}
+)
 
 
 class ChromiumResearchWorkingSetNoteRevisionEdgeSequenceIntegrityError(ValueError):
@@ -64,6 +76,10 @@ class ChromiumPageResearchWorkingSetNoteRevisionEdgeSequencePersistenceEvidence:
     stores only the sequence mode, the starting predecessor content identity, and
     the ordered content identities of the loaded revision edges. It stores no edge
     paths, note text, source evidence, timestamps, revision numbers, or head marker.
+
+    A 35A sequence may name one exact 34A root as its starting predecessor. That
+    records only the explicit sequence start already proved in memory; it does not
+    turn the root into a generic 24C predecessor or a global session head.
     """
 
     path: Path
@@ -100,8 +116,8 @@ def persist_chromium_research_working_set_note_revision_edge_sequence(
     """Persist one explicit loaded 26A edge sequence without rereading its files.
 
     Pyxis first re-establishes the retained in-memory sequence structure. It checks
-    the starting predecessor and every loaded edge through the existing local 24C
-    coherence boundary, and it re-checks each retained verification object's
+    the starting predecessor and every loaded edge through the existing bounded
+    local coherence boundaries, and it re-checks each retained verification object's
     canonical document JSON and recorded content digest in memory. No referenced
     durable file is reread or required to still exist.
 
@@ -243,6 +259,7 @@ def _validate_live_sequence(
     current: (
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
         | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
+        | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     ) = sequence.starting_predecessor
     current_reference = starting_reference
     edge_references: list[
@@ -260,8 +277,9 @@ def _validate_live_sequence(
                 f"sequence.edges[{index}] does not retain the exact preceding application record."
             )
 
-        # Re-establish the same bounded local relationship already earned by 24C.
-        # This deliberately does not recursively validate ancestry beneath `current`.
+        # Re-establish the bounded local relationship retained by each loaded edge.
+        # A root-backed first edge is valid only because 34B already earned that
+        # exact local predecessor relationship; this does not widen generic 24C.
         _validate_loaded_edge_predecessor(edge)
         edge_reference = _retained_edge_reference(edge)
 
@@ -288,6 +306,7 @@ def _loaded_record_reference(
     record: (
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
         | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
+        | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     ),
 ) -> ChromiumPageResearchWorkingSetNoteRevisionEdgeSequenceReference:
     if not isinstance(
@@ -295,18 +314,76 @@ def _loaded_record_reference(
         (
             ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
             ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
+            ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
         ),
     ):
         raise TypeError(
-            "sequence starting predecessor must be an already-loaded 23C continuation "
-            "or 24C revision edge."
+            "sequence starting predecessor must be an already-loaded 23C continuation, "
+            "24C revision edge, or 34A cross-working-set revision root."
         )
 
-    # Re-establish the existing bounded application relationship first.
+    if isinstance(
+        record,
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    ):
+        _validate_loaded_root_predecessor(record)
+        return _retained_root_reference(record)
+
+    # Re-establish the existing bounded ordinary application relationship first.
     _validate_loaded_predecessor(record)
     if isinstance(record, ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord):
         return _retained_continuation_reference(record)
     return _retained_edge_reference(record)
+
+
+def _retained_root_reference(
+    record: ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+) -> ChromiumPageResearchWorkingSetNoteRevisionEdgeSequenceReference:
+    verification = record.verification
+    try:
+        document = json.loads(verification.document_json)
+        root_record, recorded_sha256 = _validate_root_persisted_document(document)
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            "loaded sequence starting root retains incoherent verification JSON."
+        ) from exc
+
+    _require_retained_document_self_integrity(
+        document=document,
+        record_payload=root_record,
+        recorded_sha256=recorded_sha256,
+        verification_sha256=verification.root_record_sha256,
+        verification_document_json=verification.document_json,
+        verification_byte_count=verification.byte_count,
+        label="loaded sequence starting root",
+    )
+
+    transition_reference = root_record["transition_reference"]
+    root_payload = root_record["root"]
+    revision = root_payload["revision"]
+    revised_note = revision["revised_note"]
+    if verification.root_format != _ROOT_FORMAT:
+        raise ValueError("loaded sequence starting root format is unsupported.")
+    if verification.transition_format != transition_reference["format"]:
+        raise ValueError("loaded sequence starting root transition format is incoherent.")
+    if not hmac.compare_digest(
+        verification.transition_record_sha256,
+        transition_reference["record_sha256"],
+    ):
+        raise ValueError("loaded sequence starting root transition identity is incoherent.")
+    if verification.root_mode != root_payload["mode"]:
+        raise ValueError("loaded sequence starting root mode is incoherent.")
+    if verification.revision_mode != revision["mode"]:
+        raise ValueError("loaded sequence starting root revision mode is incoherent.")
+    if verification.revised_note_mode != revised_note["mode"]:
+        raise ValueError("loaded sequence starting root note mode is incoherent.")
+    if verification.revised_note_text != revised_note["text"]:
+        raise ValueError("loaded sequence starting root text is incoherent.")
+
+    return ChromiumPageResearchWorkingSetNoteRevisionEdgeSequenceReference(
+        record_format=_ROOT_FORMAT,
+        record_sha256=recorded_sha256,
+    )
 
 
 def _retained_continuation_reference(
