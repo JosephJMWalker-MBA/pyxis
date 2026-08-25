@@ -32,6 +32,7 @@ from pyxis.app.chromium_research_working_set_note_revision_edge_persistence impo
     verify_chromium_research_working_set_note_revision_edge,
 )
 from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_load import (
+    ChromiumResearchWorkingSetNoteRevisionEdgeSequenceRelinkError,
     load_chromium_research_working_set_note_revision_edge_sequence,
 )
 from test_app_chromium_research_session_working_set_transition_revision_root import (
@@ -271,9 +272,12 @@ def test_generic_24c_still_rejects_loaded_root_directly(tmp_path: Path) -> None:
         )
 
 
-def test_26a_still_rejects_loaded_root_as_sequence_start(tmp_path: Path) -> None:
+def test_35a_root_sequence_start_requires_explicit_relinkable_first_edge(tmp_path: Path) -> None:
     *_, loaded_root = _loaded_root(tmp_path)
-    with pytest.raises(TypeError, match="23C continuation or 24C revision edge"):
+    with pytest.raises(
+        ChromiumResearchWorkingSetNoteRevisionEdgeSequenceRelinkError,
+        match="member 0",
+    ):
         load_chromium_research_working_set_note_revision_edge_sequence(
             loaded_root,
             (tmp_path / "nonexistent-edge.json",),
