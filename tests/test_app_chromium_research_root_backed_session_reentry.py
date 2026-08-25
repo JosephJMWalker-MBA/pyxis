@@ -153,7 +153,7 @@ def test_35b_fresh_reentry_reconstructs_root_ancestry_and_governed_controller(
     assert result.controller.declared_endpoint is result.loaded_declaration.sequence.edges[-1]
     assert result.controller.declared_endpoint.verification.edge_record_sha256 == edge_persistence.edge_record_sha256
     assert result.controller.presentation.sequence.starting_record_format == _ROOT_FORMAT
-    assert result.controller.presentation.sequence.members[-1].record_format == _EDGE_FORMAT
+    assert result.controller.presentation.sequence.members[-1].edge_format == _EDGE_FORMAT
     assert tuple(item.note.note_text for item in result.loaded_appended_members) == (
         prepared.appended_items[0].note.note_text,
     )
