@@ -18,6 +18,16 @@ from pyxis.app.chromium_research_root_backed_session_reentry import (
 from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
     load_chromium_research_root_backed_session_reentry_plan_document,
 )
+from pyxis.app.chromium_research_second_basis_epoch_continuation_reentry_plan_document import (
+    load_chromium_research_second_basis_epoch_continuation_reentry_plan_document,
+    reenter_chromium_research_second_basis_epoch_continuation,
+)
+from pyxis.app.chromium_research_second_basis_epoch_reentry import (
+    reenter_chromium_research_second_basis_epoch,
+)
+from pyxis.app.chromium_research_second_basis_epoch_reentry_plan_document import (
+    load_chromium_research_second_basis_epoch_reentry_plan_document,
+)
 from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
 from pyxis.app.chromium_research_session_reentry import (
     ChromiumResearchSessionReentryResult,
@@ -90,6 +100,22 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help=(
             "Explicit 35D/35E post-root continuation overlay. The overlay is "
+            "operational configuration, not evidence or a head pointer."
+        ),
+    )
+    entry.add_argument(
+        "--second-basis-epoch-overlay",
+        type=Path,
+        help=(
+            "Explicit 37B second-basis-epoch locator overlay. The overlay is "
+            "operational configuration, not evidence or a head pointer."
+        ),
+    )
+    entry.add_argument(
+        "--second-basis-epoch-continuation-overlay",
+        type=Path,
+        help=(
+            "Explicit 37C/37D post-second-root continuation overlay. The overlay is "
             "operational configuration, not evidence or a head pointer."
         ),
     )
@@ -247,6 +273,20 @@ def _run_research_shell_command(
             )
             result = reenter_chromium_research_root_backed_session_continuation(plan)
             _run_root_backed_continuation_research_session_shell(result)
+        elif args.second_basis_epoch_overlay is not None:
+            plan = load_chromium_research_second_basis_epoch_reentry_plan_document(
+                args.second_basis_epoch_overlay
+            )
+            result = reenter_chromium_research_second_basis_epoch(plan)
+            _run_controller_only_research_session_shell(result.controller)
+        elif args.second_basis_epoch_continuation_overlay is not None:
+            plan = (
+                load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
+                    args.second_basis_epoch_continuation_overlay
+                )
+            )
+            result = reenter_chromium_research_second_basis_epoch_continuation(plan)
+            _run_controller_only_research_session_shell(result.controller)
         else:
             raise ValueError("research-shell requires one explicit entry configuration.")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
