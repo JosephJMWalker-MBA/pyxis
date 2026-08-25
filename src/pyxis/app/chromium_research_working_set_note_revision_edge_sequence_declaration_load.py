@@ -5,6 +5,9 @@ import hmac
 from pathlib import Path
 from typing import Iterable
 
+from .chromium_research_session_working_set_transition_revision_root_load import (
+    ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+)
 from .chromium_research_working_set_note_revision_continuation_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
 )
@@ -47,6 +50,11 @@ class ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceDeclarationRec
     `sequence` is a fresh 26A relinking from the exact caller-supplied starting
     predecessor and exact caller-supplied ordered edge paths.
 
+    35A permits the explicit starting predecessor to be a 34A cross-working-set
+    revision root. In that case public 26A uses the 34B bridge exactly once for the
+    first edge and ordinary 24C thereafter. The durable declaration records that
+    explicit root identity but does not make the root a generic 24C predecessor.
+
     Successful creation establishes only that the durable declaration names the
     same starting content identity and the same ordered edge content identities as
     that freshly relinked explicit sequence. It does not discover files, select a
@@ -62,6 +70,7 @@ def load_chromium_research_working_set_note_revision_edge_sequence_declaration(
     starting_predecessor: (
         ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord
         | ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord
+        | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     ),
     edge_sources: Iterable[Path],
     declaration_source: Path,
@@ -75,9 +84,9 @@ def load_chromium_research_working_set_note_revision_edge_sequence_declaration(
     content identities to the freshly relinked application evidence position by
     position.
 
-    Thus 26C re-establishes declaration attachment without adding directory scans,
-    digest search, path inference, automatic traversal, head selection, chronology,
-    branch semantics, completeness claims, or semantic interpretation.
+    Thus 26C/35A re-establishes declaration attachment without adding directory
+    scans, digest search, path inference, automatic traversal, head selection,
+    chronology, branch semantics, completeness claims, or semantic interpretation.
     """
 
     verification = verify_chromium_research_working_set_note_revision_edge_sequence(
