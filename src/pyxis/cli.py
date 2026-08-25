@@ -28,6 +28,12 @@ from pyxis.app.chromium_research_second_basis_epoch_reentry import (
 from pyxis.app.chromium_research_second_basis_epoch_reentry_plan_document import (
     load_chromium_research_second_basis_epoch_reentry_plan_document,
 )
+from pyxis.app.chromium_research_second_basis_epoch_shell_lineage import (
+    ChromiumResearchSecondBasisEpochContinuationShellLineage,
+    ChromiumResearchSecondBasisEpochShellLineage,
+    prove_chromium_research_second_basis_epoch_continuation_shell_lineage,
+    prove_chromium_research_second_basis_epoch_shell_lineage,
+)
 from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
 from pyxis.app.chromium_research_session_reentry import (
     ChromiumResearchSessionReentryResult,
@@ -185,6 +191,40 @@ def _load_root_backed_continuation_research_shell_factory():
     return create_root_backed_continuation_research_session_shell
 
 
+def _load_second_basis_epoch_research_shell_factory():
+    """Lazily import the lineage-retaining 37B Textual shell factory."""
+
+    try:
+        from pyxis.ui.second_basis_epoch_research_session_shell import (
+            create_second_basis_epoch_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_second_basis_epoch_research_session_shell
+
+
+def _load_second_basis_epoch_continuation_research_shell_factory():
+    """Lazily import the lineage-retaining 37C/37D Textual shell factory."""
+
+    try:
+        from pyxis.ui.second_basis_epoch_research_session_shell import (
+            create_second_basis_epoch_continuation_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_second_basis_epoch_continuation_research_session_shell
+
+
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
     """Run one exact ordinary re-entry-aware research shell."""
 
@@ -237,6 +277,35 @@ def _run_root_backed_continuation_research_session_shell(
     create_shell(reentry).run()
 
 
+def _run_second_basis_epoch_research_session_shell(
+    lineage: ChromiumResearchSecondBasisEpochShellLineage,
+) -> None:
+    """Run one proven 37B launch lineage without adding checkpoint authority."""
+
+    create_shell = _load_second_basis_epoch_research_shell_factory()
+    if not isinstance(lineage, ChromiumResearchSecondBasisEpochShellLineage):
+        raise TypeError(
+            "lineage must be ChromiumResearchSecondBasisEpochShellLineage."
+        )
+    create_shell(lineage).run()
+
+
+def _run_second_basis_epoch_continuation_research_session_shell(
+    lineage: ChromiumResearchSecondBasisEpochContinuationShellLineage,
+) -> None:
+    """Run one proven 37C/37D launch lineage without adding checkpoint authority."""
+
+    create_shell = _load_second_basis_epoch_continuation_research_shell_factory()
+    if not isinstance(
+        lineage,
+        ChromiumResearchSecondBasisEpochContinuationShellLineage,
+    ):
+        raise TypeError(
+            "lineage must be ChromiumResearchSecondBasisEpochContinuationShellLineage."
+        )
+    create_shell(lineage).run()
+
+
 def _run_controller_only_research_session_shell(
     controller: ChromiumResearchSessionController,
 ) -> None:
@@ -278,7 +347,11 @@ def _run_research_shell_command(
                 args.second_basis_epoch_overlay
             )
             result = reenter_chromium_research_second_basis_epoch(plan)
-            _run_controller_only_research_session_shell(result.controller)
+            lineage = prove_chromium_research_second_basis_epoch_shell_lineage(
+                result,
+                overlay_source=args.second_basis_epoch_overlay,
+            )
+            _run_second_basis_epoch_research_session_shell(lineage)
         elif args.second_basis_epoch_continuation_overlay is not None:
             plan = (
                 load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
@@ -286,7 +359,13 @@ def _run_research_shell_command(
                 )
             )
             result = reenter_chromium_research_second_basis_epoch_continuation(plan)
-            _run_controller_only_research_session_shell(result.controller)
+            lineage = (
+                prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
+                    result,
+                    overlay_source=args.second_basis_epoch_continuation_overlay,
+                )
+            )
+            _run_second_basis_epoch_continuation_research_session_shell(lineage)
         else:
             raise ValueError("research-shell requires one explicit entry configuration.")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
