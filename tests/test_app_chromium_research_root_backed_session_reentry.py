@@ -138,7 +138,14 @@ def test_35b_fresh_reentry_reconstructs_root_ancestry_and_governed_controller(
     assert result.prior_reentry is not prior_reentry
     assert result.prior_reentry.controller.presentation == prior_reentry.controller.presentation
     assert result.loaded_root is not loaded_root
-    assert result.loaded_root.transition.prior_endpoint is result.prior_reentry.controller.declared_endpoint
+    transition_prior = result.loaded_root.transition.prior_endpoint
+    reentered_prior = result.prior_reentry.controller.declared_endpoint
+    assert transition_prior is not reentered_prior
+    assert (
+        transition_prior.verification.edge_record_sha256
+        == reentered_prior.verification.edge_record_sha256
+    )
+    assert transition_prior.revision == reentered_prior.revision
     assert result.loaded_root.verification.root_record_sha256 == loaded_root.verification.root_record_sha256
     assert result.loaded_declaration.sequence.starting_predecessor is result.loaded_root
     assert result.loaded_declaration.sequence.edges[0].predecessor is result.loaded_root
