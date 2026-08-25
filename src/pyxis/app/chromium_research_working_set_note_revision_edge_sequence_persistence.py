@@ -5,14 +5,8 @@ import hashlib
 import hmac
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .chromium_research_session_working_set_transition_revision_root_load import (
-    ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-)
-from .chromium_research_session_working_set_transition_revision_root_persistence import (
-    _validate_document as _validate_root_persisted_document,
-)
 from .chromium_research_working_set_note_revision_continuation_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
 )
@@ -31,6 +25,11 @@ from .chromium_research_working_set_note_revision_edge_persistence import (
 from .chromium_research_working_set_note_revision_edge_sequence_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceRecord,
 )
+
+if TYPE_CHECKING:
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
 
 
 _SEQUENCE_FORMAT = (
@@ -309,6 +308,10 @@ def _loaded_record_reference(
         | ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
     ),
 ) -> ChromiumPageResearchWorkingSetNoteRevisionEdgeSequenceReference:
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
+
     if not isinstance(
         record,
         (
@@ -339,6 +342,10 @@ def _loaded_record_reference(
 def _retained_root_reference(
     record: ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
 ) -> ChromiumPageResearchWorkingSetNoteRevisionEdgeSequenceReference:
+    from .chromium_research_session_working_set_transition_revision_root_persistence import (
+        _validate_document as _validate_root_persisted_document,
+    )
+
     verification = record.verification
     try:
         document = json.loads(verification.document_json)
