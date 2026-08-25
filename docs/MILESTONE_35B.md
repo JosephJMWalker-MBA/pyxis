@@ -86,7 +86,7 @@ members.
 ```text
 explicit prior 31A plan
 → public 31A fresh ordinary session re-entry
-→ exact fresh prior declared endpoint
+→ fresh prior declared endpoint content identity
 
 explicit appended member locators
 → existing 17D/18D/19D relinking
@@ -95,7 +95,7 @@ fresh prior working-set members
 + explicit freshly relinked appended members
 → exact ordered successor member tuple
 
-prior endpoint
+prior endpoint content identity
 + successor members
 + changed 20B/21B paths
 + 33B transition path
@@ -126,9 +126,20 @@ prior_reentry.controller.declared_endpoint.verification.path
 This is not ambient path discovery. That path was reached through the exact
 caller-owned 31A plan and freshly verified during the same 35B operation.
 
+The public 34A/33B path then freshly loads that prior edge again from the supplied
+path. Therefore the prior endpoint retained inside the reconstructed transition is a
+**separate application object** from the endpoint retained by the independently
+reconstructed 31A session. The two are required to carry the same durable edge
+record SHA-256 and equivalent reconstructed revision evidence; object identity is not
+an authority claim.
+
 Therefore:
 
 ```text
+same freshly verified durable edge identity
+!=
+same Python object identity
+
 path retained by fresh explicit re-entry evidence
 !=
 filesystem search or digest discovery
@@ -158,12 +169,16 @@ duplicates.
 It delegates to the public 34A loader, which itself freshly verifies and relinks the
 33B transition through:
 
-- the exact prior endpoint;
+- the explicitly located prior endpoint content identity;
 - the complete ordered successor member tuple;
 - the changed 20B working-set file;
 - the changed 21B note file;
 - the 33B transition file; and
 - the 34A root file.
+
+The 34A loader may reconstruct a new prior-edge application object while proving that
+its durable edge identity matches the prior endpoint established by the ordinary 31A
+re-entry. This is fresh verification, not ancestry substitution.
 
 Thus the root-backed declaration cannot erase or bypass the evidence-basis change.
 
@@ -210,6 +225,7 @@ Only `reenter_chromium_research_root_backed_session()` reads and verifies artifa
 - source authenticity;
 - citation authority;
 - path identity;
+- in-memory object identity across independent fresh loads;
 - directory scanning;
 - digest-based discovery;
 - browser reacquisition;
@@ -228,8 +244,9 @@ Focused 35B coverage proves:
 4. successor membership is exactly fresh prior members followed by explicit appended
    members;
 5. the public 34A loader freshly reconstructs the exact 33B transition + 34A root;
-6. the loaded transition prior endpoint is the exact freshly reconstructed prior
-   declared endpoint;
+6. the transition's freshly reloaded prior endpoint is a separate application object
+   that matches the independently reconstructed 31A endpoint by durable edge identity
+   and revision evidence;
 7. public 26C/35A freshly reconstructs the root-started declaration;
 8. the resulting existing controller exposes the root format as the declared segment
    start while retaining an ordinary edge as the declared endpoint;
@@ -273,6 +290,7 @@ Successful 35B establishes only:
 > From one explicit caller-owned ordinary 31A prior-session plan, one or more explicit
 > appended-member locators, and explicit changed 20B/21B, 33B transition, 34A root,
 > 35A edge-sequence, and 26B declaration paths, Pyxis can freshly reconstruct the
-> pre-change governed session, exact changed-basis ancestry, root-started declared
-> segment, and existing governed controller in a new process without filesystem
-> discovery, ancestry erasure, or global head/chronology/semantic authority.
+> pre-change governed session, changed-basis ancestry by verified durable content
+> identity, root-started declared segment, and existing governed controller in a new
+> process without filesystem discovery, ancestry erasure, or global
+> head/chronology/semantic authority.
