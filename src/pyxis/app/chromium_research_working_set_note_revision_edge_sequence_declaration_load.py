@@ -3,11 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hmac
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
-from .chromium_research_session_working_set_transition_revision_root_load import (
-    ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-)
 from .chromium_research_working_set_note_revision_continuation_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
 )
@@ -26,6 +23,11 @@ from .chromium_research_working_set_note_revision_edge_sequence_persistence impo
     _retained_edge_reference,
     verify_chromium_research_working_set_note_revision_edge_sequence,
 )
+
+if TYPE_CHECKING:
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
 
 
 _SEQUENCE_FORMAT = (
@@ -83,6 +85,10 @@ def load_chromium_research_working_set_note_revision_edge_sequence_declaration(
     public 26A across those explicit edge paths, and finally compares the declared
     content identities to the freshly relinked application evidence position by
     position.
+
+    The 34A root type is annotation-only at module import time. Runtime root
+    validation remains owned by public 26A and the bounded persistence helpers,
+    avoiding any new controller/presentation import cycle.
 
     Thus 26C/35A re-establishes declaration attachment without adding directory
     scans, digest search, path inference, automatic traversal, head selection,
