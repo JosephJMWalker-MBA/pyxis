@@ -139,11 +139,11 @@ def test_research_shell_command_freshly_reenters_plan_and_never_builds_workspace
     assert reentry.controller.loaded.verification.path == fixture.declaration_path.resolve()
 
 
-def test_research_shell_command_launches_explicit_35c_root_backed_overlay_controller_only(
+def test_research_shell_command_launches_explicit_35c_root_backed_overlay_with_typed_lineage(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    _, _, earned, _, overlay_path, _ = _persist_valid_overlay(tmp_path, stem="36a-root")
+    _, _, earned, _, overlay_path, _ = _persist_valid_overlay(tmp_path, stem="36b-root")
     observed: dict[str, object] = {}
 
     def fail_workspace_build(*args, **kwargs):
@@ -152,15 +152,23 @@ def test_research_shell_command_launches_explicit_35c_root_backed_overlay_contro
     def fail_ordinary_shell(*args, **kwargs):
         raise AssertionError("root-backed launch must not fabricate ordinary re-entry lineage")
 
-    def fake_controller_shell(controller) -> None:
-        observed["controller"] = controller
+    def fail_controller_only_shell(*args, **kwargs):
+        raise AssertionError("35C launch must retain typed 35B lineage in 36B")
+
+    def fake_root_backed_shell(reentry) -> None:
+        observed["reentry"] = reentry
 
     monkeypatch.setattr(cli, "build_and_run_workspace", fail_workspace_build)
     monkeypatch.setattr(cli, "_run_research_session_shell", fail_ordinary_shell)
     monkeypatch.setattr(
         cli,
         "_run_controller_only_research_session_shell",
-        fake_controller_shell,
+        fail_controller_only_shell,
+    )
+    monkeypatch.setattr(
+        cli,
+        "_run_root_backed_research_session_shell",
+        fake_root_backed_shell,
     )
 
     exit_code = cli.main(
@@ -168,11 +176,16 @@ def test_research_shell_command_launches_explicit_35c_root_backed_overlay_contro
     )
 
     assert exit_code == 0
-    controller = observed["controller"]
-    assert controller.presentation == earned.controller.presentation
+    reentry = observed["reentry"]
+    assert reentry is not earned
+    assert reentry.controller.presentation == earned.controller.presentation
     assert (
-        controller.declared_endpoint.verification.edge_record_sha256
+        reentry.controller.declared_endpoint.verification.edge_record_sha256
         == earned.controller.declared_endpoint.verification.edge_record_sha256
+    )
+    assert (
+        reentry.loaded_root.verification.root_record_sha256
+        == earned.loaded_root.verification.root_record_sha256
     )
 
 
@@ -244,6 +257,35 @@ def test_research_shell_command_launches_35e_overlay_through_unchanged_35d_famil
     )
 
 
+def test_root_backed_shell_factory_receives_exact_35b_reentry_not_ordinary_lineage(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    import pyxis.ui.root_backed_research_session_shell as shell_module
+
+    _, _, earned, _, _, _ = _persist_valid_overlay(tmp_path, stem="36b-ui")
+    observed: dict[str, object] = {}
+
+    class FakeShell:
+        def run(self) -> None:
+            observed["ran"] = True
+
+    def fake_create(reentry):
+        observed["reentry"] = reentry
+        return FakeShell()
+
+    monkeypatch.setattr(
+        shell_module,
+        "create_root_backed_research_session_shell",
+        fake_create,
+    )
+
+    cli._run_root_backed_research_session_shell(earned)
+
+    assert observed["reentry"] is earned
+    assert observed["ran"] is True
+
+
 def test_controller_only_shell_does_not_supply_ordinary_reentry_lineage(
     tmp_path: Path,
     monkeypatch,
@@ -304,7 +346,7 @@ def test_research_shell_command_reports_invalid_root_backed_overlay_before_ui(
 
     monkeypatch.setattr(
         cli,
-        "_run_controller_only_research_session_shell",
+        "_run_root_backed_research_session_shell",
         fail_if_launched,
     )
 
@@ -360,7 +402,10 @@ def test_research_shell_ui_dependency_is_lazy_and_reports_install_hint(monkeypat
     original_import = builtins.__import__
 
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "pyxis.ui.research_session_shell":
+        if name in {
+            "pyxis.ui.research_session_shell",
+            "pyxis.ui.root_backed_research_session_shell",
+        }:
             raise ModuleNotFoundError("No module named 'textual'", name="textual")
         return original_import(name, globals, locals, fromlist, level)
 
@@ -368,5 +413,7 @@ def test_research_shell_ui_dependency_is_lazy_and_reports_install_hint(monkeypat
 
     with pytest.raises(RuntimeError, match=r"pyxis\[ui\]"):
         cli._run_research_session_shell(object())  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError, match=r"pyxis\[ui\]"):
+        cli._run_root_backed_research_session_shell(object())  # type: ignore[arg-type]
     with pytest.raises(RuntimeError, match=r"pyxis\[ui\]"):
         cli._run_controller_only_research_session_shell(object())  # type: ignore[arg-type]
