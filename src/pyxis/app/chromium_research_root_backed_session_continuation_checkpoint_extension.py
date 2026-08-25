@@ -58,6 +58,11 @@ def persist_chromium_research_root_backed_session_continuation_checkpoint_extens
     declaration. A new 35D overlay then points to the same 35C overlay, the cumulative
     edge tuple, and that new declaration.
 
+    The cumulative controller intentionally presents a longer declared segment than
+    the one-hop 30A continuation controller. Therefore equivalence to the chosen
+    rollover is established at the terminal edge by durable edge content identity and
+    exact human wording, not by requiring whole-presentation equality.
+
     No existing overlay or declaration is modified or deleted. No directory scan,
     digest search, predecessor discovery, head selection, chronology inference, or
     semantic interpretation occurs.
@@ -234,16 +239,21 @@ def _require_next_match(
     rollover: ChromiumResearchSessionRolloverResult,
     fresh: ChromiumResearchRootBackedSessionContinuationReentryResult,
 ) -> None:
-    if fresh.controller.presentation != rollover.continuation_controller.presentation:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Fresh cumulative continuation presentation does not match the chosen rollover."
-        )
+    fresh_endpoint = fresh.controller.declared_endpoint
+    chosen_endpoint = rollover.continuation_controller.declared_endpoint
     if (
-        fresh.controller.declared_endpoint.verification.edge_record_sha256
-        != rollover.continuation_controller.declared_endpoint.verification.edge_record_sha256
+        fresh_endpoint.verification.edge_record_sha256
+        != chosen_endpoint.verification.edge_record_sha256
     ):
         raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
             "Fresh cumulative continuation endpoint identity does not match the chosen rollover."
+        )
+    if (
+        fresh_endpoint.revision.revised_note.note_text
+        != chosen_endpoint.revision.revised_note.note_text
+    ):
+        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
+            "Fresh cumulative continuation endpoint text does not match the chosen rollover."
         )
 
 
