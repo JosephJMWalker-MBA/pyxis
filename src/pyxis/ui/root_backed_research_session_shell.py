@@ -28,14 +28,14 @@ class RootBackedResearchSessionShell(ResearchSessionShell):
     This subclass adds only the first root-backed continuation checkpoint boundary.
     It never constructs or stores an ordinary 31A re-entry result.
 
-    After a successful 35D checkpoint this 36B shell remains revision-locked. Moving
-    into repeated post-root continuation checkpointing is intentionally deferred to a
-    separate authority milestone rather than silently changing lineage families in
-    place.
+    After a successful 35D checkpoint the shell remains revision-locked. The
+    researcher may explicitly hand the exact freshly proven continuation re-entry to
+    the already-established cumulative shell, or close and relaunch later instead.
     """
 
     CSS = ResearchSessionShell.CSS + """
-    #research-root-backed-continuation-checkpoint-controls {
+    #research-root-backed-continuation-checkpoint-controls,
+    #research-root-backed-cumulative-handoff-notice {
         width: 94%;
         height: auto;
         padding: 1 2;
@@ -61,7 +61,8 @@ class RootBackedResearchSessionShell(ResearchSessionShell):
         text-style: bold;
     }
 
-    #save-research-root-backed-continuation-checkpoint {
+    #save-research-root-backed-continuation-checkpoint,
+    #continue-root-backed-cumulative-mode {
         margin-top: 1;
     }
     """
@@ -84,6 +85,15 @@ class RootBackedResearchSessionShell(ResearchSessionShell):
         if event.button.id == "save-research-root-backed-continuation-checkpoint":
             event.stop()
             self.call_after_refresh(self._save_root_backed_continuation_checkpoint)
+            return
+        if event.button.id == "continue-root-backed-cumulative-mode":
+            event.stop()
+            checkpoint = self.last_root_backed_continuation_checkpoint
+            if checkpoint is None:
+                raise ValueError(
+                    "Cumulative handoff requires one successful retained 35D checkpoint."
+                )
+            self.exit(checkpoint.fresh_reentry)
             return
         super().on_button_pressed(event)
 
@@ -216,7 +226,24 @@ class RootBackedResearchSessionShell(ResearchSessionShell):
 
         self.last_root_backed_continuation_checkpoint = checkpoint
         controls.lock_after_success(checkpoint)
-        # Deliberately do not unlock ResearchEndpointRevisionControls in 36B.
+        await self.mount(
+            Static(
+                "Checkpoint complete. Further revision remains locked. Choose the explicit "
+                "handoff below to continue immediately in cumulative mode with the exact "
+                "freshly proven in-memory continuation, or close this shell and relaunch "
+                "the saved overlay later. No path is promoted to continuing authority.",
+                id="research-root-backed-cumulative-handoff-notice",
+                markup=False,
+            )
+        )
+        await self.mount(
+            Button(
+                "Continue in cumulative mode",
+                id="continue-root-backed-cumulative-mode",
+                variant="primary",
+            )
+        )
+        # Deliberately do not unlock ResearchEndpointRevisionControls here.
 
 
 def create_root_backed_research_session_shell(
