@@ -9,6 +9,9 @@ from pyxis.app.chromium_research_second_basis_epoch_shell_lineage import (
     prove_chromium_research_second_basis_epoch_continuation_shell_lineage,
     prove_chromium_research_second_basis_epoch_shell_lineage,
 )
+from pyxis.ui.chromium_research_second_basis_epoch_continuation_checkpoint_extension_textual import (
+    SecondBasisEpochResearchSessionCumulativeCheckpointControls,
+)
 from pyxis.ui.chromium_research_second_basis_epoch_continuation_checkpoint_textual import (
     SecondBasisEpochResearchSessionContinuationCheckpointControls,
 )
@@ -56,7 +59,7 @@ def _continuation_shell(tmp_path: Path, *, stem: str):
 async def test_37b_shell_retains_exact_proven_launch_lineage_without_ordinary_restart_authority(
     tmp_path: Path,
 ) -> None:
-    lineage, shell = _second_epoch_shell(tmp_path, stem="38d-ui-second")
+    lineage, shell = _second_epoch_shell(tmp_path, stem="38e-ui-second")
 
     async with shell.run_test(size=(160, 130)) as pilot:
         await pilot.pause()
@@ -71,19 +74,21 @@ async def test_37b_shell_retains_exact_proven_launch_lineage_without_ordinary_re
 
 
 @pytest.mark.asyncio
-async def test_37c_shell_retains_exact_proven_continuation_launch_lineage_without_ordinary_restart_authority(
+async def test_37c_shell_retains_launch_lineage_and_exact_current_typed_continuation(
     tmp_path: Path,
 ) -> None:
-    lineage, shell = _continuation_shell(tmp_path, stem="38d-ui-cont")
+    lineage, shell = _continuation_shell(tmp_path, stem="38e-ui-cont")
 
     async with shell.run_test(size=(160, 130)) as pilot:
         await pilot.pause()
         assert isinstance(shell, SecondBasisEpochContinuationResearchSessionShell)
         assert shell.second_basis_epoch_continuation_launch_lineage is lineage
+        assert shell.second_basis_epoch_continuation_reentry is lineage.reentry
         assert shell.research_reentry is None
         assert shell.research_controller is lineage.reentry.controller
+        assert shell.last_second_basis_epoch_cumulative_checkpoint is None
         assert len(shell.query(ResearchSessionRestartPlanControls)) == 0
-        assert len(shell.query("#research-second-basis-epoch-cumulative-checkpoint-controls")) == 0
+        assert len(shell.query(SecondBasisEpochResearchSessionCumulativeCheckpointControls)) == 0
         assert not shell.query_one("#persist-research-endpoint-revision", Button).disabled
 
 
@@ -91,7 +96,7 @@ async def test_37c_shell_retains_exact_proven_continuation_launch_lineage_withou
 async def test_37b_shell_rollover_keeps_launch_lineage_and_mounts_blank_locked_37c_checkpoint(
     tmp_path: Path,
 ) -> None:
-    lineage, shell = _second_epoch_shell(tmp_path, stem="38d-ui-second-rollover")
+    lineage, shell = _second_epoch_shell(tmp_path, stem="38e-ui-second-rollover")
     launch_controller = lineage.reentry.controller
     successor = tmp_path / "successor.json"
     declaration = tmp_path / "continuation-declaration.json"
@@ -129,15 +134,15 @@ async def test_37b_shell_rollover_keeps_launch_lineage_and_mounts_blank_locked_3
 
 
 @pytest.mark.asyncio
-async def test_37c_shell_rollover_moves_live_controller_without_promoting_continuation_launch_lineage(
+async def test_37c_shell_rollover_keeps_current_typed_lineage_and_mounts_blank_locked_37d_checkpoint(
     tmp_path: Path,
 ) -> None:
-    lineage, shell = _continuation_shell(tmp_path, stem="38d-ui-cont-rollover")
+    lineage, shell = _continuation_shell(tmp_path, stem="38e-ui-cont-rollover")
     launch_controller = lineage.reentry.controller
     successor = tmp_path / "next-successor.json"
     declaration = tmp_path / "next-continuation-declaration.json"
 
-    async with shell.run_test(size=(160, 170)) as pilot:
+    async with shell.run_test(size=(160, 210)) as pilot:
         await pilot.pause()
         await _write_and_rollover(
             shell,
@@ -149,13 +154,25 @@ async def test_37c_shell_rollover_moves_live_controller_without_promoting_contin
         )
 
         assert shell.second_basis_epoch_continuation_launch_lineage is lineage
+        assert shell.second_basis_epoch_continuation_reentry is lineage.reentry
         assert shell.research_reentry is None
         assert shell.last_research_rollover is not None
         assert shell.research_controller is shell.last_research_rollover.continuation_controller
         assert shell.research_controller is not launch_controller
         assert len(shell.query(ResearchSessionRestartPlanControls)) == 0
-        assert len(shell.query("#research-second-basis-epoch-cumulative-checkpoint-controls")) == 0
-        assert not shell.query_one("#persist-research-endpoint-revision", Button).disabled
+        controls = shell.query_one(
+            SecondBasisEpochResearchSessionCumulativeCheckpointControls
+        )
+        assert controls.current_reentry is lineage.reentry
+        assert controls.rollover is shell.last_research_rollover
+        assert shell.query_one("#persist-research-endpoint-revision", Button).disabled
+        for selector in (
+            "#research-second-basis-epoch-cumulative-checkpoint-current-overlay-source",
+            "#research-second-basis-epoch-cumulative-checkpoint-successor-source",
+            "#research-second-basis-epoch-cumulative-checkpoint-declaration-destination",
+            "#research-second-basis-epoch-cumulative-checkpoint-overlay-destination",
+        ):
+            assert shell.query_one(selector, Input).value == ""
 
 
 def test_second_epoch_shell_factories_reject_wrong_lineage_family_before_mount() -> None:
