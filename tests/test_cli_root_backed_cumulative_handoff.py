@@ -17,7 +17,9 @@ def test_root_backed_cli_chains_only_explicit_typed_handoff_into_cumulative_shel
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    _, _, _, _, root_overlay, _ = _persist_valid_overlay(tmp_path / "root", stem="36d-root")
+    root_dir = tmp_path / "root"
+    root_dir.mkdir(parents=True, exist_ok=True)
+    _, _, _, _, root_overlay, _ = _persist_valid_overlay(root_dir, stem="36d-root")
     continuation_dir = tmp_path / "continuation"
     continuation_dir.mkdir(parents=True, exist_ok=True)
     *_, checkpoint = _persist_valid_continuation(continuation_dir, stem="36d-cont")
@@ -47,10 +49,9 @@ def test_root_backed_cli_chains_only_explicit_typed_handoff_into_cumulative_shel
     )
 
     assert cli.main(["research-shell", "--root-backed-overlay", str(root_overlay)]) == 0
+    assert "first_reentry" in observed
+    assert observed["first_reentry"] is not handoff
     assert observed["handoff"] is handoff
-    assert observed["first_reentry"].controller.presentation == (
-        observed["first_reentry"].controller.presentation
-    )
 
 
 def test_root_backed_cli_normal_close_does_not_launch_cumulative_shell(
