@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from .chromium_research_root_backed_session_reentry import (
-    ChromiumResearchRootBackedSessionReentryPlan,
     ChromiumResearchRootBackedSessionReentryResult,
     reenter_chromium_research_root_backed_session,
 )
@@ -14,12 +13,12 @@ from .chromium_research_root_backed_session_reentry_plan_document import (
     load_chromium_research_root_backed_session_reentry_plan_document,
 )
 from .chromium_research_session_controller import ChromiumResearchSessionController
-from .chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 from .chromium_research_session_reentry_plan_document import (
     _decode_path,
     _decode_path_array,
     _encode_path,
 )
+from .chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 from .chromium_research_working_set_note_revision_edge_sequence_declaration_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceDeclarationRecord,
     load_chromium_research_working_set_note_revision_edge_sequence_declaration,
@@ -39,26 +38,22 @@ _ROOT_KEYS = {
 
 @dataclass(frozen=True, slots=True)
 class ChromiumResearchRootBackedSessionContinuationReentryPlan:
-    """Operational locator plan for one first ordinary continuation after 35C.
+    """Locator-only plan for one first ordinary continuation after a 35C session.
 
-    `prior_root_backed_plan` is decoded through the explicitly supplied 35C overlay;
-    it is not copied into this continuation document. `declared_edge_sources` and
-    `declaration_source` describe only the explicit ordinary continuation segment
-    whose starting predecessor is the prior root-backed session's declared endpoint.
-
-    This is operational configuration only. It is not an evidence artifact, history
-    index, chronology record, branch selector, or global head pointer.
+    The plan owns only the explicit prior 35C overlay location and the explicit
+    continuation declaration locations. It does not duplicate the 35B plan decoded
+    by that overlay. Fresh re-entry must therefore decode the prior 35C overlay again
+    before reconstructing ancestry.
     """
 
     prior_root_backed_overlay_source: Path
-    prior_root_backed_plan: ChromiumResearchRootBackedSessionReentryPlan
     declared_edge_sources: tuple[Path, ...]
     declaration_source: Path
 
 
 @dataclass(frozen=True, slots=True)
 class ChromiumResearchRootBackedSessionContinuationReentryResult:
-    """One fresh continuation reconstructed on top of one fresh 35B prior session."""
+    """One fresh ordinary continuation reconstructed above fresh 35B ancestry."""
 
     plan: ChromiumResearchRootBackedSessionContinuationReentryPlan
     prior_root_backed_reentry: ChromiumResearchRootBackedSessionReentryResult
@@ -100,11 +95,11 @@ class ChromiumResearchRootBackedSessionContinuationCheckpointError(ValueError):
 def load_chromium_research_root_backed_session_continuation_reentry_plan_document(
     source: Path,
 ) -> ChromiumResearchRootBackedSessionContinuationReentryPlan:
-    """Decode one strict 35D continuation overlay without reading research evidence.
+    """Decode one strict locator-only 35D continuation overlay.
 
-    Loading reads the explicit 35D document and the explicitly referenced 35C
-    configuration document (which itself composes the ordinary 31B plan document).
-    No research artifact referenced by those plans is freshly verified here.
+    This operation reads only the 35D document. It does not read the referenced 35C
+    overlay or any research evidence. Therefore successful decoding proves only
+    configuration shape, not ancestry or session coherence.
     """
 
     if not isinstance(source, Path):
@@ -148,9 +143,6 @@ def load_chromium_research_root_backed_session_continuation_reentry_plan_documen
             "prior_root_backed_overlay_source",
             base,
         )
-        prior_plan = load_chromium_research_root_backed_session_reentry_plan_document(
-            prior_overlay_source
-        )
         declared_sources = _decode_path_array(
             document["declared_edge_sources"],
             label="declared_edge_sources",
@@ -163,14 +155,13 @@ def load_chromium_research_root_backed_session_continuation_reentry_plan_documen
             "declaration_source",
             base,
         )
-    except (OSError, TypeError, ValueError) as exc:
+    except (TypeError, ValueError) as exc:
         raise ChromiumResearchRootBackedSessionContinuationPlanDocumentError(
             "Root-backed continuation overlay cannot form a valid explicit locator plan."
         ) from exc
 
     return ChromiumResearchRootBackedSessionContinuationReentryPlan(
         prior_root_backed_overlay_source=prior_overlay_source,
-        prior_root_backed_plan=prior_plan,
         declared_edge_sources=declared_sources,
         declaration_source=declaration_source,
     )
@@ -181,11 +172,10 @@ def reenter_chromium_research_root_backed_session_continuation(
 ) -> ChromiumResearchRootBackedSessionContinuationReentryResult:
     """Freshly reconstruct one ordinary continuation above explicit 35B ancestry.
 
-    Pyxis first freshly reconstructs the complete prior root-backed session through
-    public 35B using the typed plan obtained from the 35C overlay. It then delegates
-    the explicitly ordered continuation edge paths and declaration to existing 26C,
-    using only the freshly reconstructed prior declared endpoint as the starting
-    predecessor.
+    Pyxis first decodes the exact 35C overlay named by the plan, then freshly
+    reconstructs its complete 35B root-backed session. Only that fresh prior endpoint
+    is supplied to existing 26C for the explicitly ordered continuation edge paths
+    and declaration.
     """
 
     if not isinstance(plan, ChromiumResearchRootBackedSessionContinuationReentryPlan):
@@ -195,9 +185,16 @@ def reenter_chromium_research_root_backed_session_continuation(
     _validate_plan(plan)
 
     try:
-        prior_reentry = reenter_chromium_research_root_backed_session(
-            plan.prior_root_backed_plan
+        prior_plan = load_chromium_research_root_backed_session_reentry_plan_document(
+            plan.prior_root_backed_overlay_source
         )
+    except (OSError, TypeError, ValueError) as exc:
+        raise ChromiumResearchRootBackedSessionContinuationReentryError(
+            "Explicit prior 35C overlay could not be decoded."
+        ) from exc
+
+    try:
+        prior_reentry = reenter_chromium_research_root_backed_session(prior_plan)
     except (OSError, TypeError, ValueError) as exc:
         raise ChromiumResearchRootBackedSessionContinuationReentryError(
             "Prior root-backed session could not be freshly re-entered."
@@ -240,7 +237,7 @@ def persist_chromium_research_root_backed_session_continuation_checkpoint(
     continuation_declaration_source: Path,
     destination: Path,
 ) -> ChromiumResearchRootBackedSessionContinuationCheckpointResult:
-    """Proof-gate one chosen 30A continuation before writing a 35D overlay."""
+    """Proof-gate one chosen first 30A continuation before writing a 35D overlay."""
 
     if not isinstance(prior_reentry, ChromiumResearchRootBackedSessionReentryResult):
         raise TypeError(
@@ -286,7 +283,6 @@ def persist_chromium_research_root_backed_session_continuation_checkpoint(
 
     candidate_plan = ChromiumResearchRootBackedSessionContinuationReentryPlan(
         prior_root_backed_overlay_source=overlay_source,
-        prior_root_backed_plan=prior_plan,
         declared_edge_sources=(successor_source,),
         declaration_source=declaration_source,
     )
@@ -419,8 +415,6 @@ def _persist_overlay(
 def _validate_plan(plan: ChromiumResearchRootBackedSessionContinuationReentryPlan) -> None:
     if not isinstance(plan.prior_root_backed_overlay_source, Path):
         raise TypeError("plan.prior_root_backed_overlay_source must be pathlib.Path.")
-    if not isinstance(plan.prior_root_backed_plan, ChromiumResearchRootBackedSessionReentryPlan):
-        raise TypeError("plan.prior_root_backed_plan has an unsupported type.")
     if not isinstance(plan.declared_edge_sources, tuple) or not plan.declared_edge_sources:
         raise TypeError("plan.declared_edge_sources must be a non-empty tuple of Paths.")
     for index, source in enumerate(plan.declared_edge_sources):
