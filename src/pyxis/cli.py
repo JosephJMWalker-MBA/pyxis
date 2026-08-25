@@ -174,15 +174,25 @@ def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -
 
 def _run_root_backed_research_session_shell(
     reentry: ChromiumResearchRootBackedSessionReentryResult,
-) -> None:
-    """Run one exact 35B lineage through the dedicated first-checkpoint shell."""
+) -> ChromiumResearchRootBackedSessionContinuationReentryResult | None:
+    """Run first-checkpoint shell and return only an explicit typed 36D handoff."""
 
     create_root_backed_research_session_shell = _load_root_backed_research_shell_factory()
     if not isinstance(reentry, ChromiumResearchRootBackedSessionReentryResult):
         raise TypeError(
             "reentry must be ChromiumResearchRootBackedSessionReentryResult."
         )
-    create_root_backed_research_session_shell(reentry).run()
+    handoff = create_root_backed_research_session_shell(reentry).run()
+    if handoff is None:
+        return None
+    if not isinstance(
+        handoff,
+        ChromiumResearchRootBackedSessionContinuationReentryResult,
+    ):
+        raise TypeError(
+            "root-backed research shell returned an invalid cumulative handoff result."
+        )
+    return handoff
 
 
 def _run_root_backed_continuation_research_session_shell(
@@ -226,7 +236,9 @@ def _run_research_shell_command(
                 args.root_backed_overlay
             )
             result = reenter_chromium_research_root_backed_session(plan)
-            _run_root_backed_research_session_shell(result)
+            handoff = _run_root_backed_research_session_shell(result)
+            if handoff is not None:
+                _run_root_backed_continuation_research_session_shell(handoff)
         elif args.root_backed_continuation_overlay is not None:
             plan = (
                 load_chromium_research_root_backed_session_continuation_reentry_plan_document(
