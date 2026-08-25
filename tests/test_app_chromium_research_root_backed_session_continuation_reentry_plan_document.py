@@ -18,7 +18,6 @@ from pyxis.app.chromium_research_session_rollover import (
 from test_app_chromium_research_root_backed_session_reentry_plan_document import (
     _persist_valid_overlay,
 )
-from test_app_chromium_research_session_reentry import _all_plan_paths
 
 
 _OVERLAY_FORMAT = (
@@ -179,7 +178,7 @@ def test_35d_checkpoint_rejects_different_valid_prior_root_overlay_before_write(
     assert not overlay.exists()
 
 
-def test_35d_checkpoint_rejects_rollover_from_different_root_backed_session(
+def test_35d_path_distinct_content_identical_rollover_is_same_authority(
     tmp_path: Path,
 ) -> None:
     first = tmp_path / "first"
@@ -190,15 +189,63 @@ def test_35d_checkpoint_rejects_rollover_from_different_root_backed_session(
         first,
         stem="first",
     )
-    *_, other_rollover, _ = _continuation_fixture(second, stem="second")[-3:]
+    *_, second_earned, _, _, _, _, second_rollover, _ = _continuation_fixture(
+        second,
+        stem="second",
+    )
+
+    assert second_earned.controller is not earned.controller
+    assert (
+        second_earned.controller.declared_endpoint.verification.path
+        != earned.controller.declared_endpoint.verification.path
+    )
+    assert (
+        second_earned.controller.declared_endpoint.verification.edge_record_sha256
+        == earned.controller.declared_endpoint.verification.edge_record_sha256
+    )
+
+    checkpoint = persist_chromium_research_root_backed_session_continuation_checkpoint(
+        earned,
+        second_rollover,
+        prior_root_backed_overlay_source=root_overlay,
+        successor_edge_source=successor,
+        continuation_declaration_source=declaration,
+        destination=overlay,
+    )
+
+    assert checkpoint.fresh_reentry.controller.presentation == (
+        second_rollover.continuation_controller.presentation
+    )
+    assert overlay.exists()
+
+
+def test_35d_checkpoint_rejects_different_chosen_continuation_content(
+    tmp_path: Path,
+) -> None:
+    *_, earned, _, root_overlay, successor, declaration, _, overlay = (
+        _continuation_fixture(tmp_path)
+    )
+    sibling = tmp_path / "different-chosen-successor.json"
+    sibling_revision = earned.controller.persist_declared_endpoint_revision(
+        "Different explicitly chosen continuation content.",
+        prior_edge_source=earned.controller.declared_endpoint.verification.path,
+        destination=sibling,
+    )
+    sibling_declaration = tmp_path / "different-chosen-declaration.json"
+    sibling_rollover = rollover_chromium_research_session_to_persisted_successor(
+        earned.controller,
+        sibling_revision,
+        successor_edge_source=sibling,
+        declaration_destination=sibling_declaration,
+    )
 
     with pytest.raises(
         ChromiumResearchRootBackedSessionContinuationCheckpointError,
-        match="does not belong",
+        match="continuation presentation does not match",
     ):
         persist_chromium_research_root_backed_session_continuation_checkpoint(
             earned,
-            other_rollover,
+            sibling_rollover,
             prior_root_backed_overlay_source=root_overlay,
             successor_edge_source=successor,
             continuation_declaration_source=declaration,
