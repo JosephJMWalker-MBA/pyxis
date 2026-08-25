@@ -11,6 +11,7 @@ from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_d
     reenter_chromium_research_root_backed_session_continuation,
 )
 from pyxis.app.chromium_research_root_backed_session_reentry import (
+    ChromiumResearchRootBackedSessionReentryResult,
     reenter_chromium_research_root_backed_session,
 )
 from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
@@ -109,7 +110,7 @@ def _run_workspace_command(args: argparse.Namespace) -> int:
 
 
 def _load_research_shell_factory():
-    """Lazily import the optional Textual research-shell factory."""
+    """Lazily import the optional ordinary/controller-only Textual shell factory."""
 
     try:
         from pyxis.ui.research_session_shell import create_research_session_shell
@@ -123,6 +124,23 @@ def _load_research_shell_factory():
     return create_research_session_shell
 
 
+def _load_root_backed_research_shell_factory():
+    """Lazily import the optional first-checkpoint-aware 35B Textual shell factory."""
+
+    try:
+        from pyxis.ui.root_backed_research_session_shell import (
+            create_root_backed_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_root_backed_research_session_shell
+
+
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
     """Run one exact ordinary re-entry-aware research shell."""
 
@@ -134,6 +152,19 @@ def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -
         reentry.controller,
         reentry=reentry,
     ).run()
+
+
+def _run_root_backed_research_session_shell(
+    reentry: ChromiumResearchRootBackedSessionReentryResult,
+) -> None:
+    """Run one exact 35B lineage through the dedicated first-checkpoint shell."""
+
+    create_root_backed_research_session_shell = _load_root_backed_research_shell_factory()
+    if not isinstance(reentry, ChromiumResearchRootBackedSessionReentryResult):
+        raise TypeError(
+            "reentry must be ChromiumResearchRootBackedSessionReentryResult."
+        )
+    create_root_backed_research_session_shell(reentry).run()
 
 
 def _run_controller_only_research_session_shell(
@@ -161,7 +192,7 @@ def _run_research_shell_command(
                 args.root_backed_overlay
             )
             result = reenter_chromium_research_root_backed_session(plan)
-            _run_controller_only_research_session_shell(result.controller)
+            _run_root_backed_research_session_shell(result)
         elif args.root_backed_continuation_overlay is not None:
             plan = (
                 load_chromium_research_root_backed_session_continuation_reentry_plan_document(
