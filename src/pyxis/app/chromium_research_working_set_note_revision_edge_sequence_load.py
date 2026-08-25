@@ -2,14 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
-from .chromium_research_session_working_set_transition_revision_root_edge_load import (
-    load_chromium_research_session_working_set_transition_revision_root_edge,
-)
-from .chromium_research_session_working_set_transition_revision_root_load import (
-    ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-)
 from .chromium_research_working_set_note_revision_continuation_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
 )
@@ -17,6 +11,11 @@ from .chromium_research_working_set_note_revision_edge_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
     load_chromium_research_working_set_note_revision_edge,
 )
+
+if TYPE_CHECKING:
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
 
 
 _SEQUENCE_MODE = (
@@ -74,6 +73,10 @@ def load_chromium_research_working_set_note_revision_edge_sequence(
     first member to the explicit 34B root-edge loader, then resumes public 24C for
     every later edge.
 
+    Root imports are deliberately resolved only inside this application boundary.
+    That preserves the existing controller/presentation import graph while keeping
+    root authority explicit at runtime.
+
     No directory scan, digest search, predecessor discovery, path inference,
     reordering, skipping, branch selection, automatic history traversal, current-
     head selection, revision numbering, timestamp inference, or semantic comparison
@@ -81,12 +84,13 @@ def load_chromium_research_working_set_note_revision_edge_sequence(
     delegated relinking boundary fails.
     """
 
+    root_type = _loaded_root_type()
     if not isinstance(
         starting_predecessor,
         (
             ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord,
             ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
-            ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+            root_type,
         ),
     ):
         raise TypeError(
@@ -110,10 +114,11 @@ def load_chromium_research_working_set_note_revision_edge_sequence(
     loaded_edges: list[ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord] = []
     for index, source in enumerate(sources):
         try:
-            if index == 0 and isinstance(
-                current,
-                ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
-            ):
+            if index == 0 and isinstance(current, root_type):
+                from .chromium_research_session_working_set_transition_revision_root_edge_load import (
+                    load_chromium_research_session_working_set_transition_revision_root_edge,
+                )
+
                 loaded = (
                     load_chromium_research_session_working_set_transition_revision_root_edge(
                         current,
@@ -138,3 +143,11 @@ def load_chromium_research_working_set_note_revision_edge_sequence(
         starting_predecessor=starting_predecessor,
         edges=tuple(loaded_edges),
     )
+
+
+def _loaded_root_type():
+    from .chromium_research_session_working_set_transition_revision_root_load import (
+        ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord,
+    )
+
+    return ChromiumPageResearchLoadedWorkingSetTransitionRevisionRootRecord
