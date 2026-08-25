@@ -6,6 +6,17 @@ import json
 from pathlib import Path
 
 from pyxis.app import build_and_run_workspace
+from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_document import (
+    load_chromium_research_root_backed_session_continuation_reentry_plan_document,
+    reenter_chromium_research_root_backed_session_continuation,
+)
+from pyxis.app.chromium_research_root_backed_session_reentry import (
+    reenter_chromium_research_root_backed_session,
+)
+from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
+    load_chromium_research_root_backed_session_reentry_plan_document,
+)
+from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
 from pyxis.app.chromium_research_session_reentry import (
     ChromiumResearchSessionReentryResult,
     reenter_chromium_research_session,
@@ -55,13 +66,29 @@ def _build_parser() -> argparse.ArgumentParser:
             "launch the standalone governed Textual shell."
         ),
     )
-    research_shell_parser.add_argument(
+    entry = research_shell_parser.add_mutually_exclusive_group(required=True)
+    entry.add_argument(
         "--plan",
-        required=True,
         type=Path,
         help=(
-            "Locator-only JSON plan. Relative artifact paths are interpreted "
+            "Ordinary locator-only JSON plan. Relative artifact paths are interpreted "
             "relative to the plan file; the plan is not evidence or a head pointer."
+        ),
+    )
+    entry.add_argument(
+        "--root-backed-overlay",
+        type=Path,
+        help=(
+            "Explicit 35C root-backed locator overlay. The overlay is operational "
+            "configuration, not evidence or a head pointer."
+        ),
+    )
+    entry.add_argument(
+        "--root-backed-continuation-overlay",
+        type=Path,
+        help=(
+            "Explicit 35D/35E post-root continuation overlay. The overlay is "
+            "operational configuration, not evidence or a head pointer."
         ),
     )
     return parser
@@ -81,8 +108,8 @@ def _run_workspace_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
-    """Lazily import the optional UI and run one exact re-entry-aware research shell."""
+def _load_research_shell_factory():
+    """Lazily import the optional Textual research-shell factory."""
 
     try:
         from pyxis.ui.research_session_shell import create_research_session_shell
@@ -93,7 +120,13 @@ def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
+    return create_research_session_shell
 
+
+def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
+    """Run one exact ordinary re-entry-aware research shell."""
+
+    create_research_session_shell = _load_research_shell_factory()
     if not isinstance(reentry, ChromiumResearchSessionReentryResult):
         raise TypeError("reentry must be ChromiumResearchSessionReentryResult.")
 
@@ -103,14 +136,42 @@ def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -
     ).run()
 
 
+def _run_controller_only_research_session_shell(
+    controller: ChromiumResearchSessionController,
+) -> None:
+    """Run one governed controller without inventing ordinary restart lineage."""
+
+    create_research_session_shell = _load_research_shell_factory()
+    if not isinstance(controller, ChromiumResearchSessionController):
+        raise TypeError("controller must be ChromiumResearchSessionController.")
+    create_research_session_shell(controller).run()
+
+
 def _run_research_shell_command(
     parser: argparse.ArgumentParser,
     args: argparse.Namespace,
 ) -> int:
     try:
-        plan = load_chromium_research_session_reentry_plan_document(args.plan)
-        result = reenter_chromium_research_session(plan)
-        _run_research_session_shell(result)
+        if args.plan is not None:
+            plan = load_chromium_research_session_reentry_plan_document(args.plan)
+            result = reenter_chromium_research_session(plan)
+            _run_research_session_shell(result)
+        elif args.root_backed_overlay is not None:
+            plan = load_chromium_research_root_backed_session_reentry_plan_document(
+                args.root_backed_overlay
+            )
+            result = reenter_chromium_research_root_backed_session(plan)
+            _run_controller_only_research_session_shell(result.controller)
+        elif args.root_backed_continuation_overlay is not None:
+            plan = (
+                load_chromium_research_root_backed_session_continuation_reentry_plan_document(
+                    args.root_backed_continuation_overlay
+                )
+            )
+            result = reenter_chromium_research_root_backed_session_continuation(plan)
+            _run_controller_only_research_session_shell(result.controller)
+        else:
+            raise ValueError("research-shell requires one explicit entry configuration.")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
         parser.error(f"research-shell failed: {exc}")
     return 0
