@@ -106,14 +106,11 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
         self,
         result: ChromiumResearchSessionRolloverResult,
     ) -> None:
-        """Mount one-hop continuation, then lock it pending explicit 37C proof."""
-
         await super()._mount_research_rollover(result)
         if self.last_research_rollover is not result:
             raise ValueError(
                 "Base research shell did not retain the exact second-epoch continuation rollover."
             )
-
         unlocked_revision = self.query_one(
             "#research-endpoint-revision-controls",
             ResearchEndpointRevisionControls,
@@ -124,7 +121,6 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
         )
         await unlocked_revision.remove()
         await empty_rollover.remove()
-
         await self.mount(
             ResearchEndpointRevisionControls(restart_checkpoint_required=True)
         )
@@ -153,7 +149,6 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
                 "Second-epoch checkpoint failed: displayed checkpoint does not match the shell's exact rollover."
             )
             return
-
         prior_overlay_source = self.query_one(
             "#research-second-basis-epoch-checkpoint-prior-overlay-source",
             Input,
@@ -190,7 +185,6 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
                 "Second-epoch checkpoint failed: explicit no-overwrite 37C overlay destination is required."
             )
             return
-
         prior = self.second_basis_epoch_launch_lineage.reentry
         try:
             checkpoint = (
@@ -208,7 +202,6 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
         except Exception as exc:
             status.update(f"Second-epoch checkpoint failed: {exc}")
             return
-
         _require_second_basis_epoch_checkpoint_matches_shell(
             checkpoint,
             prior=prior,
@@ -220,14 +213,7 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
 
 
 class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
-    """Repeatable cumulative-checkpoint shell for proven persisted 37C/37D lineage.
-
-    The 38B wrapper remains immutable launch provenance. A separate current typed
-    continuation re-entry advances only after one explicit 37D cumulative checkpoint
-    succeeds. Because cumulative presentation is longer than the one-hop rollover
-    surface, every success visibly promotes the fresh cumulative controller before
-    another revision is unlocked.
-    """
+    """Repeatable cumulative-checkpoint shell for proven persisted 37C/37D lineage."""
 
     CSS = ResearchSessionShell.CSS + """
     #research-second-basis-epoch-cumulative-checkpoint-controls,
@@ -297,7 +283,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
             raise ValueError(
                 "Base research shell did not retain the exact cumulative second-epoch rollover."
             )
-
         if len(self.query("#research-second-basis-epoch-cumulative-checkpoint-success-receipt")):
             await self.query_one(
                 "#research-second-basis-epoch-cumulative-checkpoint-success-receipt",
@@ -307,7 +292,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
             raise ValueError(
                 "Cumulative second-epoch shell must not mount ordinary restart-plan controls."
             )
-
         unlocked_revision = self.query_one(
             "#research-endpoint-revision-controls",
             ResearchEndpointRevisionControls,
@@ -355,7 +339,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
                 "Cumulative second-epoch checkpoint failed: displayed checkpoint does not match the shell's exact current typed continuation."
             )
             return
-
         current_overlay = self.query_one(
             "#research-second-basis-epoch-cumulative-checkpoint-current-overlay-source",
             Input,
@@ -392,7 +375,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
                 "Cumulative second-epoch checkpoint failed: explicit no-overwrite next overlay destination is required."
             )
             return
-
         try:
             checkpoint = persist_chromium_research_second_basis_epoch_continuation_checkpoint_extension(
                 current_reentry,
@@ -405,7 +387,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
         except Exception as exc:
             status.update(f"Cumulative second-epoch checkpoint failed: {exc}")
             return
-
         _require_second_basis_epoch_cumulative_checkpoint_matches_shell(
             checkpoint,
             current_reentry=current_reentry,
@@ -426,7 +407,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
             raise ValueError(
                 "Fresh cumulative second-epoch controller presentation is incoherent with retained loaded evidence."
             )
-
         new_session = fresh_controller.presentation
         _require_research_sequence_presentation(new_session.sequence)
         new_contexts = _snapshot_working_set_contexts(
@@ -437,7 +417,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
             raise ValueError(
                 "Fresh cumulative second-epoch session must contain one context per declared position."
             )
-
         old_detail = self.query_one(
             "#research-revision-edge-sequence",
             ResearchRevisionEdgeSequenceDetail,
@@ -454,14 +433,12 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
             "#research-second-basis-epoch-cumulative-checkpoint-controls",
             SecondBasisEpochResearchSessionCumulativeCheckpointControls,
         )
-
         if len(self.query("#research-rollover-success-receipt")):
             await self.query_one("#research-rollover-success-receipt", Static).remove()
         await old_detail.remove()
         await old_revision.remove()
         await old_rollover.remove()
         await old_checkpoint.remove()
-
         self.second_basis_epoch_continuation_reentry = fresh_reentry
         self.research_controller = fresh_controller
         self.research_session = new_session
@@ -470,7 +447,6 @@ class SecondBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
         self.last_research_rollover = None
         self.last_research_restart_plan = None
         self.last_second_basis_epoch_cumulative_checkpoint = result
-
         await self.mount(
             Static(
                 second_basis_epoch_cumulative_checkpoint_success_receipt(result),
@@ -514,7 +490,6 @@ def _require_second_basis_epoch_checkpoint_matches_shell(
         raise ValueError(
             "37C fresh continuation endpoint identity does not match the shell's mounted one-hop continuation."
         )
-
     fresh_prior = result.fresh_reentry.prior_second_basis_epoch_reentry
     if (
         fresh_prior.loaded_root.verification.root_record_sha256
@@ -549,9 +524,11 @@ def _require_second_basis_epoch_cumulative_checkpoint_matches_shell(
         )
     if (
         result.next_plan.prior_second_basis_epoch_overlay_source
-        != current_reentry.plan.prior_second_basis_epoch_overlay_source
+        != result.current_plan.prior_second_basis_epoch_overlay_source
     ):
-        raise ValueError("37D checkpoint changed the fixed 37B ancestry anchor.")
+        raise ValueError(
+            "37D checkpoint did not preserve the explicit current plan's direct 37B ancestry anchor."
+        )
     fresh_endpoint = result.fresh_reentry.controller.declared_endpoint
     one_hop_endpoint = one_hop_controller.declared_endpoint
     if (
@@ -568,9 +545,19 @@ def _require_second_basis_epoch_cumulative_checkpoint_matches_shell(
         raise ValueError(
             "37D fresh cumulative endpoint text does not match the mounted one-hop continuation."
         )
-
     fresh_second = result.fresh_reentry.prior_second_basis_epoch_reentry
     current_second = current_reentry.prior_second_basis_epoch_reentry
+    if fresh_second.controller.presentation != current_second.controller.presentation:
+        raise ValueError(
+            "37D fresh second-epoch anchor presentation changed cumulative ancestry."
+        )
+    if (
+        fresh_second.controller.declared_endpoint.verification.edge_record_sha256
+        != current_second.controller.declared_endpoint.verification.edge_record_sha256
+    ):
+        raise ValueError(
+            "37D fresh second-epoch anchor endpoint identity changed cumulative ancestry."
+        )
     if (
         fresh_second.loaded_root.verification.root_record_sha256
         != current_second.loaded_root.verification.root_record_sha256
@@ -580,7 +567,9 @@ def _require_second_basis_epoch_cumulative_checkpoint_matches_shell(
         fresh_second.prior_continuation_reentry.prior_root_backed_reentry.loaded_root.verification.root_record_sha256
         != current_second.prior_continuation_reentry.prior_root_backed_reentry.loaded_root.verification.root_record_sha256
     ):
-        raise ValueError("37D fresh retained first-root identity changed cumulative ancestry.")
+        raise ValueError(
+            "37D fresh retained first-root identity changed cumulative ancestry."
+        )
 
 
 def create_second_basis_epoch_research_session_shell(
@@ -592,8 +581,6 @@ def create_second_basis_epoch_research_session_shell(
 def create_second_basis_epoch_continuation_research_session_shell(
     lineage: ChromiumResearchSecondBasisEpochContinuationShellLineage,
 ) -> SecondBasisEpochContinuationResearchSessionShell:
-    """Create one repeatable cumulative-checkpoint shell from proven launch lineage."""
-
     return SecondBasisEpochContinuationResearchSessionShell(lineage)
 
 
