@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pyxis.app import build_and_run_workspace
 from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_document import (
+    ChromiumResearchRootBackedSessionContinuationReentryResult,
     load_chromium_research_root_backed_session_continuation_reentry_plan_document,
     reenter_chromium_research_root_backed_session_continuation,
 )
@@ -141,6 +142,23 @@ def _load_root_backed_research_shell_factory():
     return create_root_backed_research_session_shell
 
 
+def _load_root_backed_continuation_research_shell_factory():
+    """Lazily import the optional repeatable 35D/35E Textual shell factory."""
+
+    try:
+        from pyxis.ui.root_backed_continuation_research_session_shell import (
+            create_root_backed_continuation_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_root_backed_continuation_research_session_shell
+
+
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
     """Run one exact ordinary re-entry-aware research shell."""
 
@@ -167,10 +185,26 @@ def _run_root_backed_research_session_shell(
     create_root_backed_research_session_shell(reentry).run()
 
 
+def _run_root_backed_continuation_research_session_shell(
+    reentry: ChromiumResearchRootBackedSessionContinuationReentryResult,
+) -> None:
+    """Run one exact 35D/35E lineage through the cumulative-checkpoint shell."""
+
+    create_shell = _load_root_backed_continuation_research_shell_factory()
+    if not isinstance(
+        reentry,
+        ChromiumResearchRootBackedSessionContinuationReentryResult,
+    ):
+        raise TypeError(
+            "reentry must be ChromiumResearchRootBackedSessionContinuationReentryResult."
+        )
+    create_shell(reentry).run()
+
+
 def _run_controller_only_research_session_shell(
     controller: ChromiumResearchSessionController,
 ) -> None:
-    """Run one governed controller without inventing ordinary restart lineage."""
+    """Run one governed controller without inventing restart lineage."""
 
     create_research_session_shell = _load_research_shell_factory()
     if not isinstance(controller, ChromiumResearchSessionController):
@@ -200,7 +234,7 @@ def _run_research_shell_command(
                 )
             )
             result = reenter_chromium_research_root_backed_session_continuation(plan)
-            _run_controller_only_research_session_shell(result.controller)
+            _run_root_backed_continuation_research_session_shell(result)
         else:
             raise ValueError("research-shell requires one explicit entry configuration.")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
