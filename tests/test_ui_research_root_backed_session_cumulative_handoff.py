@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from textual.widgets import Button, Input, TextArea
+from textual.widgets import Button, Input
 
 from test_ui_research_root_backed_session_continuation_checkpoint import (
     _press,
@@ -17,7 +17,7 @@ from test_ui_research_root_backed_session_continuation_checkpoint import (
 async def test_cumulative_handoff_control_is_absent_until_successful_35d_checkpoint(
     tmp_path: Path,
 ) -> None:
-    prior, root_overlay, shell = _shell_with_root_backed_reentry(
+    prior, _, shell = _shell_with_root_backed_reentry(
         tmp_path,
         stem="36d-absent",
     )
@@ -38,8 +38,8 @@ async def test_cumulative_handoff_control_is_absent_until_successful_35d_checkpo
         )
 
         assert len(shell.query("#continue-root-backed-cumulative-mode")) == 0
+        assert shell.last_root_backed_continuation_checkpoint is None
         assert shell.query_one("#persist-research-endpoint-revision", Button).disabled
-        assert not root_overlay.samefile(root_overlay.parent / root_overlay.name) is False
 
 
 @pytest.mark.asyncio
