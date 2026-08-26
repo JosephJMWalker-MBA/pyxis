@@ -291,7 +291,7 @@ def _run_root_backed_research_session_shell(
 ) -> ChromiumResearchRootBackedSessionContinuationReentryResult | None:
     """Run first-checkpoint shell and return only an explicit typed 36D handoff."""
 
-    create_root_backed_research_session_shell = _load_root_backed_research_session_shell_factory()
+    create_root_backed_research_session_shell = _load_root_backed_research_shell_factory()
     if not isinstance(reentry, ChromiumResearchRootBackedSessionReentryResult):
         raise TypeError(
             "reentry must be ChromiumResearchRootBackedSessionReentryResult."
