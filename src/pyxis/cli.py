@@ -18,6 +18,11 @@ from pyxis.app.chromium_research_root_backed_session_reentry import (
 from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
     load_chromium_research_root_backed_session_reentry_plan_document,
 )
+from pyxis.app.chromium_research_second_basis_epoch_authority_inspection import (
+    inspect_chromium_research_second_basis_epoch_continuation_launch,
+    inspect_chromium_research_second_basis_epoch_launch,
+    serialize_chromium_research_second_basis_epoch_authority_inspection,
+)
 from pyxis.app.chromium_research_second_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchSecondBasisEpochContinuationReentryResult,
     load_chromium_research_second_basis_epoch_continuation_reentry_plan_document,
@@ -124,6 +129,31 @@ def _build_parser() -> argparse.ArgumentParser:
         help=(
             "Explicit 37C/37D post-second-root continuation overlay. The overlay is "
             "operational configuration, not evidence or a head pointer."
+        ),
+    )
+
+    research_inspect_parser = subparsers.add_parser(
+        "research-inspect",
+        help=(
+            "Freshly prove one explicit persisted second-epoch entry and emit a "
+            "deterministic read-only authority inspection report."
+        ),
+    )
+    inspect_entry = research_inspect_parser.add_mutually_exclusive_group(required=True)
+    inspect_entry.add_argument(
+        "--second-basis-epoch-overlay",
+        type=Path,
+        help=(
+            "Explicit 37B second-basis-epoch locator overlay. The emitted path is "
+            "launch location context only, never current/latest/head authority."
+        ),
+    )
+    inspect_entry.add_argument(
+        "--second-basis-epoch-continuation-overlay",
+        type=Path,
+        help=(
+            "Explicit 37C/37D continuation overlay. The emitted path is launch "
+            "location context only, never current/latest/head authority."
         ),
     )
     return parser
@@ -421,6 +451,56 @@ def _run_research_shell_command(
     return 0
 
 
+def _run_research_inspect_command(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+) -> int:
+    """Freshly prove one explicit persisted second-epoch launch and emit inspection JSON."""
+
+    try:
+        if args.second_basis_epoch_overlay is not None:
+            plan = load_chromium_research_second_basis_epoch_reentry_plan_document(
+                args.second_basis_epoch_overlay
+            )
+            result = reenter_chromium_research_second_basis_epoch(plan)
+            lineage = prove_chromium_research_second_basis_epoch_shell_lineage(
+                result,
+                overlay_source=args.second_basis_epoch_overlay,
+            )
+            inspection = inspect_chromium_research_second_basis_epoch_launch(lineage)
+        elif args.second_basis_epoch_continuation_overlay is not None:
+            plan = (
+                load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
+                    args.second_basis_epoch_continuation_overlay
+                )
+            )
+            result = reenter_chromium_research_second_basis_epoch_continuation(plan)
+            lineage = (
+                prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
+                    result,
+                    overlay_source=args.second_basis_epoch_continuation_overlay,
+                )
+            )
+            inspection = (
+                inspect_chromium_research_second_basis_epoch_continuation_launch(
+                    lineage
+                )
+            )
+        else:
+            raise ValueError(
+                "research-inspect requires one explicit persisted second-epoch entry configuration."
+            )
+        print(
+            serialize_chromium_research_second_basis_epoch_authority_inspection(
+                inspection
+            ),
+            end="",
+        )
+    except (OSError, TypeError, ValueError, RuntimeError) as exc:
+        parser.error(f"research-inspect failed: {exc}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the thin command-line interface over established application boundaries."""
 
@@ -434,6 +514,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_workspace_command(args)
     if args.command == "research-shell":
         return _run_research_shell_command(parser, args)
+    if args.command == "research-inspect":
+        return _run_research_inspect_command(parser, args)
 
     parser.error(f"unsupported command: {args.command}")
     return 2
