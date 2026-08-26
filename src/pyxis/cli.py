@@ -193,11 +193,11 @@ def _load_root_backed_continuation_research_shell_factory():
 
 
 def _load_second_basis_epoch_research_shell_factory():
-    """Lazily import the explicit-handoff 37B Textual shell factory."""
+    """Lazily import the inspectable explicit-handoff 37B Textual shell factory."""
 
     try:
-        from pyxis.ui.second_basis_epoch_cumulative_handoff_shell import (
-            create_second_basis_epoch_cumulative_handoff_research_session_shell,
+        from pyxis.ui.second_basis_epoch_authority_inspection_shell import (
+            create_inspectable_second_basis_epoch_cumulative_handoff_research_session_shell,
         )
     except ModuleNotFoundError as exc:
         if exc.name == "textual":
@@ -206,15 +206,15 @@ def _load_second_basis_epoch_research_shell_factory():
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
-    return create_second_basis_epoch_cumulative_handoff_research_session_shell
+    return create_inspectable_second_basis_epoch_cumulative_handoff_research_session_shell
 
 
 def _load_second_basis_epoch_continuation_research_shell_factory():
-    """Lazily import the path-proofed 37C/37D Textual shell factory."""
+    """Lazily import the inspectable path-proofed 37C/37D Textual shell factory."""
 
     try:
-        from pyxis.ui.second_basis_epoch_research_session_shell import (
-            create_second_basis_epoch_continuation_research_session_shell,
+        from pyxis.ui.second_basis_epoch_authority_inspection_shell import (
+            create_inspectable_second_basis_epoch_continuation_research_session_shell,
         )
     except ModuleNotFoundError as exc:
         if exc.name == "textual":
@@ -223,15 +223,15 @@ def _load_second_basis_epoch_continuation_research_shell_factory():
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
-    return create_second_basis_epoch_continuation_research_session_shell
+    return create_inspectable_second_basis_epoch_continuation_research_session_shell
 
 
 def _load_second_basis_epoch_continuation_handoff_research_shell_factory():
-    """Lazily import the raw-typed in-process 38F cumulative shell factory."""
+    """Lazily import the inspectable raw-typed in-process 38F cumulative shell factory."""
 
     try:
-        from pyxis.ui.second_basis_epoch_cumulative_handoff_shell import (
-            create_second_basis_epoch_continuation_handoff_research_session_shell,
+        from pyxis.ui.second_basis_epoch_authority_inspection_shell import (
+            create_inspectable_second_basis_epoch_continuation_handoff_research_session_shell,
         )
     except ModuleNotFoundError as exc:
         if exc.name == "textual":
@@ -240,7 +240,7 @@ def _load_second_basis_epoch_continuation_handoff_research_shell_factory():
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
-    return create_second_basis_epoch_continuation_handoff_research_session_shell
+    return create_inspectable_second_basis_epoch_continuation_handoff_research_session_shell
 
 
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:

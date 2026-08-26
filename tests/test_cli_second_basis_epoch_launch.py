@@ -276,7 +276,7 @@ def test_second_epoch_shell_ui_dependency_remains_lazy(
     original_import = builtins.__import__
 
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "pyxis.ui.second_basis_epoch_cumulative_handoff_shell":
+        if name == "pyxis.ui.second_basis_epoch_authority_inspection_shell":
             raise ModuleNotFoundError("No module named 'textual'", name="textual")
         return original_import(name, globals, locals, fromlist, level)
 
