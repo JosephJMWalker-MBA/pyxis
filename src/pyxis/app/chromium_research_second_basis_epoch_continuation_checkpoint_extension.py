@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .chromium_research_fixed_anchor_cumulative_extension import (
+    _FixedAnchorCumulativeExtensionAdapter,
+    _FixedAnchorCumulativeExtensionMessages,
+    _extend_fixed_anchor_cumulative_continuation,
+)
 from .chromium_research_second_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchSecondBasisEpochContinuationOverlayPersistenceResult,
     ChromiumResearchSecondBasisEpochContinuationReentryPlan,
@@ -14,11 +19,9 @@ from .chromium_research_second_basis_epoch_continuation_reentry_plan_document im
 from .chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 from .chromium_research_working_set_note_revision_edge_sequence_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceRecord,
-    load_chromium_research_working_set_note_revision_edge_sequence,
 )
 from .chromium_research_working_set_note_revision_edge_sequence_persistence import (
     ChromiumPageResearchWorkingSetNoteRevisionEdgeSequencePersistenceEvidence,
-    persist_chromium_research_working_set_note_revision_edge_sequence,
 )
 
 
@@ -51,21 +54,10 @@ def persist_chromium_research_second_basis_epoch_continuation_checkpoint_extensi
 ) -> ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult:
     """Extend one persisted 37C continuation without recursive overlay ancestry.
 
-    The explicit current 37C overlay is freshly decoded and re-entered. Its fixed 37B
-    ancestry anchor is retained. The current ordered post-second-root edge tuple is
-    extended by the explicitly supplied chosen successor, freshly relinked from the
-    second-epoch endpoint, and persisted as a new cumulative 26B declaration. A new
-    37C overlay then points to the same 37B overlay, the cumulative edge tuple, and
-    that new declaration.
-
-    Whole-presentation equality to the one-hop rollover is intentionally not required
-    after cumulative extension. The cumulative controller presents a longer declared
-    segment, so chosen terminal equivalence is established by durable terminal edge
-    identity plus exact final human wording.
-
-    The current overlay path is location rather than content identity. A path-distinct
-    current 37C overlay may therefore be accepted only when fresh reconstruction proves
-    the same current continuation and both retained basis-change roots.
+    Concrete 37D authority remains here: path-distinct durable current equivalence,
+    retained first/second roots, rollover ownership, the direct 37B anchor, and public
+    37C result/error types remain unchanged. Only triply-proven fixed-anchor mechanics
+    delegate to the private cumulative-extension kernel.
     """
 
     if not isinstance(
@@ -77,118 +69,25 @@ def persist_chromium_research_second_basis_epoch_continuation_checkpoint_extensi
         )
     if not isinstance(rollover, ChromiumResearchSessionRolloverResult):
         raise TypeError("rollover must be ChromiumResearchSessionRolloverResult.")
-    for value, label in (
-        (current_overlay_source, "current_overlay_source"),
-        (successor_edge_source, "successor_edge_source"),
-        (cumulative_declaration_destination, "cumulative_declaration_destination"),
-        (next_overlay_destination, "next_overlay_destination"),
-    ):
-        if not isinstance(value, Path):
-            raise TypeError(f"{label} must be pathlib.Path.")
 
-    overlay_source = current_overlay_source.resolve()
-    successor_source = successor_edge_source.resolve()
-    declaration_destination = cumulative_declaration_destination.resolve()
-    overlay_destination = next_overlay_destination.resolve()
-
-    if declaration_destination == overlay_destination:
-        raise ValueError("cumulative declaration and next overlay destinations must be distinct.")
-    if declaration_destination.exists():
-        raise FileExistsError("cumulative_declaration_destination already exists.")
-    if overlay_destination.exists():
-        raise FileExistsError("next_overlay_destination already exists.")
-
-    try:
-        current_plan = (
-            load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
-                overlay_source
-            )
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Explicit current 37C overlay could not be decoded."
-        ) from exc
-
-    try:
-        fresh_current = reenter_chromium_research_second_basis_epoch_continuation(
-            current_plan
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Explicit current 37C overlay could not freshly reconstruct its continuation."
-        ) from exc
-    _require_current_match(current_reentry, fresh_current)
-    _require_rollover_prior_match(current_reentry, rollover)
-
-    cumulative_sources = (*current_plan.declared_edge_sources, successor_source)
-    anchor = fresh_current.prior_second_basis_epoch_reentry.controller.declared_endpoint
-    try:
-        explicit_sequence = load_chromium_research_working_set_note_revision_edge_sequence(
-            anchor,
-            cumulative_sources,
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Cumulative post-second-root edge sequence could not be freshly relinked from the 37B anchor."
-        ) from exc
-
-    successor = explicit_sequence.edges[-1]
-    chosen = rollover.prior_revision
-    if successor.verification.edge_record_sha256 != chosen.persistence.edge_record_sha256:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Cumulative sequence endpoint identity does not match the chosen rollover successor."
-        )
-    if (
-        successor.revision.revised_note.note_text
-        != chosen.extension.revision.revised_note.note_text
-    ):
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Cumulative sequence endpoint text does not match the chosen rollover successor."
-        )
-
-    declaration = persist_chromium_research_working_set_note_revision_edge_sequence(
-        explicit_sequence,
-        declaration_destination,
+    kernel = _extend_fixed_anchor_cumulative_continuation(
+        current_reentry,
+        rollover,
+        current_overlay_source=current_overlay_source,
+        successor_edge_source=successor_edge_source,
+        cumulative_declaration_destination=cumulative_declaration_destination,
+        next_overlay_destination=next_overlay_destination,
+        adapter=_ADAPTER,
     )
-    next_plan = ChromiumResearchSecondBasisEpochContinuationReentryPlan(
-        prior_second_basis_epoch_overlay_source=(
-            current_plan.prior_second_basis_epoch_overlay_source
-        ),
-        declared_edge_sources=tuple(cumulative_sources),
-        declaration_source=declaration.path,
-    )
-
-    try:
-        fresh_next = reenter_chromium_research_second_basis_epoch_continuation(next_plan)
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "New cumulative declaration could not freshly reconstruct the chosen continuation."
-        ) from exc
-    _require_next_match(rollover, fresh_next)
-
-    overlay = _persist_overlay(next_plan, overlay_destination)
-    try:
-        decoded = load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
-            overlay.path
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Persisted next 37C overlay could not be round-trip decoded."
-        ) from exc
-    if decoded != next_plan:
-        raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
-            "Persisted next 37C overlay did not round-trip to the exact cumulative plan."
-        )
-
     return ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult(
         current_reentry=current_reentry,
         rollover=rollover,
-        current_plan=current_plan,
-        explicit_sequence=explicit_sequence,
-        declaration=declaration,
-        next_plan=next_plan,
-        fresh_reentry=fresh_next,
-        overlay=overlay,
+        current_plan=kernel.current_plan,
+        explicit_sequence=kernel.explicit_sequence,
+        declaration=kernel.declaration,
+        next_plan=kernel.next_plan,
+        fresh_reentry=kernel.fresh_reentry,
+        overlay=kernel.overlay,
     )
 
 
@@ -254,6 +153,20 @@ def _require_rollover_prior_match(
         )
 
 
+def _build_next_plan(
+    current_plan: ChromiumResearchSecondBasisEpochContinuationReentryPlan,
+    cumulative_sources: tuple[Path, ...],
+    declaration_source: Path,
+) -> ChromiumResearchSecondBasisEpochContinuationReentryPlan:
+    return ChromiumResearchSecondBasisEpochContinuationReentryPlan(
+        prior_second_basis_epoch_overlay_source=(
+            current_plan.prior_second_basis_epoch_overlay_source
+        ),
+        declared_edge_sources=cumulative_sources,
+        declaration_source=declaration_source,
+    )
+
+
 def _require_next_match(
     rollover: ChromiumResearchSessionRolloverResult,
     fresh: ChromiumResearchSecondBasisEpochContinuationReentryResult,
@@ -274,6 +187,50 @@ def _require_next_match(
         raise ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError(
             "Fresh cumulative continuation endpoint text does not match the chosen rollover."
         )
+
+
+_ADAPTER = _FixedAnchorCumulativeExtensionAdapter[
+    ChromiumResearchSecondBasisEpochContinuationReentryPlan,
+    ChromiumResearchSecondBasisEpochContinuationReentryResult,
+    ChromiumResearchSecondBasisEpochContinuationOverlayPersistenceResult,
+](
+    error_type=ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionError,
+    messages=_FixedAnchorCumulativeExtensionMessages(
+        current_decode="Explicit current 37C overlay could not be decoded.",
+        current_reentry=(
+            "Explicit current 37C overlay could not freshly reconstruct its continuation."
+        ),
+        sequence_relink=(
+            "Cumulative post-second-root edge sequence could not be freshly relinked from the 37B anchor."
+        ),
+        terminal_identity=(
+            "Cumulative sequence endpoint identity does not match the chosen rollover successor."
+        ),
+        terminal_text=(
+            "Cumulative sequence endpoint text does not match the chosen rollover successor."
+        ),
+        next_reentry=(
+            "New cumulative declaration could not freshly reconstruct the chosen continuation."
+        ),
+        overlay_decode="Persisted next 37C overlay could not be round-trip decoded.",
+        overlay_round_trip=(
+            "Persisted next 37C overlay did not round-trip to the exact cumulative plan."
+        ),
+    ),
+    load_plan=load_chromium_research_second_basis_epoch_continuation_reentry_plan_document,
+    reenter=reenter_chromium_research_second_basis_epoch_continuation,
+    require_loaded_plan_match=None,
+    require_current_match=_require_current_match,
+    require_rollover_prior_match=_require_rollover_prior_match,
+    declared_edge_sources=lambda plan: plan.declared_edge_sources,
+    anchor_endpoint=(
+        lambda reentry: reentry.prior_second_basis_epoch_reentry.controller.declared_endpoint
+    ),
+    build_next_plan=_build_next_plan,
+    require_next_match=_require_next_match,
+    persist_overlay=_persist_overlay,
+    overlay_path=lambda overlay: overlay.path,
+)
 
 
 __all__ = [
