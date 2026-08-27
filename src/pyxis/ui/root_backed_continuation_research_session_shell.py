@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from textual.widgets import Button, Input, Static
+from textual.widgets import Button, Static
 
 from pyxis.app.chromium_research_root_backed_session_continuation_checkpoint_extension import (
     ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
@@ -172,41 +170,21 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
             )
             return
 
-        current_overlay = self.query_one(
-            "#research-root-backed-cumulative-checkpoint-current-overlay-source",
-            Input,
-        )
-        successor_source = self.query_one(
-            "#research-root-backed-cumulative-checkpoint-successor-source",
-            Input,
-        )
-        declaration_destination = self.query_one(
-            "#research-root-backed-cumulative-checkpoint-declaration-destination",
-            Input,
-        )
-        overlay_destination = self.query_one(
-            "#research-root-backed-cumulative-checkpoint-overlay-destination",
-            Input,
-        )
-        if not current_overlay.value.strip():
-            status.update(
+        submission = controls._collect_cumulative_checkpoint_path_submission(
+            current_overlay_required=(
                 "Cumulative checkpoint failed: explicit current 35D/35E overlay path is required."
-            )
-            return
-        if not successor_source.value.strip():
-            status.update(
+            ),
+            successor_required=(
                 "Cumulative checkpoint failed: explicit current successor edge path is required."
-            )
-            return
-        if not declaration_destination.value.strip():
-            status.update(
+            ),
+            declaration_required=(
                 "Cumulative checkpoint failed: explicit no-overwrite cumulative declaration destination is required."
-            )
-            return
-        if not overlay_destination.value.strip():
-            status.update(
+            ),
+            next_overlay_required=(
                 "Cumulative checkpoint failed: explicit no-overwrite next overlay destination is required."
-            )
+            ),
+        )
+        if submission is None:
             return
 
         try:
@@ -214,12 +192,12 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
                 persist_chromium_research_root_backed_session_continuation_checkpoint_extension(
                     current_reentry,
                     rollover,
-                    current_overlay_source=Path(current_overlay.value),
-                    successor_edge_source=Path(successor_source.value),
-                    cumulative_declaration_destination=Path(
-                        declaration_destination.value
+                    current_overlay_source=submission.current_overlay_source,
+                    successor_edge_source=submission.successor_edge_source,
+                    cumulative_declaration_destination=(
+                        submission.cumulative_declaration_destination
                     ),
-                    next_overlay_destination=Path(overlay_destination.value),
+                    next_overlay_destination=submission.next_overlay_destination,
                 )
             )
         except Exception as exc:
