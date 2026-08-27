@@ -4,9 +4,15 @@ from pathlib import Path
 
 from textual.widgets import Button, Input, Static
 
+from pyxis.app.chromium_research_session_presentation import present_chromium_research_session
 from pyxis.app.chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
+from pyxis.app.chromium_research_third_basis_epoch_continuation_checkpoint_extension import (
+    ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult,
+    persist_chromium_research_third_basis_epoch_continuation_checkpoint_extension,
+)
 from pyxis.app.chromium_research_third_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchThirdBasisEpochContinuationCheckpointResult,
+    ChromiumResearchThirdBasisEpochContinuationReentryResult,
     persist_chromium_research_third_basis_epoch_continuation_checkpoint,
 )
 from pyxis.app.chromium_research_third_basis_epoch_reentry import (
@@ -18,7 +24,17 @@ from pyxis.app.chromium_research_third_basis_epoch_shell_lineage import (
 )
 
 from .chromium_research_endpoint_revision_textual import ResearchEndpointRevisionControls
+from .chromium_research_revision_edge_sequence_textual import (
+    ResearchRevisionEdgeSequenceDetail,
+    _require_research_sequence_presentation,
+    _snapshot_working_set_contexts,
+)
+from .chromium_research_session_restart_plan_textual import ResearchSessionRestartPlanControls
 from .chromium_research_session_rollover_textual import ResearchSessionRolloverControls
+from .chromium_research_third_basis_epoch_continuation_checkpoint_extension_textual import (
+    ThirdBasisEpochResearchSessionCumulativeCheckpointControls,
+    third_basis_epoch_cumulative_checkpoint_success_receipt,
+)
 from .chromium_research_third_basis_epoch_continuation_checkpoint_textual import (
     ThirdBasisEpochResearchSessionContinuationCheckpointControls,
 )
@@ -200,12 +216,45 @@ class ThirdBasisEpochResearchSessionShell(ResearchSessionShell):
 
 
 class ThirdBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
-    """Controller shell retaining one exact proven 40C/40D launch lineage.
+    """Repeatable cumulative-checkpoint shell for proven persisted 40C/40D lineage.
 
-    The supplied 41A continuation wrapper remains explicit launch context only. No
-    ordinary 31A lineage, cumulative third-epoch checkpoint controls, path prefilling,
-    automatic persistence, or inspection authority is inferred from the live
-    controller. Repeatable 40D checkpointing remains outside 41C.
+    The exact 41A wrapper remains immutable launch provenance. A separate current
+    typed continuation starts at `lineage.reentry` and advances only after an explicit
+    40D checkpoint is freshly proven and visibly promoted. No ordinary restart-plan
+    authority, current-path prefilling, or automatic handoff is inferred.
+    """
+
+    CSS = ResearchSessionShell.CSS + """
+    #research-third-basis-epoch-cumulative-checkpoint-controls,
+    #research-third-basis-epoch-cumulative-checkpoint-success-receipt {
+        width: 94%;
+        height: auto;
+        padding: 1 2;
+        margin-top: 1;
+        border: round $secondary;
+    }
+
+    #research-third-basis-epoch-cumulative-checkpoint-authority-notice,
+    #research-third-basis-epoch-cumulative-checkpoint-candidate,
+    #research-third-basis-epoch-cumulative-checkpoint-current-overlay-source-label,
+    #research-third-basis-epoch-cumulative-checkpoint-successor-source-label,
+    #research-third-basis-epoch-cumulative-checkpoint-declaration-destination-label,
+    #research-third-basis-epoch-cumulative-checkpoint-overlay-destination-label,
+    #research-third-basis-epoch-cumulative-checkpoint-status {
+        margin-top: 1;
+    }
+
+    #research-third-basis-epoch-cumulative-checkpoint-title,
+    #research-third-basis-epoch-cumulative-checkpoint-current-overlay-source-label,
+    #research-third-basis-epoch-cumulative-checkpoint-successor-source-label,
+    #research-third-basis-epoch-cumulative-checkpoint-declaration-destination-label,
+    #research-third-basis-epoch-cumulative-checkpoint-overlay-destination-label {
+        text-style: bold;
+    }
+
+    #save-research-third-basis-epoch-cumulative-checkpoint {
+        margin-top: 1;
+    }
     """
 
     def __init__(
@@ -221,6 +270,207 @@ class ThirdBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
             )
         super().__init__(lineage.reentry.controller)
         self.third_basis_epoch_continuation_launch_lineage = lineage
+        self.third_basis_epoch_continuation_reentry = lineage.reentry
+        self.last_third_basis_epoch_cumulative_checkpoint: (
+            ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult | None
+        ) = None
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "save-research-third-basis-epoch-cumulative-checkpoint":
+            event.stop()
+            self.call_after_refresh(self._save_third_basis_epoch_cumulative_checkpoint)
+            return
+        super().on_button_pressed(event)
+
+    async def _mount_research_rollover(
+        self,
+        result: ChromiumResearchSessionRolloverResult,
+    ) -> None:
+        current_reentry = self.third_basis_epoch_continuation_reentry
+        await super()._mount_research_rollover(result)
+        if self.last_research_rollover is not result:
+            raise ValueError(
+                "Base research shell did not retain the exact cumulative third-epoch rollover."
+            )
+        if len(self.query("#research-third-basis-epoch-cumulative-checkpoint-success-receipt")):
+            await self.query_one(
+                "#research-third-basis-epoch-cumulative-checkpoint-success-receipt",
+                Static,
+            ).remove()
+        if len(self.query(ResearchSessionRestartPlanControls)):
+            raise ValueError(
+                "Cumulative third-epoch shell must not mount ordinary restart-plan controls."
+            )
+        unlocked_revision = self.query_one(
+            "#research-endpoint-revision-controls",
+            ResearchEndpointRevisionControls,
+        )
+        empty_rollover = self.query_one(
+            "#research-session-rollover-controls",
+            ResearchSessionRolloverControls,
+        )
+        await unlocked_revision.remove()
+        await empty_rollover.remove()
+        await self.mount(
+            ResearchEndpointRevisionControls(restart_checkpoint_required=True)
+        )
+        await self.mount(ResearchSessionRolloverControls())
+        await self.mount(
+            ThirdBasisEpochResearchSessionCumulativeCheckpointControls(
+                current_reentry,
+                result,
+            )
+        )
+
+    async def _save_third_basis_epoch_cumulative_checkpoint(self) -> None:
+        controls = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-controls",
+            ThirdBasisEpochResearchSessionCumulativeCheckpointControls,
+        )
+        status = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-status",
+            Static,
+        )
+        rollover = self.last_research_rollover
+        current_reentry = self.third_basis_epoch_continuation_reentry
+        if rollover is None:
+            status.update(
+                "Cumulative third-epoch checkpoint failed: no explicit rollover is awaiting a checkpoint."
+            )
+            return
+        if controls.rollover is not rollover:
+            status.update(
+                "Cumulative third-epoch checkpoint failed: displayed checkpoint does not match the shell's exact rollover."
+            )
+            return
+        if controls.current_reentry is not current_reentry:
+            status.update(
+                "Cumulative third-epoch checkpoint failed: displayed checkpoint does not match the shell's exact current typed continuation."
+            )
+            return
+        current_overlay = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-current-overlay-source",
+            Input,
+        )
+        successor_source = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-successor-source",
+            Input,
+        )
+        declaration_destination = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-declaration-destination",
+            Input,
+        )
+        overlay_destination = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-overlay-destination",
+            Input,
+        )
+        if not current_overlay.value.strip():
+            status.update(
+                "Cumulative third-epoch checkpoint failed: explicit current 40C/40D overlay path is required."
+            )
+            return
+        if not successor_source.value.strip():
+            status.update(
+                "Cumulative third-epoch checkpoint failed: explicit current successor edge path is required."
+            )
+            return
+        if not declaration_destination.value.strip():
+            status.update(
+                "Cumulative third-epoch checkpoint failed: explicit no-overwrite cumulative declaration destination is required."
+            )
+            return
+        if not overlay_destination.value.strip():
+            status.update(
+                "Cumulative third-epoch checkpoint failed: explicit no-overwrite next overlay destination is required."
+            )
+            return
+        try:
+            checkpoint = persist_chromium_research_third_basis_epoch_continuation_checkpoint_extension(
+                current_reentry,
+                rollover,
+                current_overlay_source=Path(current_overlay.value),
+                successor_edge_source=Path(successor_source.value),
+                cumulative_declaration_destination=Path(declaration_destination.value),
+                next_overlay_destination=Path(overlay_destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Cumulative third-epoch checkpoint failed: {exc}")
+            return
+        _require_third_basis_epoch_cumulative_checkpoint_matches_shell(
+            checkpoint,
+            current_reentry=current_reentry,
+            rollover=rollover,
+            one_hop_controller=self.research_controller,
+        )
+        controls.lock_after_success(checkpoint)
+        await self._promote_third_basis_epoch_cumulative_checkpoint(checkpoint)
+
+    async def _promote_third_basis_epoch_cumulative_checkpoint(
+        self,
+        result: ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult,
+    ) -> None:
+        fresh_reentry = result.fresh_reentry
+        fresh_controller = fresh_reentry.controller
+        rebuilt_session = present_chromium_research_session(fresh_controller.loaded)
+        if rebuilt_session != fresh_controller.presentation:
+            raise ValueError(
+                "Fresh cumulative third-epoch controller presentation is incoherent with retained loaded evidence."
+            )
+        new_session = fresh_controller.presentation
+        _require_research_sequence_presentation(new_session.sequence)
+        new_contexts = _snapshot_working_set_contexts(
+            new_session.sequence,
+            new_session.working_set_contexts,
+        )
+        if len(new_contexts) != len(new_session.sequence.members):
+            raise ValueError(
+                "Fresh cumulative third-epoch session must contain one context per declared position."
+            )
+        old_detail = self.query_one(
+            "#research-revision-edge-sequence",
+            ResearchRevisionEdgeSequenceDetail,
+        )
+        old_revision = self.query_one(
+            "#research-endpoint-revision-controls",
+            ResearchEndpointRevisionControls,
+        )
+        old_rollover = self.query_one(
+            "#research-session-rollover-controls",
+            ResearchSessionRolloverControls,
+        )
+        old_checkpoint = self.query_one(
+            "#research-third-basis-epoch-cumulative-checkpoint-controls",
+            ThirdBasisEpochResearchSessionCumulativeCheckpointControls,
+        )
+        if len(self.query("#research-rollover-success-receipt")):
+            await self.query_one("#research-rollover-success-receipt", Static).remove()
+        await old_detail.remove()
+        await old_revision.remove()
+        await old_rollover.remove()
+        await old_checkpoint.remove()
+        self.third_basis_epoch_continuation_reentry = fresh_reentry
+        self.research_controller = fresh_controller
+        self.research_session = new_session
+        self.research_presentation = new_session.sequence
+        self.research_working_set_contexts = new_contexts
+        self.last_research_rollover = None
+        self.last_research_restart_plan = None
+        self.last_third_basis_epoch_cumulative_checkpoint = result
+        await self.mount(
+            Static(
+                third_basis_epoch_cumulative_checkpoint_success_receipt(result),
+                id="research-third-basis-epoch-cumulative-checkpoint-success-receipt",
+                markup=False,
+            )
+        )
+        await self.mount(
+            ResearchRevisionEdgeSequenceDetail(
+                new_session.sequence,
+                working_set_contexts=new_contexts,
+            )
+        )
+        await self.mount(ResearchEndpointRevisionControls())
+        await self.mount(ResearchSessionRolloverControls())
 
 
 def _root_shas(reentry: ChromiumResearchThirdBasisEpochReentryResult) -> tuple[str, str, str]:
@@ -277,6 +527,70 @@ def _require_third_basis_epoch_checkpoint_matches_shell(
         )
 
 
+def _require_third_basis_epoch_cumulative_checkpoint_matches_shell(
+    result: ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult,
+    *,
+    current_reentry: ChromiumResearchThirdBasisEpochContinuationReentryResult,
+    rollover: ChromiumResearchSessionRolloverResult,
+    one_hop_controller,
+) -> None:
+    if not isinstance(
+        result,
+        ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult,
+    ):
+        raise TypeError(
+            "result must be ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult."
+        )
+    if result.current_reentry is not current_reentry:
+        raise ValueError(
+            "40D checkpoint did not retain the shell's exact current third-epoch continuation."
+        )
+    if result.rollover is not rollover:
+        raise ValueError(
+            "40D checkpoint did not retain the shell's exact continuation rollover."
+        )
+    if (
+        result.next_plan.prior_third_basis_epoch_overlay_source
+        != result.current_plan.prior_third_basis_epoch_overlay_source
+    ):
+        raise ValueError(
+            "40D checkpoint did not preserve the explicit current plan's direct 40B ancestry anchor."
+        )
+    fresh_endpoint = result.fresh_reentry.controller.declared_endpoint
+    one_hop_endpoint = one_hop_controller.declared_endpoint
+    if (
+        fresh_endpoint.verification.edge_record_sha256
+        != one_hop_endpoint.verification.edge_record_sha256
+    ):
+        raise ValueError(
+            "40D fresh cumulative endpoint identity does not match the mounted one-hop continuation."
+        )
+    if (
+        fresh_endpoint.revision.revised_note.note_text
+        != one_hop_endpoint.revision.revised_note.note_text
+    ):
+        raise ValueError(
+            "40D fresh cumulative endpoint text does not match the mounted one-hop continuation."
+        )
+    fresh_third = result.fresh_reentry.prior_third_basis_epoch_reentry
+    current_third = current_reentry.prior_third_basis_epoch_reentry
+    if fresh_third.controller.presentation != current_third.controller.presentation:
+        raise ValueError(
+            "40D fresh third-epoch anchor presentation changed cumulative ancestry."
+        )
+    if (
+        fresh_third.controller.declared_endpoint.verification.edge_record_sha256
+        != current_third.controller.declared_endpoint.verification.edge_record_sha256
+    ):
+        raise ValueError(
+            "40D fresh third-epoch anchor endpoint identity changed cumulative ancestry."
+        )
+    if _root_shas(fresh_third) != _root_shas(current_third):
+        raise ValueError(
+            "40D fresh cumulative checkpoint changed retained three-root ancestry."
+        )
+
+
 def create_third_basis_epoch_research_session_shell(
     lineage: ChromiumResearchThirdBasisEpochShellLineage,
 ) -> ThirdBasisEpochResearchSessionShell:
@@ -288,7 +602,7 @@ def create_third_basis_epoch_research_session_shell(
 def create_third_basis_epoch_continuation_research_session_shell(
     lineage: ChromiumResearchThirdBasisEpochContinuationShellLineage,
 ) -> ThirdBasisEpochContinuationResearchSessionShell:
-    """Create one controller shell retaining exact proven 40C/40D launch lineage."""
+    """Create one cumulative shell retaining exact proven 40C/40D launch lineage."""
 
     return ThirdBasisEpochContinuationResearchSessionShell(lineage)
 

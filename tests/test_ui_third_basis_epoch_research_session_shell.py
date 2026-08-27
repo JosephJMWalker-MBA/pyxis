@@ -149,7 +149,7 @@ async def test_40c_rollover_moves_live_controller_without_promoting_continuation
     successor = tmp_path / "next-successor.json"
     declaration = tmp_path / "next-continuation-declaration.json"
 
-    async with shell.run_test(size=(160, 170)) as pilot:
+    async with shell.run_test(size=(160, 190)) as pilot:
         await pilot.pause()
         await _write_and_rollover(
             shell,
@@ -165,8 +165,10 @@ async def test_40c_rollover_moves_live_controller_without_promoting_continuation
         assert shell.last_research_rollover is not None
         assert shell.research_controller is shell.last_research_rollover.continuation_controller
         assert shell.research_controller is not launch_controller
+        assert shell.third_basis_epoch_continuation_reentry is lineage.reentry
         assert len(shell.query(ResearchSessionRestartPlanControls)) == 0
-        assert len(shell.query("#research-third-basis-epoch-cumulative-checkpoint-controls")) == 0
+        assert len(shell.query("#research-third-basis-epoch-cumulative-checkpoint-controls")) == 1
+        assert shell.query_one("#persist-research-endpoint-revision", Button).disabled
 
 
 def test_third_epoch_shell_factories_reject_wrong_lineage_family_before_mount() -> None:
