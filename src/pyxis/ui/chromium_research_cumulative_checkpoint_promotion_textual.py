@@ -36,7 +36,7 @@ async def _promote_cumulative_checkpoint_surface(
     fresh_reentry: Any,
     checkpoint_result: Any,
     spec: _CumulativeCheckpointPromotionSpec,
-    success_receipt: Callable[[Any], str],
+    success_receipt_text: str,
     advance_current_reentry: Callable[[Any], None],
     record_checkpoint: Callable[[Any], None],
 ) -> None:
@@ -97,7 +97,7 @@ async def _promote_cumulative_checkpoint_surface(
 
     await shell.mount(
         Static(
-            success_receipt(checkpoint_result),
+            success_receipt_text,
             id=spec.success_receipt_id,
             markup=False,
         )
