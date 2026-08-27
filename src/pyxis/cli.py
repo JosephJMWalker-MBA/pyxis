@@ -48,6 +48,13 @@ from pyxis.app.chromium_research_session_reentry import (
 from pyxis.app.chromium_research_session_reentry_plan_document import (
     load_chromium_research_session_reentry_plan_document,
 )
+from pyxis.app.chromium_research_third_basis_epoch_authority_inspection import (
+    inspect_chromium_research_third_basis_epoch_continuation_launch,
+    inspect_chromium_research_third_basis_epoch_launch,
+)
+from pyxis.app.chromium_research_third_basis_epoch_authority_inspection_report import (
+    serialize_chromium_research_third_basis_epoch_authority_inspection,
+)
 from pyxis.app.chromium_research_third_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchThirdBasisEpochContinuationReentryResult,
     load_chromium_research_third_basis_epoch_continuation_reentry_plan_document,
@@ -168,7 +175,7 @@ def _build_parser() -> argparse.ArgumentParser:
     research_inspect_parser = subparsers.add_parser(
         "research-inspect",
         help=(
-            "Freshly prove one explicit persisted second-epoch entry and emit a "
+            "Freshly prove one explicit persisted second- or third-epoch entry and emit a "
             "deterministic read-only authority inspection report."
         ),
     )
@@ -186,6 +193,22 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help=(
             "Explicit 37C/37D continuation overlay. The emitted path is launch "
+            "location context only, never current/latest/head authority."
+        ),
+    )
+    inspect_entry.add_argument(
+        "--third-basis-epoch-overlay",
+        type=Path,
+        help=(
+            "Explicit 40B third-basis-epoch locator overlay. The emitted path is "
+            "launch location context only, never current/latest/head authority."
+        ),
+    )
+    inspect_entry.add_argument(
+        "--third-basis-epoch-continuation-overlay",
+        type=Path,
+        help=(
+            "Explicit 40C/40D continuation overlay. The emitted path is launch "
             "location context only, never current/latest/head authority."
         ),
     )
@@ -622,7 +645,7 @@ def _run_research_inspect_command(
     parser: argparse.ArgumentParser,
     args: argparse.Namespace,
 ) -> int:
-    """Freshly prove one explicit persisted second-epoch launch and emit inspection JSON."""
+    """Freshly prove one explicit persisted second- or third-epoch launch and emit JSON."""
 
     try:
         if args.second_basis_epoch_overlay is not None:
@@ -635,6 +658,9 @@ def _run_research_inspect_command(
                 overlay_source=args.second_basis_epoch_overlay,
             )
             inspection = inspect_chromium_research_second_basis_epoch_launch(lineage)
+            report = serialize_chromium_research_second_basis_epoch_authority_inspection(
+                inspection
+            )
         elif args.second_basis_epoch_continuation_overlay is not None:
             plan = (
                 load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
@@ -653,16 +679,46 @@ def _run_research_inspect_command(
                     lineage
                 )
             )
+            report = serialize_chromium_research_second_basis_epoch_authority_inspection(
+                inspection
+            )
+        elif args.third_basis_epoch_overlay is not None:
+            plan = load_chromium_research_third_basis_epoch_reentry_plan_document(
+                args.third_basis_epoch_overlay
+            )
+            result = reenter_chromium_research_third_basis_epoch(plan)
+            lineage = prove_chromium_research_third_basis_epoch_shell_lineage(
+                result,
+                overlay_source=args.third_basis_epoch_overlay,
+            )
+            inspection = inspect_chromium_research_third_basis_epoch_launch(lineage)
+            report = serialize_chromium_research_third_basis_epoch_authority_inspection(
+                inspection
+            )
+        elif args.third_basis_epoch_continuation_overlay is not None:
+            plan = (
+                load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
+                    args.third_basis_epoch_continuation_overlay
+                )
+            )
+            result = reenter_chromium_research_third_basis_epoch_continuation(plan)
+            lineage = (
+                prove_chromium_research_third_basis_epoch_continuation_shell_lineage(
+                    result,
+                    overlay_source=args.third_basis_epoch_continuation_overlay,
+                )
+            )
+            inspection = inspect_chromium_research_third_basis_epoch_continuation_launch(
+                lineage
+            )
+            report = serialize_chromium_research_third_basis_epoch_authority_inspection(
+                inspection
+            )
         else:
             raise ValueError(
-                "research-inspect requires one explicit persisted second-epoch entry configuration."
+                "research-inspect requires one explicit persisted second- or third-epoch entry configuration."
             )
-        print(
-            serialize_chromium_research_second_basis_epoch_authority_inspection(
-                inspection
-            ),
-            end="",
-        )
+        print(report, end="")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
         parser.error(f"research-inspect failed: {exc}")
     return 0
