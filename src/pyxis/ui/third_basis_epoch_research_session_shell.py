@@ -4,7 +4,6 @@ from pathlib import Path
 
 from textual.widgets import Button, Input, Static
 
-from pyxis.app.chromium_research_session_presentation import present_chromium_research_session
 from pyxis.app.chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 from pyxis.app.chromium_research_third_basis_epoch_continuation_checkpoint_extension import (
     ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult,
@@ -23,12 +22,11 @@ from pyxis.app.chromium_research_third_basis_epoch_shell_lineage import (
     ChromiumResearchThirdBasisEpochShellLineage,
 )
 
-from .chromium_research_endpoint_revision_textual import ResearchEndpointRevisionControls
-from .chromium_research_revision_edge_sequence_textual import (
-    ResearchRevisionEdgeSequenceDetail,
-    _require_research_sequence_presentation,
-    _snapshot_working_set_contexts,
+from .chromium_research_cumulative_checkpoint_promotion_textual import (
+    _CumulativeCheckpointPromotionSpec,
+    _promote_cumulative_checkpoint_surface,
 )
+from .chromium_research_endpoint_revision_textual import ResearchEndpointRevisionControls
 from .chromium_research_session_restart_plan_textual import ResearchSessionRestartPlanControls
 from .chromium_research_session_rollover_textual import ResearchSessionRolloverControls
 from .chromium_research_third_basis_epoch_continuation_checkpoint_extension_textual import (
@@ -39,6 +37,21 @@ from .chromium_research_third_basis_epoch_continuation_checkpoint_textual import
     ThirdBasisEpochResearchSessionContinuationCheckpointControls,
 )
 from .research_session_shell import ResearchSessionShell
+
+
+_THIRD_BASIS_EPOCH_CUMULATIVE_PROMOTION = _CumulativeCheckpointPromotionSpec(
+    checkpoint_controls_selector=(
+        "#research-third-basis-epoch-cumulative-checkpoint-controls"
+    ),
+    checkpoint_controls_type=ThirdBasisEpochResearchSessionCumulativeCheckpointControls,
+    success_receipt_id="research-third-basis-epoch-cumulative-checkpoint-success-receipt",
+    presentation_error=(
+        "Fresh cumulative third-epoch controller presentation is incoherent with retained loaded evidence."
+    ),
+    context_cardinality_error=(
+        "Fresh cumulative third-epoch session must contain one context per declared position."
+    ),
+)
 
 
 class ThirdBasisEpochResearchSessionShell(ResearchSessionShell):
@@ -409,68 +422,23 @@ class ThirdBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
         self,
         result: ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult,
     ) -> None:
-        fresh_reentry = result.fresh_reentry
-        fresh_controller = fresh_reentry.controller
-        rebuilt_session = present_chromium_research_session(fresh_controller.loaded)
-        if rebuilt_session != fresh_controller.presentation:
-            raise ValueError(
-                "Fresh cumulative third-epoch controller presentation is incoherent with retained loaded evidence."
-            )
-        new_session = fresh_controller.presentation
-        _require_research_sequence_presentation(new_session.sequence)
-        new_contexts = _snapshot_working_set_contexts(
-            new_session.sequence,
-            new_session.working_set_contexts,
+        def advance_current_reentry(fresh_reentry) -> None:
+            self.third_basis_epoch_continuation_reentry = fresh_reentry
+
+        def record_checkpoint(checkpoint) -> None:
+            self.last_third_basis_epoch_cumulative_checkpoint = checkpoint
+
+        await _promote_cumulative_checkpoint_surface(
+            self,
+            fresh_reentry=result.fresh_reentry,
+            checkpoint_result=result,
+            spec=_THIRD_BASIS_EPOCH_CUMULATIVE_PROMOTION,
+            success_receipt_text=third_basis_epoch_cumulative_checkpoint_success_receipt(
+                result
+            ),
+            advance_current_reentry=advance_current_reentry,
+            record_checkpoint=record_checkpoint,
         )
-        if len(new_contexts) != len(new_session.sequence.members):
-            raise ValueError(
-                "Fresh cumulative third-epoch session must contain one context per declared position."
-            )
-        old_detail = self.query_one(
-            "#research-revision-edge-sequence",
-            ResearchRevisionEdgeSequenceDetail,
-        )
-        old_revision = self.query_one(
-            "#research-endpoint-revision-controls",
-            ResearchEndpointRevisionControls,
-        )
-        old_rollover = self.query_one(
-            "#research-session-rollover-controls",
-            ResearchSessionRolloverControls,
-        )
-        old_checkpoint = self.query_one(
-            "#research-third-basis-epoch-cumulative-checkpoint-controls",
-            ThirdBasisEpochResearchSessionCumulativeCheckpointControls,
-        )
-        if len(self.query("#research-rollover-success-receipt")):
-            await self.query_one("#research-rollover-success-receipt", Static).remove()
-        await old_detail.remove()
-        await old_revision.remove()
-        await old_rollover.remove()
-        await old_checkpoint.remove()
-        self.third_basis_epoch_continuation_reentry = fresh_reentry
-        self.research_controller = fresh_controller
-        self.research_session = new_session
-        self.research_presentation = new_session.sequence
-        self.research_working_set_contexts = new_contexts
-        self.last_research_rollover = None
-        self.last_research_restart_plan = None
-        self.last_third_basis_epoch_cumulative_checkpoint = result
-        await self.mount(
-            Static(
-                third_basis_epoch_cumulative_checkpoint_success_receipt(result),
-                id="research-third-basis-epoch-cumulative-checkpoint-success-receipt",
-                markup=False,
-            )
-        )
-        await self.mount(
-            ResearchRevisionEdgeSequenceDetail(
-                new_session.sequence,
-                working_set_contexts=new_contexts,
-            )
-        )
-        await self.mount(ResearchEndpointRevisionControls())
-        await self.mount(ResearchSessionRolloverControls())
 
 
 def _root_shas(reentry: ChromiumResearchThirdBasisEpochReentryResult) -> tuple[str, str, str]:
