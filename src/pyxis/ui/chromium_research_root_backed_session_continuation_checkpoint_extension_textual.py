@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from textual.app import ComposeResult
-from textual.containers import Vertical
-from textual.widgets import Button, Input, Static
-
 from pyxis.app.chromium_research_root_backed_session_continuation_checkpoint_extension import (
     ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
 )
@@ -11,6 +7,11 @@ from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_d
     ChromiumResearchRootBackedSessionContinuationReentryResult,
 )
 from pyxis.app.chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
+
+from .chromium_research_cumulative_checkpoint_textual import (
+    _CumulativeCheckpointTextualControls,
+    _CumulativeCheckpointTextualSpec,
+)
 
 
 CUMULATIVE_CHECKPOINT_AUTHORITY_NOTICE = (
@@ -51,7 +52,58 @@ def cumulative_checkpoint_success_receipt(
     )
 
 
-class RootBackedResearchSessionCumulativeCheckpointControls(Vertical):
+_SPEC = _CumulativeCheckpointTextualSpec(
+    controls_id="research-root-backed-cumulative-checkpoint-controls",
+    title="Checkpoint cumulative post-root continuation",
+    title_id="research-root-backed-cumulative-checkpoint-title",
+    authority_notice=CUMULATIVE_CHECKPOINT_AUTHORITY_NOTICE,
+    authority_notice_id="research-root-backed-cumulative-checkpoint-authority-notice",
+    candidate_id="research-root-backed-cumulative-checkpoint-candidate",
+    current_overlay_label=(
+        "Current durable file for the exact current 35D/35E continuation overlay"
+    ),
+    current_overlay_label_id=(
+        "research-root-backed-cumulative-checkpoint-current-overlay-source-label"
+    ),
+    current_overlay_placeholder="Explicit current 35D/35E overlay path",
+    current_overlay_input_id=(
+        "research-root-backed-cumulative-checkpoint-current-overlay-source"
+    ),
+    successor_label="Current durable file for the exact chosen successor",
+    successor_label_id="research-root-backed-cumulative-checkpoint-successor-source-label",
+    successor_placeholder="Explicit current chosen successor edge path",
+    successor_input_id="research-root-backed-cumulative-checkpoint-successor-source",
+    declaration_label=(
+        "No-overwrite destination for the new cumulative post-root declaration"
+    ),
+    declaration_label_id=(
+        "research-root-backed-cumulative-checkpoint-declaration-destination-label"
+    ),
+    declaration_placeholder="Explicit cumulative declaration destination",
+    declaration_input_id=(
+        "research-root-backed-cumulative-checkpoint-declaration-destination"
+    ),
+    overlay_label="No-overwrite destination for the next 35D/35E continuation overlay",
+    overlay_label_id=(
+        "research-root-backed-cumulative-checkpoint-overlay-destination-label"
+    ),
+    overlay_placeholder="Explicit next continuation overlay destination",
+    overlay_input_id="research-root-backed-cumulative-checkpoint-overlay-destination",
+    save_label="Save proven cumulative continuation checkpoint",
+    save_button_id="save-research-root-backed-cumulative-checkpoint",
+    pending_status=(
+        "Further revision remains locked until a fresh cumulative checkpoint succeeds."
+    ),
+    status_id="research-root-backed-cumulative-checkpoint-status",
+)
+
+
+class RootBackedResearchSessionCumulativeCheckpointControls(
+    _CumulativeCheckpointTextualControls[
+        ChromiumResearchRootBackedSessionContinuationReentryResult,
+        ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
+    ]
+):
     """Blank explicit inputs for one governed 35E cumulative continuation checkpoint."""
 
     def __init__(
@@ -68,69 +120,12 @@ class RootBackedResearchSessionCumulativeCheckpointControls(Vertical):
             )
         if not isinstance(rollover, ChromiumResearchSessionRolloverResult):
             raise TypeError("rollover must be ChromiumResearchSessionRolloverResult.")
-        super().__init__(id="research-root-backed-cumulative-checkpoint-controls")
-        self.current_reentry = current_reentry
-        self.rollover = rollover
-        self.persistence_result: (
-            ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult | None
-        ) = None
-
-    def compose(self) -> ComposeResult:
-        yield Static(
-            "Checkpoint cumulative post-root continuation",
-            id="research-root-backed-cumulative-checkpoint-title",
-        )
-        yield Static(
-            CUMULATIVE_CHECKPOINT_AUTHORITY_NOTICE,
-            id="research-root-backed-cumulative-checkpoint-authority-notice",
-            markup=False,
-        )
-        yield Static(
-            _candidate_receipt(self.current_reentry, self.rollover),
-            id="research-root-backed-cumulative-checkpoint-candidate",
-            markup=False,
-        )
-        yield Static(
-            "Current durable file for the exact current 35D/35E continuation overlay",
-            id="research-root-backed-cumulative-checkpoint-current-overlay-source-label",
-        )
-        yield Input(
-            placeholder="Explicit current 35D/35E overlay path",
-            id="research-root-backed-cumulative-checkpoint-current-overlay-source",
-        )
-        yield Static(
-            "Current durable file for the exact chosen successor",
-            id="research-root-backed-cumulative-checkpoint-successor-source-label",
-        )
-        yield Input(
-            placeholder="Explicit current chosen successor edge path",
-            id="research-root-backed-cumulative-checkpoint-successor-source",
-        )
-        yield Static(
-            "No-overwrite destination for the new cumulative post-root declaration",
-            id="research-root-backed-cumulative-checkpoint-declaration-destination-label",
-        )
-        yield Input(
-            placeholder="Explicit cumulative declaration destination",
-            id="research-root-backed-cumulative-checkpoint-declaration-destination",
-        )
-        yield Static(
-            "No-overwrite destination for the next 35D/35E continuation overlay",
-            id="research-root-backed-cumulative-checkpoint-overlay-destination-label",
-        )
-        yield Input(
-            placeholder="Explicit next continuation overlay destination",
-            id="research-root-backed-cumulative-checkpoint-overlay-destination",
-        )
-        yield Button(
-            "Save proven cumulative continuation checkpoint",
-            id="save-research-root-backed-cumulative-checkpoint",
-            variant="warning",
-        )
-        yield Static(
-            "Further revision remains locked until a fresh cumulative checkpoint succeeds.",
-            id="research-root-backed-cumulative-checkpoint-status",
-            markup=False,
+        super().__init__(
+            current_reentry,
+            rollover,
+            spec=_SPEC,
+            candidate_receipt=_candidate_receipt(current_reentry, rollover),
+            success_receipt=cumulative_checkpoint_success_receipt,
         )
 
     def lock_after_success(
@@ -139,38 +134,19 @@ class RootBackedResearchSessionCumulativeCheckpointControls(Vertical):
     ) -> None:
         """Lock the old one-hop checkpoint form before its surface is promoted away."""
 
-        if not isinstance(
+        self._lock_cumulative_checkpoint_after_success(
             result,
-            ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
-        ):
-            raise TypeError(
+            result_type=ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
+            result_type_error=(
                 "result must be ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult."
-            )
-        if result.current_reentry is not self.current_reentry:
-            raise ValueError(
+            ),
+            current_identity_error=(
                 "Cumulative checkpoint result does not retain this form's exact current re-entry lineage."
-            )
-        if result.rollover is not self.rollover:
-            raise ValueError(
+            ),
+            rollover_identity_error=(
                 "Cumulative checkpoint result does not retain this form's exact rollover."
-            )
-
-        self.persistence_result = result
-        for selector in (
-            "#research-root-backed-cumulative-checkpoint-current-overlay-source",
-            "#research-root-backed-cumulative-checkpoint-successor-source",
-            "#research-root-backed-cumulative-checkpoint-declaration-destination",
-            "#research-root-backed-cumulative-checkpoint-overlay-destination",
-        ):
-            self.query_one(selector, Input).disabled = True
-        self.query_one(
-            "#save-research-root-backed-cumulative-checkpoint",
-            Button,
-        ).disabled = True
-        self.query_one(
-            "#research-root-backed-cumulative-checkpoint-status",
-            Static,
-        ).update(cumulative_checkpoint_success_receipt(result))
+            ),
+        )
 
 
 __all__ = [
