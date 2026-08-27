@@ -24,13 +24,27 @@ def test_current_third_epoch_cli_factories_route_through_inspection_adapters() -
     ]
 
 
-def test_42a_does_not_expand_research_inspect_to_third_epoch(capsys) -> None:
+def test_42b_expands_research_inspect_only_to_explicit_persisted_third_epoch(capsys) -> None:
     with pytest.raises(SystemExit) as exc_info:
         cli.main(["research-inspect", "--help"])
 
     assert exc_info.value.code == 0
     output = capsys.readouterr().out
-    assert "--second-basis-epoch-overlay" in output
-    assert "--second-basis-epoch-continuation-overlay" in output
-    assert "--third-basis-epoch-overlay" not in output
-    assert "--third-basis-epoch-continuation-overlay" not in output
+    for explicit in (
+        "--second-basis-epoch-overlay",
+        "--second-basis-epoch-continuation-overlay",
+        "--third-basis-epoch-overlay",
+        "--third-basis-epoch-continuation-overlay",
+    ):
+        assert explicit in output
+
+    for forbidden in (
+        "--handoff",
+        "--latest",
+        "--head",
+        "--directory",
+        "--auto",
+        "--detect",
+        "--format",
+    ):
+        assert forbidden not in output
