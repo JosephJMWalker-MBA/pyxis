@@ -49,6 +49,7 @@ from pyxis.app.chromium_research_session_reentry_plan_document import (
     load_chromium_research_session_reentry_plan_document,
 )
 from pyxis.app.chromium_research_third_basis_epoch_continuation_reentry_plan_document import (
+    ChromiumResearchThirdBasisEpochContinuationReentryResult,
     load_chromium_research_third_basis_epoch_continuation_reentry_plan_document,
     reenter_chromium_research_third_basis_epoch_continuation,
 )
@@ -306,11 +307,11 @@ def _load_second_basis_epoch_continuation_handoff_research_shell_factory():
 
 
 def _load_third_basis_epoch_research_shell_factory():
-    """Lazily import the lineage-retaining 40B Textual shell factory."""
+    """Lazily import the explicit-handoff 40B Textual shell factory."""
 
     try:
-        from pyxis.ui.third_basis_epoch_research_session_shell import (
-            create_third_basis_epoch_research_session_shell,
+        from pyxis.ui.third_basis_epoch_cumulative_handoff_shell import (
+            create_third_basis_epoch_cumulative_handoff_research_session_shell,
         )
     except ModuleNotFoundError as exc:
         if exc.name == "textual":
@@ -319,11 +320,11 @@ def _load_third_basis_epoch_research_shell_factory():
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
-    return create_third_basis_epoch_research_session_shell
+    return create_third_basis_epoch_cumulative_handoff_research_session_shell
 
 
 def _load_third_basis_epoch_continuation_research_shell_factory():
-    """Lazily import the lineage-retaining 40C/40D Textual shell factory."""
+    """Lazily import the path-proofed 40C/40D Textual shell factory."""
 
     try:
         from pyxis.ui.third_basis_epoch_research_session_shell import (
@@ -337,6 +338,23 @@ def _load_third_basis_epoch_continuation_research_shell_factory():
             ) from exc
         raise
     return create_third_basis_epoch_continuation_research_session_shell
+
+
+def _load_third_basis_epoch_continuation_handoff_research_shell_factory():
+    """Lazily import the raw-typed in-process 41E cumulative shell factory."""
+
+    try:
+        from pyxis.ui.third_basis_epoch_cumulative_handoff_shell import (
+            create_third_basis_epoch_continuation_handoff_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_third_basis_epoch_continuation_handoff_research_session_shell
 
 
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
@@ -448,21 +466,31 @@ def _run_second_basis_epoch_continuation_handoff_research_session_shell(
 
 def _run_third_basis_epoch_research_session_shell(
     lineage: ChromiumResearchThirdBasisEpochShellLineage,
-) -> None:
-    """Run one proven 40B launch lineage without adding checkpoint authority."""
+) -> ChromiumResearchThirdBasisEpochContinuationReentryResult | None:
+    """Run proven 40B first-checkpoint mode and return only an explicit 41E handoff."""
 
     create_shell = _load_third_basis_epoch_research_shell_factory()
     if not isinstance(lineage, ChromiumResearchThirdBasisEpochShellLineage):
         raise TypeError(
             "lineage must be ChromiumResearchThirdBasisEpochShellLineage."
         )
-    create_shell(lineage).run()
+    handoff = create_shell(lineage).run()
+    if handoff is None:
+        return None
+    if not isinstance(
+        handoff,
+        ChromiumResearchThirdBasisEpochContinuationReentryResult,
+    ):
+        raise TypeError(
+            "third-basis-epoch research shell returned an invalid cumulative handoff result."
+        )
+    return handoff
 
 
 def _run_third_basis_epoch_continuation_research_session_shell(
     lineage: ChromiumResearchThirdBasisEpochContinuationShellLineage,
 ) -> None:
-    """Run one proven 40C/40D launch lineage without adding checkpoint authority."""
+    """Run one path-proofed persisted 40C/40D launch lineage."""
 
     create_shell = _load_third_basis_epoch_continuation_research_shell_factory()
     if not isinstance(
@@ -473,6 +501,22 @@ def _run_third_basis_epoch_continuation_research_session_shell(
             "lineage must be ChromiumResearchThirdBasisEpochContinuationShellLineage."
         )
     create_shell(lineage).run()
+
+
+def _run_third_basis_epoch_continuation_handoff_research_session_shell(
+    reentry: ChromiumResearchThirdBasisEpochContinuationReentryResult,
+) -> None:
+    """Run cumulative mode directly from one exact in-process 41E typed handoff."""
+
+    create_shell = _load_third_basis_epoch_continuation_handoff_research_shell_factory()
+    if not isinstance(
+        reentry,
+        ChromiumResearchThirdBasisEpochContinuationReentryResult,
+    ):
+        raise TypeError(
+            "reentry must be ChromiumResearchThirdBasisEpochContinuationReentryResult."
+        )
+    create_shell(reentry).run()
 
 
 def _run_controller_only_research_session_shell(
@@ -548,7 +592,11 @@ def _run_research_shell_command(
                 result,
                 overlay_source=args.third_basis_epoch_overlay,
             )
-            _run_third_basis_epoch_research_session_shell(lineage)
+            handoff = _run_third_basis_epoch_research_session_shell(lineage)
+            if handoff is not None:
+                _run_third_basis_epoch_continuation_handoff_research_session_shell(
+                    handoff
+                )
         elif args.third_basis_epoch_continuation_overlay is not None:
             plan = (
                 load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
