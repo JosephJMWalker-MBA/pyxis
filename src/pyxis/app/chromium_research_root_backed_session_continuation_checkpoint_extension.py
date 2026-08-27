@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .chromium_research_fixed_anchor_cumulative_extension import (
+    _FixedAnchorCumulativeExtensionAdapter,
+    _FixedAnchorCumulativeExtensionMessages,
+    _extend_fixed_anchor_cumulative_continuation,
+)
 from .chromium_research_root_backed_session_continuation_reentry_plan_document import (
     ChromiumResearchRootBackedSessionContinuationOverlayPersistenceResult,
     ChromiumResearchRootBackedSessionContinuationReentryPlan,
@@ -14,11 +19,9 @@ from .chromium_research_root_backed_session_continuation_reentry_plan_document i
 from .chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 from .chromium_research_working_set_note_revision_edge_sequence_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceRecord,
-    load_chromium_research_working_set_note_revision_edge_sequence,
 )
 from .chromium_research_working_set_note_revision_edge_sequence_persistence import (
     ChromiumPageResearchWorkingSetNoteRevisionEdgeSequencePersistenceEvidence,
-    persist_chromium_research_working_set_note_revision_edge_sequence,
 )
 
 
@@ -51,21 +54,10 @@ def persist_chromium_research_root_backed_session_continuation_checkpoint_extens
 ) -> ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult:
     """Extend one persisted 35D continuation without recursive overlay ancestry.
 
-    The current 35D overlay is freshly decoded and re-entered. Its fixed 35C ancestry
-    anchor is retained exactly. The current ordered post-root edge tuple is extended
-    by the explicitly supplied chosen successor, freshly relinked from the root-backed
-    endpoint through public 26A/24C behavior, and persisted as a new cumulative 26B
-    declaration. A new 35D overlay then points to the same 35C overlay, the cumulative
-    edge tuple, and that new declaration.
-
-    The cumulative controller intentionally presents a longer declared segment than
-    the one-hop 30A continuation controller. Therefore equivalence to the chosen
-    rollover is established at the terminal edge by durable edge content identity and
-    exact human wording, not by requiring whole-presentation equality.
-
-    No existing overlay or declaration is modified or deleted. No directory scan,
-    digest search, predecessor discovery, head selection, chronology inference, or
-    semantic interpretation occurs.
+    Concrete 35E authority remains here: the exact current plan relationship, retained
+    root identity, rollover ownership, direct 35C anchor, and public 35D result/error
+    types are unchanged. Shared path/relink/declaration/round-trip mechanics delegate
+    to the private fixed-anchor cumulative-extension kernel proven again at 37D/40D.
     """
 
     if not isinstance(
@@ -77,121 +69,36 @@ def persist_chromium_research_root_backed_session_continuation_checkpoint_extens
         )
     if not isinstance(rollover, ChromiumResearchSessionRolloverResult):
         raise TypeError("rollover must be ChromiumResearchSessionRolloverResult.")
-    for value, label in (
-        (current_overlay_source, "current_overlay_source"),
-        (successor_edge_source, "successor_edge_source"),
-        (cumulative_declaration_destination, "cumulative_declaration_destination"),
-        (next_overlay_destination, "next_overlay_destination"),
-    ):
-        if not isinstance(value, Path):
-            raise TypeError(f"{label} must be pathlib.Path.")
 
-    overlay_source = current_overlay_source.resolve()
-    successor_source = successor_edge_source.resolve()
-    declaration_destination = cumulative_declaration_destination.resolve()
-    overlay_destination = next_overlay_destination.resolve()
+    kernel = _extend_fixed_anchor_cumulative_continuation(
+        current_reentry,
+        rollover,
+        current_overlay_source=current_overlay_source,
+        successor_edge_source=successor_edge_source,
+        cumulative_declaration_destination=cumulative_declaration_destination,
+        next_overlay_destination=next_overlay_destination,
+        adapter=_ADAPTER,
+    )
+    return ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult(
+        current_reentry=current_reentry,
+        rollover=rollover,
+        current_plan=kernel.current_plan,
+        explicit_sequence=kernel.explicit_sequence,
+        declaration=kernel.declaration,
+        next_plan=kernel.next_plan,
+        fresh_reentry=kernel.fresh_reentry,
+        overlay=kernel.overlay,
+    )
 
-    if declaration_destination == overlay_destination:
-        raise ValueError("cumulative declaration and next overlay destinations must be distinct.")
-    if declaration_destination.exists():
-        raise FileExistsError("cumulative_declaration_destination already exists.")
-    if overlay_destination.exists():
-        raise FileExistsError("next_overlay_destination already exists.")
 
-    try:
-        current_plan = (
-            load_chromium_research_root_backed_session_continuation_reentry_plan_document(
-                overlay_source
-            )
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Explicit current 35D overlay could not be decoded."
-        ) from exc
+def _require_loaded_plan_match(
+    current_plan: ChromiumResearchRootBackedSessionContinuationReentryPlan,
+    current_reentry: ChromiumResearchRootBackedSessionContinuationReentryResult,
+) -> None:
     if current_plan != current_reentry.plan:
         raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
             "Explicit current 35D overlay does not describe the supplied continuation plan."
         )
-
-    try:
-        fresh_current = reenter_chromium_research_root_backed_session_continuation(
-            current_plan
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Explicit current 35D overlay could not freshly reconstruct its continuation."
-        ) from exc
-    _require_current_match(current_reentry, fresh_current)
-    _require_rollover_prior_match(current_reentry, rollover)
-
-    cumulative_sources = (*current_plan.declared_edge_sources, successor_source)
-    anchor = fresh_current.prior_root_backed_reentry.controller.declared_endpoint
-    try:
-        explicit_sequence = load_chromium_research_working_set_note_revision_edge_sequence(
-            anchor,
-            cumulative_sources,
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Cumulative post-root edge sequence could not be freshly relinked from the 35C anchor."
-        ) from exc
-
-    successor = explicit_sequence.edges[-1]
-    chosen = rollover.prior_revision
-    if successor.verification.edge_record_sha256 != chosen.persistence.edge_record_sha256:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Cumulative sequence endpoint identity does not match the chosen rollover successor."
-        )
-    if (
-        successor.revision.revised_note.note_text
-        != chosen.extension.revision.revised_note.note_text
-    ):
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Cumulative sequence endpoint text does not match the chosen rollover successor."
-        )
-
-    declaration = persist_chromium_research_working_set_note_revision_edge_sequence(
-        explicit_sequence,
-        declaration_destination,
-    )
-    next_plan = ChromiumResearchRootBackedSessionContinuationReentryPlan(
-        prior_root_backed_overlay_source=current_plan.prior_root_backed_overlay_source,
-        declared_edge_sources=tuple(cumulative_sources),
-        declaration_source=declaration.path,
-    )
-
-    try:
-        fresh_next = reenter_chromium_research_root_backed_session_continuation(next_plan)
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "New cumulative declaration could not freshly reconstruct the chosen continuation."
-        ) from exc
-    _require_next_match(rollover, fresh_next)
-
-    overlay = _persist_overlay(next_plan, overlay_destination)
-    try:
-        decoded = load_chromium_research_root_backed_session_continuation_reentry_plan_document(
-            overlay.path
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Persisted next 35D overlay could not be round-trip decoded."
-        ) from exc
-    if decoded != next_plan:
-        raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
-            "Persisted next 35D overlay did not round-trip to the exact cumulative plan."
-        )
-
-    return ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult(
-        current_reentry=current_reentry,
-        rollover=rollover,
-        current_plan=current_plan,
-        explicit_sequence=explicit_sequence,
-        declaration=declaration,
-        next_plan=next_plan,
-        fresh_reentry=fresh_next,
-        overlay=overlay,
-    )
 
 
 def _require_current_match(
@@ -235,6 +142,18 @@ def _require_rollover_prior_match(
         )
 
 
+def _build_next_plan(
+    current_plan: ChromiumResearchRootBackedSessionContinuationReentryPlan,
+    cumulative_sources: tuple[Path, ...],
+    declaration_source: Path,
+) -> ChromiumResearchRootBackedSessionContinuationReentryPlan:
+    return ChromiumResearchRootBackedSessionContinuationReentryPlan(
+        prior_root_backed_overlay_source=current_plan.prior_root_backed_overlay_source,
+        declared_edge_sources=cumulative_sources,
+        declaration_source=declaration_source,
+    )
+
+
 def _require_next_match(
     rollover: ChromiumResearchSessionRolloverResult,
     fresh: ChromiumResearchRootBackedSessionContinuationReentryResult,
@@ -255,6 +174,50 @@ def _require_next_match(
         raise ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError(
             "Fresh cumulative continuation endpoint text does not match the chosen rollover."
         )
+
+
+_ADAPTER = _FixedAnchorCumulativeExtensionAdapter[
+    ChromiumResearchRootBackedSessionContinuationReentryPlan,
+    ChromiumResearchRootBackedSessionContinuationReentryResult,
+    ChromiumResearchRootBackedSessionContinuationOverlayPersistenceResult,
+](
+    error_type=ChromiumResearchRootBackedSessionContinuationCheckpointExtensionError,
+    messages=_FixedAnchorCumulativeExtensionMessages(
+        current_decode="Explicit current 35D overlay could not be decoded.",
+        current_reentry=(
+            "Explicit current 35D overlay could not freshly reconstruct its continuation."
+        ),
+        sequence_relink=(
+            "Cumulative post-root edge sequence could not be freshly relinked from the 35C anchor."
+        ),
+        terminal_identity=(
+            "Cumulative sequence endpoint identity does not match the chosen rollover successor."
+        ),
+        terminal_text=(
+            "Cumulative sequence endpoint text does not match the chosen rollover successor."
+        ),
+        next_reentry=(
+            "New cumulative declaration could not freshly reconstruct the chosen continuation."
+        ),
+        overlay_decode="Persisted next 35D overlay could not be round-trip decoded.",
+        overlay_round_trip=(
+            "Persisted next 35D overlay did not round-trip to the exact cumulative plan."
+        ),
+    ),
+    load_plan=load_chromium_research_root_backed_session_continuation_reentry_plan_document,
+    reenter=reenter_chromium_research_root_backed_session_continuation,
+    require_loaded_plan_match=_require_loaded_plan_match,
+    require_current_match=_require_current_match,
+    require_rollover_prior_match=_require_rollover_prior_match,
+    declared_edge_sources=lambda plan: plan.declared_edge_sources,
+    anchor_endpoint=(
+        lambda reentry: reentry.prior_root_backed_reentry.controller.declared_endpoint
+    ),
+    build_next_plan=_build_next_plan,
+    require_next_match=_require_next_match,
+    persist_overlay=_persist_overlay,
+    overlay_path=lambda overlay: overlay.path,
+)
 
 
 __all__ = [
