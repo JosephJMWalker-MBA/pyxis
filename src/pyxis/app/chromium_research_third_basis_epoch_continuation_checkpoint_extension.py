@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .chromium_research_fixed_anchor_cumulative_extension import (
+    _FixedAnchorCumulativeExtensionAdapter,
+    _FixedAnchorCumulativeExtensionMessages,
+    _extend_fixed_anchor_cumulative_continuation,
+)
 from .chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 from .chromium_research_third_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchThirdBasisEpochContinuationOverlayPersistenceResult,
@@ -14,11 +19,9 @@ from .chromium_research_third_basis_epoch_continuation_reentry_plan_document imp
 )
 from .chromium_research_working_set_note_revision_edge_sequence_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeSequenceRecord,
-    load_chromium_research_working_set_note_revision_edge_sequence,
 )
 from .chromium_research_working_set_note_revision_edge_sequence_persistence import (
     ChromiumPageResearchWorkingSetNoteRevisionEdgeSequencePersistenceEvidence,
-    persist_chromium_research_working_set_note_revision_edge_sequence,
 )
 
 
@@ -51,22 +54,10 @@ def persist_chromium_research_third_basis_epoch_continuation_checkpoint_extensio
 ) -> ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult:
     """Extend one persisted 40C continuation without recursive overlay ancestry.
 
-    The exact current 40C overlay is freshly decoded and re-entered. Its direct 40B
-    ancestry anchor is retained, which in turn freshly reconstructs first-, second-,
-    and third-root ancestry. The current ordered post-third-root edge tuple is then
-    extended by one explicitly supplied chosen successor, freshly relinked from the
-    third-epoch endpoint, and persisted as a new cumulative declaration. The next
-    overlay reuses the existing 40C format and still points directly to the same 40B
-    overlay rather than to the current 40C overlay.
-
-    Whole-presentation equality to the one-hop rollover is intentionally not required
-    after cumulative extension because the cumulative controller presents a longer
-    declared segment. Terminal authority is instead checked by durable terminal edge
-    identity and exact final human note text.
-
-    Paths remain location context only. A path-distinct current 40C overlay may be
-    accepted only when explicit fresh reconstruction proves the same continuation and
-    retained three-root ancestry. No path or successor is discovered automatically.
+    Concrete 40D authority remains here: path-distinct durable current equivalence,
+    retained first/second/third roots, the retained second-epoch continuation, rollover
+    ownership, direct 40B anchoring, and public 40C result/error types are unchanged.
+    Only the triply-proven fixed-anchor mechanics delegate to the private kernel.
     """
 
     if not isinstance(
@@ -78,121 +69,25 @@ def persist_chromium_research_third_basis_epoch_continuation_checkpoint_extensio
         )
     if not isinstance(rollover, ChromiumResearchSessionRolloverResult):
         raise TypeError("rollover must be ChromiumResearchSessionRolloverResult.")
-    for value, label in (
-        (current_overlay_source, "current_overlay_source"),
-        (successor_edge_source, "successor_edge_source"),
-        (cumulative_declaration_destination, "cumulative_declaration_destination"),
-        (next_overlay_destination, "next_overlay_destination"),
-    ):
-        if not isinstance(value, Path):
-            raise TypeError(f"{label} must be pathlib.Path.")
 
-    overlay_source = current_overlay_source.resolve()
-    successor_source = successor_edge_source.resolve()
-    declaration_destination = cumulative_declaration_destination.resolve()
-    overlay_destination = next_overlay_destination.resolve()
-
-    if declaration_destination == overlay_destination:
-        raise ValueError(
-            "cumulative declaration and next overlay destinations must be distinct."
-        )
-    if declaration_destination.exists():
-        raise FileExistsError("cumulative_declaration_destination already exists.")
-    if overlay_destination.exists():
-        raise FileExistsError("next_overlay_destination already exists.")
-
-    try:
-        current_plan = (
-            load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
-                overlay_source
-            )
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Explicit current 40C overlay could not be decoded."
-        ) from exc
-
-    try:
-        fresh_current = reenter_chromium_research_third_basis_epoch_continuation(
-            current_plan
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Explicit current 40C overlay could not freshly reconstruct its continuation."
-        ) from exc
-
-    _require_current_match(current_reentry, fresh_current)
-    _require_rollover_prior_match(current_reentry, rollover)
-
-    cumulative_sources = (*current_plan.declared_edge_sources, successor_source)
-    anchor = fresh_current.prior_third_basis_epoch_reentry.controller.declared_endpoint
-    try:
-        explicit_sequence = load_chromium_research_working_set_note_revision_edge_sequence(
-            anchor,
-            cumulative_sources,
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Cumulative post-third-root edge sequence could not be freshly relinked from the direct 40B ancestry anchor."
-        ) from exc
-
-    successor = explicit_sequence.edges[-1]
-    chosen = rollover.prior_revision
-    if successor.verification.edge_record_sha256 != chosen.persistence.edge_record_sha256:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Cumulative sequence endpoint identity does not match the chosen rollover successor."
-        )
-    if (
-        successor.revision.revised_note.note_text
-        != chosen.extension.revision.revised_note.note_text
-    ):
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Cumulative sequence endpoint text does not match the chosen rollover successor."
-        )
-
-    declaration = persist_chromium_research_working_set_note_revision_edge_sequence(
-        explicit_sequence,
-        declaration_destination,
+    kernel = _extend_fixed_anchor_cumulative_continuation(
+        current_reentry,
+        rollover,
+        current_overlay_source=current_overlay_source,
+        successor_edge_source=successor_edge_source,
+        cumulative_declaration_destination=cumulative_declaration_destination,
+        next_overlay_destination=next_overlay_destination,
+        adapter=_ADAPTER,
     )
-    next_plan = ChromiumResearchThirdBasisEpochContinuationReentryPlan(
-        prior_third_basis_epoch_overlay_source=(
-            current_plan.prior_third_basis_epoch_overlay_source
-        ),
-        declared_edge_sources=tuple(cumulative_sources),
-        declaration_source=declaration.path,
-    )
-
-    try:
-        fresh_next = reenter_chromium_research_third_basis_epoch_continuation(next_plan)
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "New cumulative declaration could not freshly reconstruct the chosen continuation."
-        ) from exc
-    _require_next_match(rollover, fresh_next)
-
-    overlay = _persist_overlay(next_plan, overlay_destination)
-    try:
-        decoded = load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
-            overlay.path
-        )
-    except (OSError, TypeError, ValueError) as exc:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Persisted next 40C overlay could not be round-trip decoded."
-        ) from exc
-    if decoded != next_plan:
-        raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
-            "Persisted next 40C overlay did not round-trip to the exact cumulative plan."
-        )
-
     return ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionResult(
         current_reentry=current_reentry,
         rollover=rollover,
-        current_plan=current_plan,
-        explicit_sequence=explicit_sequence,
-        declaration=declaration,
-        next_plan=next_plan,
-        fresh_reentry=fresh_next,
-        overlay=overlay,
+        current_plan=kernel.current_plan,
+        explicit_sequence=kernel.explicit_sequence,
+        declaration=kernel.declaration,
+        next_plan=kernel.next_plan,
+        fresh_reentry=kernel.fresh_reentry,
+        overlay=kernel.overlay,
     )
 
 
@@ -282,6 +177,20 @@ def _require_rollover_prior_match(
         )
 
 
+def _build_next_plan(
+    current_plan: ChromiumResearchThirdBasisEpochContinuationReentryPlan,
+    cumulative_sources: tuple[Path, ...],
+    declaration_source: Path,
+) -> ChromiumResearchThirdBasisEpochContinuationReentryPlan:
+    return ChromiumResearchThirdBasisEpochContinuationReentryPlan(
+        prior_third_basis_epoch_overlay_source=(
+            current_plan.prior_third_basis_epoch_overlay_source
+        ),
+        declared_edge_sources=cumulative_sources,
+        declaration_source=declaration_source,
+    )
+
+
 def _require_next_match(
     rollover: ChromiumResearchSessionRolloverResult,
     fresh: ChromiumResearchThirdBasisEpochContinuationReentryResult,
@@ -302,6 +211,50 @@ def _require_next_match(
         raise ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError(
             "Fresh cumulative continuation endpoint text does not match the chosen rollover."
         )
+
+
+_ADAPTER = _FixedAnchorCumulativeExtensionAdapter[
+    ChromiumResearchThirdBasisEpochContinuationReentryPlan,
+    ChromiumResearchThirdBasisEpochContinuationReentryResult,
+    ChromiumResearchThirdBasisEpochContinuationOverlayPersistenceResult,
+](
+    error_type=ChromiumResearchThirdBasisEpochContinuationCheckpointExtensionError,
+    messages=_FixedAnchorCumulativeExtensionMessages(
+        current_decode="Explicit current 40C overlay could not be decoded.",
+        current_reentry=(
+            "Explicit current 40C overlay could not freshly reconstruct its continuation."
+        ),
+        sequence_relink=(
+            "Cumulative post-third-root edge sequence could not be freshly relinked from the direct 40B ancestry anchor."
+        ),
+        terminal_identity=(
+            "Cumulative sequence endpoint identity does not match the chosen rollover successor."
+        ),
+        terminal_text=(
+            "Cumulative sequence endpoint text does not match the chosen rollover successor."
+        ),
+        next_reentry=(
+            "New cumulative declaration could not freshly reconstruct the chosen continuation."
+        ),
+        overlay_decode="Persisted next 40C overlay could not be round-trip decoded.",
+        overlay_round_trip=(
+            "Persisted next 40C overlay did not round-trip to the exact cumulative plan."
+        ),
+    ),
+    load_plan=load_chromium_research_third_basis_epoch_continuation_reentry_plan_document,
+    reenter=reenter_chromium_research_third_basis_epoch_continuation,
+    require_loaded_plan_match=None,
+    require_current_match=_require_current_match,
+    require_rollover_prior_match=_require_rollover_prior_match,
+    declared_edge_sources=lambda plan: plan.declared_edge_sources,
+    anchor_endpoint=(
+        lambda reentry: reentry.prior_third_basis_epoch_reentry.controller.declared_endpoint
+    ),
+    build_next_plan=_build_next_plan,
+    require_next_match=_require_next_match,
+    persist_overlay=_persist_overlay,
+    overlay_path=lambda overlay: overlay.path,
+)
 
 
 __all__ = [
