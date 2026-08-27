@@ -95,7 +95,7 @@ def test_third_epoch_first_shell_runner_returns_exact_typed_handoff_from_textual
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    import pyxis.ui.third_basis_epoch_cumulative_handoff_shell as shell_module
+    import pyxis.ui.third_basis_epoch_authority_inspection_shell as shell_module
 
     first_dir = tmp_path / "first"
     first_dir.mkdir(parents=True, exist_ok=True)
@@ -115,7 +115,7 @@ def test_third_epoch_first_shell_runner_returns_exact_typed_handoff_from_textual
 
     monkeypatch.setattr(
         shell_module,
-        "create_third_basis_epoch_cumulative_handoff_research_session_shell",
+        "create_inspectable_third_basis_epoch_cumulative_handoff_research_session_shell",
         lambda supplied: FakeShell(),
     )
 
@@ -126,7 +126,7 @@ def test_third_epoch_first_shell_runner_rejects_untyped_app_return(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    import pyxis.ui.third_basis_epoch_cumulative_handoff_shell as shell_module
+    import pyxis.ui.third_basis_epoch_authority_inspection_shell as shell_module
 
     _, earned, overlay, _ = _persist_valid_overlay(tmp_path, stem="41e-invalid")
     lineage = prove_chromium_research_third_basis_epoch_shell_lineage(
@@ -140,7 +140,7 @@ def test_third_epoch_first_shell_runner_rejects_untyped_app_return(
 
     monkeypatch.setattr(
         shell_module,
-        "create_third_basis_epoch_cumulative_handoff_research_session_shell",
+        "create_inspectable_third_basis_epoch_cumulative_handoff_research_session_shell",
         lambda supplied: FakeShell(),
     )
 
@@ -152,7 +152,7 @@ def test_raw_third_epoch_handoff_runner_passes_exact_reentry_to_distinct_factory
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    import pyxis.ui.third_basis_epoch_cumulative_handoff_shell as shell_module
+    import pyxis.ui.third_basis_epoch_authority_inspection_shell as shell_module
 
     values = _persist_valid_continuation(tmp_path, stem="41e-raw-runner")
     handoff = values[8].fresh_reentry
@@ -169,7 +169,7 @@ def test_raw_third_epoch_handoff_runner_passes_exact_reentry_to_distinct_factory
 
     monkeypatch.setattr(
         shell_module,
-        "create_third_basis_epoch_continuation_handoff_research_session_shell",
+        "create_inspectable_third_basis_epoch_continuation_handoff_research_session_shell",
         fake_factory,
     )
 
