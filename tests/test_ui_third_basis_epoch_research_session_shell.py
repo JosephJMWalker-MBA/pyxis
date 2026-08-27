@@ -74,7 +74,7 @@ async def test_40b_shell_retains_exact_41a_launch_lineage_without_restart_or_che
         assert shell.research_reentry is None
         assert shell.research_controller is lineage.reentry.controller
         assert len(shell.query(ResearchSessionRestartPlanControls)) == 0
-        assert len(shell.query("#research-third-basis-epoch-checkpoint-controls")) == 0
+        assert len(shell.query("#research-third-basis-epoch-continuation-checkpoint-controls")) == 0
         assert not shell.query_one("#persist-research-endpoint-revision", Button).disabled
 
 
@@ -137,7 +137,7 @@ async def test_40b_rollover_moves_live_controller_without_promoting_launch_linea
         assert shell.research_controller is shell.last_research_rollover.continuation_controller
         assert shell.research_controller is not launch_controller
         assert len(shell.query(ResearchSessionRestartPlanControls)) == 0
-        assert len(shell.query("#research-third-basis-epoch-checkpoint-controls")) == 0
+        assert len(shell.query("#research-third-basis-epoch-continuation-checkpoint-controls")) == 1
 
 
 @pytest.mark.asyncio
