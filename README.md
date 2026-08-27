@@ -5,19 +5,20 @@ Pyxis is an **evidence-first Python research system** with two proven, connected
 1. a transparent architecture-to-code compiler/runtime that keeps human intent, canonical state, generated products, runtime evidence, revisions, and export boundaries inspectable; and
 2. a read-only Chromium research workflow that preserves observation, human selection, comparison, rationale, and revision history without silently promoting any layer into stronger authority.
 
-## Current status — through Milestone 25A / D158
+## Current status — through Milestone 40D / D205
 
 Pyxis currently proves:
 
 - **Architecture → code → runtime → portable output:** canonical Workspace authoring, RIR, deterministic compilation, generated Workspace execution, governed architecture preview/Apply, append-only revision evidence, incremental recompilation, proposed-vs-observed consequence reconciliation, export verification, conventional source output, and a verified wheel path.
 - **Evidence-preserving UI and measurement:** a Textual Workspace shell renders application-owned evidence; descriptive measurement remains provenance-heavy and explicitly non-causal.
 - **Read-only Chromium research:** caller-owned Chromium pages can be observed through an explicit DevTools endpoint for bounded page text, links, headings, metadata, paragraphs, tables, and lists. Pyxis does not infer an active tab when multiple pages exist and does not acquire navigation or interaction authority from observation capability.
-- **Durable research evidence:** the seven browser evidence families can be composed sequentially into a non-atomic research bundle, persisted deterministically with SHA-256 self-integrity evidence, verified, and rehydrated without Chromium remaining alive.
-- **Human-owned research actions:** a caller can explicitly select paragraphs and exact Unicode text ranges, attach verbatim notes, compare exact ranges, group already-loaded records into ordered working sets, and attach rationale to those working sets while keeping human interpretation distinct from source evidence.
-- **Durable and revisable human rationale:** comparison notes, working sets, working-set notes, note revisions, revision continuations, and generalized revision edges have explicit persistence/relinking boundaries. Milestone 25A adds an in-memory human extension of one exact already-loaded revision edge while deliberately adding no global current-head, chronology, branch/merge, semantic-diff, or whole-history authority.
+- **Durable research evidence:** browser evidence can be composed into durable verified captures, reopened after Chromium exits, and used for explicit human selections, notes, comparisons, working sets, and rationale without silently promoting interpretation into source authority.
+- **Governed durable research continuity:** explicit revision segments can be inspected, revised, persisted, adopted, checkpointed, exited, and freshly re-entered from caller-supplied durable locators without ambient history discovery or a global latest/current/head model.
+- **Changed evidence-basis ancestry:** three distinct evidence-basis roots can be retained through explicit transition/root machinery. A persisted third basis epoch can be freshly re-entered and extended through repeatable cumulative ordinary continuation while retaining one direct 40B ancestry anchor and freshly re-earning first-, second-, and third-root ancestry.
+- **Inspection without authority promotion:** second-epoch launch provenance and current governed state share one application-owned projection consumable by Textual and deterministic `pyxis research-inspect` JSON output; presentation remains downstream of authority rather than a new authority source.
 - **Bounded compatibility:** package metadata declares Python `>=3.11,<3.15`, and the supported lanes are exercised across Python 3.11, 3.12, 3.13, and 3.14.
 
-The detailed narrative below was written as the central README proof trail through **Milestone 18C / D137** and is preserved rather than rewritten. Milestones **19A through 25A / D158** extend that foundation and are recorded in their dedicated milestone documents. Any older “current” or “next milestone” wording below should therefore be read in its historical 18C context; this section is the repository’s current high-level front door.
+The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), and [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
 
 ## Authority boundaries
 
@@ -488,17 +489,25 @@ The permanent reference example is `examples/text_lab/`.
 
 ## Project continuity
 
-Start with [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for the current map through Milestone 18C / D137.
+For a fresh development session, use this compact orientation chain:
 
-The repository also keeps three complementary detailed records so future development does not depend on chat history:
+1. [`README.md`](README.md) — product identity and authority philosophy.
+2. [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md) — 25B–34B.
+3. [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md) — 35A–36D.
+4. [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md) — 37A–38F.
+5. [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md) — 39A–40D / D205, the current implemented frontier.
+
+Then open the relevant milestone-specific document and implementation/tests for the decision being changed. The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architectural boundaries and detailed evolution
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — normative implementation decisions
 - [`docs/DEVELOPMENT_ARCHIVE.md`](docs/DEVELOPMENT_ARCHIVE.md) — development history, learned logic, prototype lessons, current gaps, and foreseeable implementation path
 
-Later milestone documents remain the narrow proof trail for changes not safely foldable into the large central files through the current GitHub connector.
+The large central documents contain intentionally preserved historical status language. Treat implementation + tests + milestone records as stronger authority than compact continuity summaries, and compact continuity summaries as stronger orientation than stale historical presentation wording.
 
-## Status
+## Historical detailed status snapshot — through Milestone 18C / D137
+
+The following paragraph is retained as the original detailed status snapshot rather than rewritten into a second competing milestone history.
 
 Pyxis is proven through Milestone 18C / D137: Repository Zero retains the compiler/runtime/revision/export lifecycle, interactive evidence UI, descriptive measurement pipeline, live measurement provenance/invalidation/re-entry path, two concrete governed architecture operations, shared private architecture orchestration, preview-only architecture consequence trace, distinct post-Apply proposed-vs-observed reconciliation, and bounded Python 3.11–3.14 release contract. The browser-facing product has seven real read-only evidence families over explicitly addressable existing Chromium pages, one application-level research bundle that composes those families through fixed sequential acquisition with exact target/URL coherence while explicitly denying atomic-DOM semantics, one deterministic no-overwrite capture format that preserves the complete already-observed bundle with SHA-256 self-integrity evidence, one verified rehydration boundary that can reconstruct the typed bundle after the browser is gone while retaining the exact capture-verification evidence, one human-owned paragraph-selection boundary that points to exact already-returned durable evidence without reacquisition or semantic promotion, one human-authored paragraph-note boundary that preserves exact caller text over the exact selection while keeping interpretation distinct from source evidence, one deterministic paragraph-note sidecar that preserves only the durable source-content reference + human action without duplicating source evidence or claiming authorship, one verified paragraph-note relinking boundary that reconstructs that exact human action against an explicit matching loaded capture without source discovery, path identity, bounded-evidence expansion, or authenticity promotion, one exact paragraph-text refinement boundary that records explicit Unicode code-point coordinates over already-returned text while deriving rather than duplicating selected source text, one exact-range human-note boundary that preserves verbatim human interpretation over the exact range while reusing 18A validation and adding no semantic or epistemic promotion, and one deterministic exact-range-note sidecar that preserves only durable source-content identity + explicit paragraph/range coordinates + verbatim human text while refusing to treat file integrity as proof of source-range validity.
 
