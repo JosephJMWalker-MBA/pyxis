@@ -26,8 +26,11 @@ from .chromium_research_cumulative_checkpoint_promotion_textual import (
     _CumulativeCheckpointPromotionSpec,
     _promote_cumulative_checkpoint_surface,
 )
+from .chromium_research_cumulative_checkpoint_rollover_textual import (
+    _CumulativeCheckpointRolloverMountSpec,
+    _mount_cumulative_checkpoint_after_rollover,
+)
 from .chromium_research_endpoint_revision_textual import ResearchEndpointRevisionControls
-from .chromium_research_session_restart_plan_textual import ResearchSessionRestartPlanControls
 from .chromium_research_session_rollover_textual import ResearchSessionRolloverControls
 from .chromium_research_third_basis_epoch_continuation_checkpoint_extension_textual import (
     ThirdBasisEpochResearchSessionCumulativeCheckpointControls,
@@ -50,6 +53,18 @@ _THIRD_BASIS_EPOCH_CUMULATIVE_PROMOTION = _CumulativeCheckpointPromotionSpec(
     ),
     context_cardinality_error=(
         "Fresh cumulative third-epoch session must contain one context per declared position."
+    ),
+)
+
+_THIRD_BASIS_EPOCH_CUMULATIVE_ROLLOVER = _CumulativeCheckpointRolloverMountSpec(
+    stale_success_receipt_selector=(
+        "#research-third-basis-epoch-cumulative-checkpoint-success-receipt"
+    ),
+    retained_rollover_error=(
+        "Base research shell did not retain the exact cumulative third-epoch rollover."
+    ),
+    restart_plan_error=(
+        "Cumulative third-epoch shell must not mount ordinary restart-plan controls."
     ),
 )
 
@@ -301,38 +316,19 @@ class ThirdBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
     ) -> None:
         current_reentry = self.third_basis_epoch_continuation_reentry
         await super()._mount_research_rollover(result)
-        if self.last_research_rollover is not result:
-            raise ValueError(
-                "Base research shell did not retain the exact cumulative third-epoch rollover."
+
+        def create_checkpoint_controls(current, rollover):
+            return ThirdBasisEpochResearchSessionCumulativeCheckpointControls(
+                current,
+                rollover,
             )
-        if len(self.query("#research-third-basis-epoch-cumulative-checkpoint-success-receipt")):
-            await self.query_one(
-                "#research-third-basis-epoch-cumulative-checkpoint-success-receipt",
-                Static,
-            ).remove()
-        if len(self.query(ResearchSessionRestartPlanControls)):
-            raise ValueError(
-                "Cumulative third-epoch shell must not mount ordinary restart-plan controls."
-            )
-        unlocked_revision = self.query_one(
-            "#research-endpoint-revision-controls",
-            ResearchEndpointRevisionControls,
-        )
-        empty_rollover = self.query_one(
-            "#research-session-rollover-controls",
-            ResearchSessionRolloverControls,
-        )
-        await unlocked_revision.remove()
-        await empty_rollover.remove()
-        await self.mount(
-            ResearchEndpointRevisionControls(restart_checkpoint_required=True)
-        )
-        await self.mount(ResearchSessionRolloverControls())
-        await self.mount(
-            ThirdBasisEpochResearchSessionCumulativeCheckpointControls(
-                current_reentry,
-                result,
-            )
+
+        await _mount_cumulative_checkpoint_after_rollover(
+            self,
+            current_reentry=current_reentry,
+            rollover=result,
+            spec=_THIRD_BASIS_EPOCH_CUMULATIVE_ROLLOVER,
+            create_checkpoint_controls=create_checkpoint_controls,
         )
 
     async def _save_third_basis_epoch_cumulative_checkpoint(self) -> None:
