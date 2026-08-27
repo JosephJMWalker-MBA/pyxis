@@ -33,6 +33,12 @@ def _record_kernel_calls(monkeypatch, module):
     return calls
 
 
+def _fixture_directory(tmp_path: Path, name: str) -> Path:
+    destination = tmp_path / name
+    destination.mkdir(parents=True, exist_ok=False)
+    return destination
+
+
 def test_all_three_concrete_extension_families_execute_through_private_kernel(
     tmp_path: Path,
     monkeypatch,
@@ -41,9 +47,18 @@ def test_all_three_concrete_extension_families_execute_through_private_kernel(
     second_calls = _record_kernel_calls(monkeypatch, second_module)
     third_calls = _record_kernel_calls(monkeypatch, third_module)
 
-    root_values = _persist_root_extension(tmp_path / "root", stem="43a-root")
-    second_values = _persist_second_extension(tmp_path / "second", stem="43a-second")
-    third_values = _persist_third_extension(tmp_path / "third", stem="43a-third")
+    root_values = _persist_root_extension(
+        _fixture_directory(tmp_path, "root"),
+        stem="43a-root",
+    )
+    second_values = _persist_second_extension(
+        _fixture_directory(tmp_path, "second"),
+        stem="43a-second",
+    )
+    third_values = _persist_third_extension(
+        _fixture_directory(tmp_path, "third"),
+        stem="43a-third",
+    )
 
     assert root_calls == [root_module._ADAPTER]
     assert second_calls == [second_module._ADAPTER]
