@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from textual.app import ComposeResult
-from textual.containers import Vertical
-from textual.widgets import Button, Input, Static
-
 from pyxis.app.chromium_research_second_basis_epoch_continuation_checkpoint_extension import (
     ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult,
 )
@@ -11,6 +7,11 @@ from pyxis.app.chromium_research_second_basis_epoch_continuation_reentry_plan_do
     ChromiumResearchSecondBasisEpochContinuationReentryResult,
 )
 from pyxis.app.chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
+
+from .chromium_research_cumulative_checkpoint_textual import (
+    _CumulativeCheckpointTextualControls,
+    _CumulativeCheckpointTextualSpec,
+)
 
 
 SECOND_BASIS_EPOCH_CUMULATIVE_CHECKPOINT_AUTHORITY_NOTICE = (
@@ -55,7 +56,68 @@ def second_basis_epoch_cumulative_checkpoint_success_receipt(
     )
 
 
-class SecondBasisEpochResearchSessionCumulativeCheckpointControls(Vertical):
+_SPEC = _CumulativeCheckpointTextualSpec(
+    controls_id="research-second-basis-epoch-cumulative-checkpoint-controls",
+    title="Checkpoint cumulative post-second-root continuation",
+    title_id="research-second-basis-epoch-cumulative-checkpoint-title",
+    authority_notice=SECOND_BASIS_EPOCH_CUMULATIVE_CHECKPOINT_AUTHORITY_NOTICE,
+    authority_notice_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-authority-notice"
+    ),
+    candidate_id="research-second-basis-epoch-cumulative-checkpoint-candidate",
+    current_overlay_label=(
+        "Current durable file for the exact current 37C/37D continuation overlay"
+    ),
+    current_overlay_label_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-current-overlay-source-label"
+    ),
+    current_overlay_placeholder="Explicit current 37C/37D overlay path",
+    current_overlay_input_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-current-overlay-source"
+    ),
+    successor_label="Current durable file for the exact chosen successor",
+    successor_label_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-successor-source-label"
+    ),
+    successor_placeholder="Explicit current chosen successor edge path",
+    successor_input_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-successor-source"
+    ),
+    declaration_label=(
+        "No-overwrite destination for the new cumulative post-second-root declaration"
+    ),
+    declaration_label_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-declaration-destination-label"
+    ),
+    declaration_placeholder="Explicit cumulative declaration destination",
+    declaration_input_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-declaration-destination"
+    ),
+    overlay_label=(
+        "No-overwrite destination for the next 37C/37D continuation overlay"
+    ),
+    overlay_label_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-overlay-destination-label"
+    ),
+    overlay_placeholder="Explicit next continuation overlay destination",
+    overlay_input_id=(
+        "research-second-basis-epoch-cumulative-checkpoint-overlay-destination"
+    ),
+    save_label="Save proven cumulative second-epoch continuation checkpoint",
+    save_button_id="save-research-second-basis-epoch-cumulative-checkpoint",
+    pending_status=(
+        "Further revision remains locked until a fresh cumulative checkpoint succeeds."
+    ),
+    status_id="research-second-basis-epoch-cumulative-checkpoint-status",
+)
+
+
+class SecondBasisEpochResearchSessionCumulativeCheckpointControls(
+    _CumulativeCheckpointTextualControls[
+        ChromiumResearchSecondBasisEpochContinuationReentryResult,
+        ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult,
+    ]
+):
     """Blank explicit inputs for one governed cumulative 37D checkpoint."""
 
     def __init__(
@@ -72,69 +134,12 @@ class SecondBasisEpochResearchSessionCumulativeCheckpointControls(Vertical):
             )
         if not isinstance(rollover, ChromiumResearchSessionRolloverResult):
             raise TypeError("rollover must be ChromiumResearchSessionRolloverResult.")
-        super().__init__(id="research-second-basis-epoch-cumulative-checkpoint-controls")
-        self.current_reentry = current_reentry
-        self.rollover = rollover
-        self.persistence_result: (
-            ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult | None
-        ) = None
-
-    def compose(self) -> ComposeResult:
-        yield Static(
-            "Checkpoint cumulative post-second-root continuation",
-            id="research-second-basis-epoch-cumulative-checkpoint-title",
-        )
-        yield Static(
-            SECOND_BASIS_EPOCH_CUMULATIVE_CHECKPOINT_AUTHORITY_NOTICE,
-            id="research-second-basis-epoch-cumulative-checkpoint-authority-notice",
-            markup=False,
-        )
-        yield Static(
-            _candidate_receipt(self.current_reentry, self.rollover),
-            id="research-second-basis-epoch-cumulative-checkpoint-candidate",
-            markup=False,
-        )
-        yield Static(
-            "Current durable file for the exact current 37C/37D continuation overlay",
-            id="research-second-basis-epoch-cumulative-checkpoint-current-overlay-source-label",
-        )
-        yield Input(
-            placeholder="Explicit current 37C/37D overlay path",
-            id="research-second-basis-epoch-cumulative-checkpoint-current-overlay-source",
-        )
-        yield Static(
-            "Current durable file for the exact chosen successor",
-            id="research-second-basis-epoch-cumulative-checkpoint-successor-source-label",
-        )
-        yield Input(
-            placeholder="Explicit current chosen successor edge path",
-            id="research-second-basis-epoch-cumulative-checkpoint-successor-source",
-        )
-        yield Static(
-            "No-overwrite destination for the new cumulative post-second-root declaration",
-            id="research-second-basis-epoch-cumulative-checkpoint-declaration-destination-label",
-        )
-        yield Input(
-            placeholder="Explicit cumulative declaration destination",
-            id="research-second-basis-epoch-cumulative-checkpoint-declaration-destination",
-        )
-        yield Static(
-            "No-overwrite destination for the next 37C/37D continuation overlay",
-            id="research-second-basis-epoch-cumulative-checkpoint-overlay-destination-label",
-        )
-        yield Input(
-            placeholder="Explicit next continuation overlay destination",
-            id="research-second-basis-epoch-cumulative-checkpoint-overlay-destination",
-        )
-        yield Button(
-            "Save proven cumulative second-epoch continuation checkpoint",
-            id="save-research-second-basis-epoch-cumulative-checkpoint",
-            variant="warning",
-        )
-        yield Static(
-            "Further revision remains locked until a fresh cumulative checkpoint succeeds.",
-            id="research-second-basis-epoch-cumulative-checkpoint-status",
-            markup=False,
+        super().__init__(
+            current_reentry,
+            rollover,
+            spec=_SPEC,
+            candidate_receipt=_candidate_receipt(current_reentry, rollover),
+            success_receipt=second_basis_epoch_cumulative_checkpoint_success_receipt,
         )
 
     def lock_after_success(
@@ -143,38 +148,19 @@ class SecondBasisEpochResearchSessionCumulativeCheckpointControls(Vertical):
     ) -> None:
         """Lock the old one-hop checkpoint form before its surface is promoted away."""
 
-        if not isinstance(
+        self._lock_cumulative_checkpoint_after_success(
             result,
-            ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult,
-        ):
-            raise TypeError(
+            result_type=ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult,
+            result_type_error=(
                 "result must be ChromiumResearchSecondBasisEpochContinuationCheckpointExtensionResult."
-            )
-        if result.current_reentry is not self.current_reentry:
-            raise ValueError(
+            ),
+            current_identity_error=(
                 "Cumulative second-epoch checkpoint result does not retain this form's exact current re-entry."
-            )
-        if result.rollover is not self.rollover:
-            raise ValueError(
+            ),
+            rollover_identity_error=(
                 "Cumulative second-epoch checkpoint result does not retain this form's exact rollover."
-            )
-
-        self.persistence_result = result
-        for selector in (
-            "#research-second-basis-epoch-cumulative-checkpoint-current-overlay-source",
-            "#research-second-basis-epoch-cumulative-checkpoint-successor-source",
-            "#research-second-basis-epoch-cumulative-checkpoint-declaration-destination",
-            "#research-second-basis-epoch-cumulative-checkpoint-overlay-destination",
-        ):
-            self.query_one(selector, Input).disabled = True
-        self.query_one(
-            "#save-research-second-basis-epoch-cumulative-checkpoint",
-            Button,
-        ).disabled = True
-        self.query_one(
-            "#research-second-basis-epoch-cumulative-checkpoint-status",
-            Static,
-        ).update(second_basis_epoch_cumulative_checkpoint_success_receipt(result))
+            ),
+        )
 
 
 __all__ = [
