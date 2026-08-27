@@ -48,6 +48,22 @@ from pyxis.app.chromium_research_session_reentry import (
 from pyxis.app.chromium_research_session_reentry_plan_document import (
     load_chromium_research_session_reentry_plan_document,
 )
+from pyxis.app.chromium_research_third_basis_epoch_continuation_reentry_plan_document import (
+    load_chromium_research_third_basis_epoch_continuation_reentry_plan_document,
+    reenter_chromium_research_third_basis_epoch_continuation,
+)
+from pyxis.app.chromium_research_third_basis_epoch_reentry import (
+    reenter_chromium_research_third_basis_epoch,
+)
+from pyxis.app.chromium_research_third_basis_epoch_reentry_plan_document import (
+    load_chromium_research_third_basis_epoch_reentry_plan_document,
+)
+from pyxis.app.chromium_research_third_basis_epoch_shell_lineage import (
+    ChromiumResearchThirdBasisEpochContinuationShellLineage,
+    ChromiumResearchThirdBasisEpochShellLineage,
+    prove_chromium_research_third_basis_epoch_continuation_shell_lineage,
+    prove_chromium_research_third_basis_epoch_shell_lineage,
+)
 from pyxis.authoring import create_workspace_spec
 
 
@@ -128,6 +144,22 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help=(
             "Explicit 37C/37D post-second-root continuation overlay. The overlay is "
+            "operational configuration, not evidence or a head pointer."
+        ),
+    )
+    entry.add_argument(
+        "--third-basis-epoch-overlay",
+        type=Path,
+        help=(
+            "Explicit 40B third-basis-epoch locator overlay. The overlay is "
+            "operational configuration, not evidence or a head pointer."
+        ),
+    )
+    entry.add_argument(
+        "--third-basis-epoch-continuation-overlay",
+        type=Path,
+        help=(
+            "Explicit 40C/40D post-third-root continuation overlay. The overlay is "
             "operational configuration, not evidence or a head pointer."
         ),
     )
@@ -273,6 +305,40 @@ def _load_second_basis_epoch_continuation_handoff_research_shell_factory():
     return create_inspectable_second_basis_epoch_continuation_handoff_research_session_shell
 
 
+def _load_third_basis_epoch_research_shell_factory():
+    """Lazily import the lineage-retaining 40B Textual shell factory."""
+
+    try:
+        from pyxis.ui.third_basis_epoch_research_session_shell import (
+            create_third_basis_epoch_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_third_basis_epoch_research_session_shell
+
+
+def _load_third_basis_epoch_continuation_research_shell_factory():
+    """Lazily import the lineage-retaining 40C/40D Textual shell factory."""
+
+    try:
+        from pyxis.ui.third_basis_epoch_research_session_shell import (
+            create_third_basis_epoch_continuation_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_third_basis_epoch_continuation_research_session_shell
+
+
 def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -> None:
     """Run one exact ordinary re-entry-aware research shell."""
 
@@ -380,6 +446,35 @@ def _run_second_basis_epoch_continuation_handoff_research_session_shell(
     create_shell(reentry).run()
 
 
+def _run_third_basis_epoch_research_session_shell(
+    lineage: ChromiumResearchThirdBasisEpochShellLineage,
+) -> None:
+    """Run one proven 40B launch lineage without adding checkpoint authority."""
+
+    create_shell = _load_third_basis_epoch_research_shell_factory()
+    if not isinstance(lineage, ChromiumResearchThirdBasisEpochShellLineage):
+        raise TypeError(
+            "lineage must be ChromiumResearchThirdBasisEpochShellLineage."
+        )
+    create_shell(lineage).run()
+
+
+def _run_third_basis_epoch_continuation_research_session_shell(
+    lineage: ChromiumResearchThirdBasisEpochContinuationShellLineage,
+) -> None:
+    """Run one proven 40C/40D launch lineage without adding checkpoint authority."""
+
+    create_shell = _load_third_basis_epoch_continuation_research_shell_factory()
+    if not isinstance(
+        lineage,
+        ChromiumResearchThirdBasisEpochContinuationShellLineage,
+    ):
+        raise TypeError(
+            "lineage must be ChromiumResearchThirdBasisEpochContinuationShellLineage."
+        )
+    create_shell(lineage).run()
+
+
 def _run_controller_only_research_session_shell(
     controller: ChromiumResearchSessionController,
 ) -> None:
@@ -444,6 +539,30 @@ def _run_research_shell_command(
                 )
             )
             _run_second_basis_epoch_continuation_research_session_shell(lineage)
+        elif args.third_basis_epoch_overlay is not None:
+            plan = load_chromium_research_third_basis_epoch_reentry_plan_document(
+                args.third_basis_epoch_overlay
+            )
+            result = reenter_chromium_research_third_basis_epoch(plan)
+            lineage = prove_chromium_research_third_basis_epoch_shell_lineage(
+                result,
+                overlay_source=args.third_basis_epoch_overlay,
+            )
+            _run_third_basis_epoch_research_session_shell(lineage)
+        elif args.third_basis_epoch_continuation_overlay is not None:
+            plan = (
+                load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
+                    args.third_basis_epoch_continuation_overlay
+                )
+            )
+            result = reenter_chromium_research_third_basis_epoch_continuation(plan)
+            lineage = (
+                prove_chromium_research_third_basis_epoch_continuation_shell_lineage(
+                    result,
+                    overlay_source=args.third_basis_epoch_continuation_overlay,
+                )
+            )
+            _run_third_basis_epoch_continuation_research_session_shell(lineage)
         else:
             raise ValueError("research-shell requires one explicit entry configuration.")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
