@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Generic, TypeVar
 
 from textual.app import ComposeResult
@@ -13,6 +14,16 @@ from pyxis.app.chromium_research_session_rollover import ChromiumResearchSession
 
 ReentryT = TypeVar("ReentryT")
 ResultT = TypeVar("ResultT")
+
+
+@dataclass(frozen=True, slots=True)
+class _CumulativeCheckpointPathSubmission:
+    """Four explicit paths entered into one cumulative checkpoint form."""
+
+    current_overlay_source: Path
+    successor_edge_source: Path
+    cumulative_declaration_destination: Path
+    next_overlay_destination: Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,8 +72,9 @@ class _CumulativeCheckpointTextualControls(Vertical, Generic[ReentryT, ResultT])
 
     The base knows no root count, epoch, milestone, persistence format, or ancestry
     semantics. Concrete public controls retain their exact type checks, wording,
-    selectors, and receipt functions. This base owns only composition of four blank
-    explicit path inputs and post-success locking of the old form.
+    selectors, and receipt functions. This base owns composition of four blank
+    explicit path inputs, explicit path submission collection, and post-success
+    locking of the old form.
     """
 
     def __init__(
@@ -124,6 +136,43 @@ class _CumulativeCheckpointTextualControls(Vertical, Generic[ReentryT, ResultT])
             spec.pending_status,
             id=spec.status_id,
             markup=False,
+        )
+
+    def _collect_cumulative_checkpoint_path_submission(
+        self,
+        *,
+        current_overlay_required: str,
+        successor_required: str,
+        declaration_required: str,
+        next_overlay_required: str,
+    ) -> _CumulativeCheckpointPathSubmission | None:
+        """Read four explicit paths without interpreting or proving their authority."""
+
+        spec = self._cumulative_checkpoint_spec
+        status = self.query_one(f"#{spec.status_id}", Static)
+        current_overlay = self.query_one(f"#{spec.current_overlay_input_id}", Input)
+        successor = self.query_one(f"#{spec.successor_input_id}", Input)
+        declaration = self.query_one(f"#{spec.declaration_input_id}", Input)
+        next_overlay = self.query_one(f"#{spec.overlay_input_id}", Input)
+
+        if not current_overlay.value.strip():
+            status.update(current_overlay_required)
+            return None
+        if not successor.value.strip():
+            status.update(successor_required)
+            return None
+        if not declaration.value.strip():
+            status.update(declaration_required)
+            return None
+        if not next_overlay.value.strip():
+            status.update(next_overlay_required)
+            return None
+
+        return _CumulativeCheckpointPathSubmission(
+            current_overlay_source=Path(current_overlay.value),
+            successor_edge_source=Path(successor.value),
+            cumulative_declaration_destination=Path(declaration.value),
+            next_overlay_destination=Path(next_overlay.value),
         )
 
     def _lock_cumulative_checkpoint_after_success(
