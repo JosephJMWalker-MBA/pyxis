@@ -23,6 +23,10 @@ from .first_changed_basis_root_edge_research_session_shell import (
     FirstChangedBasisRootEdgeResearchSessionShell,
     create_first_changed_basis_root_edge_research_session_shell,
 )
+from .first_changed_basis_session_adoption_research_session_shell import (
+    FirstChangedBasisSessionAdoptionResearchSessionShell,
+    create_first_changed_basis_session_adoption_research_session_shell,
+)
 from .research_workspace_shell import (
     WorkspaceShell,
     create_workspace_shell,
@@ -33,6 +37,7 @@ __all__ = [
     "FirstChangedBasisResearchSessionShell",
     "FirstChangedBasisRootEdgeResearchSessionShell",
     "FirstChangedBasisRootResearchSessionShell",
+    "FirstChangedBasisSessionAdoptionResearchSessionShell",
     "MeasurementSummaryDetail",
     "MeasurementSummaryShell",
     "ResearchSessionShell",
@@ -41,6 +46,7 @@ __all__ = [
     "create_first_changed_basis_research_session_shell",
     "create_first_changed_basis_root_edge_research_session_shell",
     "create_first_changed_basis_root_research_session_shell",
+    "create_first_changed_basis_session_adoption_research_session_shell",
     "create_measurement_summary_shell",
     "create_research_session_shell",
     "create_workspace_shell",
