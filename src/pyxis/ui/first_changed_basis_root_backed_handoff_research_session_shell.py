@@ -74,11 +74,12 @@ class FirstChangedBasisRootBackedHandoffResearchSessionShell(
             raise TypeError(
                 "44G checkpoint fresh re-entry must be a root-backed session re-entry result."
             )
-        if len(shell_notice := self.query("#research-first-changed-basis-root-backed-handoff-notice")):
+        if len(
+            self.query("#research-first-changed-basis-root-backed-handoff-notice")
+        ) != 0:
             raise ValueError(
                 "44H handoff controls are already mounted after successful 44G persistence."
             )
-        del shell_notice
 
         await self.mount(
             Static(
