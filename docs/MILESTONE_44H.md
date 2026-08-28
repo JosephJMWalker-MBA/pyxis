@@ -84,6 +84,31 @@ Only pressing that button exits the Textual application with the exact retained 
 
 Normal close remains a valid non-handoff choice.
 
+## Product runner closes the handoff loop
+
+Returning a typed object from the 44H shell is necessary but is not by itself a complete product transition.
+
+44H therefore also exposes one narrow UI-level runner:
+
+```text
+run_first_changed_basis_root_backed_handoff_research_session_shell(...)
+```
+
+Its behavior is exactly:
+
+```text
+run 44H shell
+→ None on normal close: stop
+→ exact ChromiumResearchRootBackedSessionReentryResult on explicit handoff
+→ validate exact result family
+→ pass that same object to create_root_backed_research_session_shell(...)
+→ run the existing RootBackedResearchSessionShell
+```
+
+The runner does not inspect or reopen the persisted 35C overlay. It receives no overlay path argument and owns no persistence or ancestry proof.
+
+This orchestration seam is the product act of “continue immediately”; the button press remains the authority that permits it.
+
 ## No overlay reload
 
 44H performs no persistence, decode, file read, locator proof, directory search, digest search, format guessing, or overlay reconstruction.
@@ -117,7 +142,7 @@ That existing product remains authoritative for:
 - the first 35D continuation checkpoint; and
 - the later explicit 36D cumulative handoff.
 
-44H adds only the typed bridge from the first changed-basis authoring flow into that established product family.
+44H adds only the typed bridge and narrow runner from the first changed-basis authoring flow into that established product family.
 
 ## Historical-target behavior
 
@@ -131,7 +156,7 @@ That explicit button press is the branch-changing authority.
 
 It is not described as discovery of the latest, current, preferred, or canonical branch.
 
-If the researcher does not press the button, no handoff occurs.
+If the researcher does not press the button, no handoff occurs and the product runner launches no receiver.
 
 ## Textual dispatch boundary
 
@@ -150,7 +175,7 @@ Internal prior art is decisive:
 - 44G / D224 owns exact 35C persistence and retains `checkpoint.fresh_reentry`;
 - `RootBackedResearchSessionShell` already owns receiving root-backed behavior.
 
-44H therefore introduces no new persistence, replay, ancestry, orchestration, or restart schema.
+44H therefore introduces no new persistence, replay, ancestry, restart schema, or generic orchestration subsystem. Its runner is bounded to this exact proven product transition.
 
 Conclusion remains:
 
@@ -169,16 +194,20 @@ Focused 44H coverage proves:
 7. the handoff does not return the earlier 44F fresh object merely because it describes equivalent durable state;
 8. deleting the just-written overlay after successful 44G persistence does not prevent the typed in-process handoff;
 9. the existing `RootBackedResearchSessionShell` accepts and retains that exact object and exposes its established revision/rollover surface;
-10. after a later mounted rollover, explicit 44H handoff still returns the historical 44G/35C target rather than the later mounted controller; and
-11. a plain 44G shell never gains 44H controls.
+10. after a later mounted rollover, explicit 44H handoff still returns the historical 44G/35C target rather than the later mounted controller;
+11. a plain 44G shell never gains 44H controls;
+12. the 44H runner passes the exact returned typed object directly into the existing root-backed shell and runs that receiver;
+13. normal close returns `None` and launches no receiver; and
+14. an untyped 44H shell return is rejected before receiver launch.
 
 ## Scope
 
-44H adds only:
+44H changes only:
 
 - `src/pyxis/ui/first_changed_basis_root_backed_handoff_research_session_shell.py`;
-- narrow `pyxis.ui` export;
-- focused mounted-UI/integration tests; and
+- narrow `pyxis.ui` exports;
+- focused mounted-UI/integration tests;
+- focused product-runner tests; and
 - this milestone document.
 
 44H does not change:
@@ -190,6 +219,7 @@ Focused 44H coverage proves:
 - cumulative root-backed shells;
 - second- or third-epoch shells;
 - CLI locator syntax;
+- application-layer persistence or reconstruction;
 - browser behavior;
 - persistence formats; or
 - evidence formats.
@@ -198,4 +228,4 @@ Focused 44H coverage proves:
 
 Successful 44H establishes only:
 
-> After one exact successful 44G persistence, the researcher may explicitly transfer the exact freshly proven 35C `ChromiumResearchRootBackedSessionReentryResult` from the current changed-basis shell into the already-established root-backed product family without reloading the persisted overlay, promoting its path to current authority, automatically changing modes at persistence time, discovering a branch, or creating global latest/current/head authority.
+> After one exact successful 44G persistence, the researcher may explicitly transfer the exact freshly proven 35C `ChromiumResearchRootBackedSessionReentryResult` from the current changed-basis shell into the already-established root-backed product family, and the bounded 44H runner can launch that existing receiver with the exact typed object, without reloading the persisted overlay, promoting its path to current authority, automatically changing modes at persistence time, discovering a branch, or creating global latest/current/head authority.
