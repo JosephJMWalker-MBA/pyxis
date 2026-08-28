@@ -27,6 +27,10 @@ from .first_changed_basis_session_adoption_research_session_shell import (
     FirstChangedBasisSessionAdoptionResearchSessionShell,
     create_first_changed_basis_session_adoption_research_session_shell,
 )
+from .first_changed_basis_root_backed_reentry_research_session_shell import (
+    FirstChangedBasisRootBackedReentryResearchSessionShell,
+    create_first_changed_basis_root_backed_reentry_research_session_shell,
+)
 from .research_workspace_shell import (
     WorkspaceShell,
     create_workspace_shell,
@@ -35,6 +39,7 @@ from .research_workspace_shell import (
 __all__ = [
     "ArchitecturePreviewDetail",
     "FirstChangedBasisResearchSessionShell",
+    "FirstChangedBasisRootBackedReentryResearchSessionShell",
     "FirstChangedBasisRootEdgeResearchSessionShell",
     "FirstChangedBasisRootResearchSessionShell",
     "FirstChangedBasisSessionAdoptionResearchSessionShell",
@@ -44,6 +49,7 @@ __all__ = [
     "WorkspaceDetail",
     "WorkspaceShell",
     "create_first_changed_basis_research_session_shell",
+    "create_first_changed_basis_root_backed_reentry_research_session_shell",
     "create_first_changed_basis_root_edge_research_session_shell",
     "create_first_changed_basis_root_research_session_shell",
     "create_first_changed_basis_session_adoption_research_session_shell",
