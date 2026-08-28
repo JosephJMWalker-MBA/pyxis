@@ -18,6 +18,12 @@ from pyxis.app.chromium_research_root_backed_session_reentry import (
 from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
     load_chromium_research_root_backed_session_reentry_plan_document,
 )
+from pyxis.app.chromium_research_root_backed_session_shell_lineage import (
+    ChromiumResearchRootBackedSessionContinuationShellLineage,
+    ChromiumResearchRootBackedSessionShellLineage,
+    prove_chromium_research_root_backed_session_continuation_shell_lineage,
+    prove_chromium_research_root_backed_session_shell_lineage,
+)
 from pyxis.app.chromium_research_second_basis_epoch_authority_inspection import (
     inspect_chromium_research_second_basis_epoch_continuation_launch,
     inspect_chromium_research_second_basis_epoch_launch,
@@ -245,11 +251,11 @@ def _load_research_shell_factory():
 
 
 def _load_root_backed_research_shell_factory():
-    """Lazily import the optional first-checkpoint-aware 35B Textual shell factory."""
+    """Lazily import the inspectable path-proofed 35C Textual shell factory."""
 
     try:
-        from pyxis.ui.root_backed_research_session_shell import (
-            create_root_backed_research_session_shell,
+        from pyxis.ui.root_backed_authority_inspection_shell import (
+            create_inspectable_root_backed_research_session_shell,
         )
     except ModuleNotFoundError as exc:
         if exc.name == "textual":
@@ -258,15 +264,15 @@ def _load_root_backed_research_shell_factory():
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
-    return create_root_backed_research_session_shell
+    return create_inspectable_root_backed_research_session_shell
 
 
 def _load_root_backed_continuation_research_shell_factory():
-    """Lazily import the optional repeatable 35D/35E Textual shell factory."""
+    """Lazily import the inspectable path-proofed 35D/35E Textual shell factory."""
 
     try:
-        from pyxis.ui.root_backed_continuation_research_session_shell import (
-            create_root_backed_continuation_research_session_shell,
+        from pyxis.ui.root_backed_authority_inspection_shell import (
+            create_inspectable_root_backed_continuation_research_session_shell,
         )
     except ModuleNotFoundError as exc:
         if exc.name == "textual":
@@ -275,7 +281,24 @@ def _load_root_backed_continuation_research_shell_factory():
                 "install with: pip install 'pyxis[ui]'"
             ) from exc
         raise
-    return create_root_backed_continuation_research_session_shell
+    return create_inspectable_root_backed_continuation_research_session_shell
+
+
+def _load_root_backed_continuation_handoff_research_shell_factory():
+    """Lazily import the inspectable raw-typed in-process 36D cumulative shell factory."""
+
+    try:
+        from pyxis.ui.root_backed_authority_inspection_shell import (
+            create_inspectable_root_backed_continuation_handoff_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell requires the optional Pyxis UI dependency; "
+                "install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return create_inspectable_root_backed_continuation_handoff_research_session_shell
 
 
 def _load_second_basis_epoch_research_shell_factory():
@@ -394,16 +417,16 @@ def _run_research_session_shell(reentry: ChromiumResearchSessionReentryResult) -
 
 
 def _run_root_backed_research_session_shell(
-    reentry: ChromiumResearchRootBackedSessionReentryResult,
+    lineage: ChromiumResearchRootBackedSessionShellLineage,
 ) -> ChromiumResearchRootBackedSessionContinuationReentryResult | None:
-    """Run first-checkpoint shell and return only an explicit typed 36D handoff."""
+    """Run one path-proofed persisted 35C launch and return only explicit 36D handoff."""
 
-    create_root_backed_research_session_shell = _load_root_backed_research_shell_factory()
-    if not isinstance(reentry, ChromiumResearchRootBackedSessionReentryResult):
+    create_shell = _load_root_backed_research_shell_factory()
+    if not isinstance(lineage, ChromiumResearchRootBackedSessionShellLineage):
         raise TypeError(
-            "reentry must be ChromiumResearchRootBackedSessionReentryResult."
+            "lineage must be ChromiumResearchRootBackedSessionShellLineage."
         )
-    handoff = create_root_backed_research_session_shell(reentry).run()
+    handoff = create_shell(lineage).run()
     if handoff is None:
         return None
     if not isinstance(
@@ -417,11 +440,24 @@ def _run_root_backed_research_session_shell(
 
 
 def _run_root_backed_continuation_research_session_shell(
-    reentry: ChromiumResearchRootBackedSessionContinuationReentryResult,
+    lineage: ChromiumResearchRootBackedSessionContinuationShellLineage,
 ) -> None:
-    """Run one exact 35D/35E lineage through the cumulative-checkpoint shell."""
+    """Run one path-proofed persisted 35D/35E launch lineage."""
 
     create_shell = _load_root_backed_continuation_research_shell_factory()
+    if not isinstance(lineage, ChromiumResearchRootBackedSessionContinuationShellLineage):
+        raise TypeError(
+            "lineage must be ChromiumResearchRootBackedSessionContinuationShellLineage."
+        )
+    create_shell(lineage).run()
+
+
+def _run_root_backed_continuation_handoff_research_session_shell(
+    reentry: ChromiumResearchRootBackedSessionContinuationReentryResult,
+) -> None:
+    """Run cumulative mode directly from one exact in-process 36D typed handoff."""
+
+    create_shell = _load_root_backed_continuation_handoff_research_shell_factory()
     if not isinstance(
         reentry,
         ChromiumResearchRootBackedSessionContinuationReentryResult,
@@ -567,9 +603,13 @@ def _run_research_shell_command(
                 args.root_backed_overlay
             )
             result = reenter_chromium_research_root_backed_session(plan)
-            handoff = _run_root_backed_research_session_shell(result)
+            lineage = prove_chromium_research_root_backed_session_shell_lineage(
+                result,
+                overlay_source=args.root_backed_overlay,
+            )
+            handoff = _run_root_backed_research_session_shell(lineage)
             if handoff is not None:
-                _run_root_backed_continuation_research_session_shell(handoff)
+                _run_root_backed_continuation_handoff_research_session_shell(handoff)
         elif args.root_backed_continuation_overlay is not None:
             plan = (
                 load_chromium_research_root_backed_session_continuation_reentry_plan_document(
@@ -577,7 +617,11 @@ def _run_research_shell_command(
                 )
             )
             result = reenter_chromium_research_root_backed_session_continuation(plan)
-            _run_root_backed_continuation_research_session_shell(result)
+            lineage = prove_chromium_research_root_backed_session_continuation_shell_lineage(
+                result,
+                overlay_source=args.root_backed_continuation_overlay,
+            )
+            _run_root_backed_continuation_research_session_shell(lineage)
         elif args.second_basis_epoch_overlay is not None:
             plan = load_chromium_research_second_basis_epoch_reentry_plan_document(
                 args.second_basis_epoch_overlay
