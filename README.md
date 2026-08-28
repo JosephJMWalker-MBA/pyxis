@@ -5,7 +5,7 @@ Pyxis is an **evidence-first Python research system** with two proven, connected
 1. a transparent architecture-to-code compiler/runtime that keeps human intent, canonical state, generated products, runtime evidence, revisions, and export boundaries inspectable; and
 2. a read-only Chromium research workflow that preserves observation, human selection, comparison, rationale, and revision history without silently promoting any layer into stronger authority.
 
-## Current status — through Milestone 40D / D205
+## Current status — through Milestone 43E / D217
 
 Pyxis currently proves:
 
@@ -14,11 +14,12 @@ Pyxis currently proves:
 - **Read-only Chromium research:** caller-owned Chromium pages can be observed through an explicit DevTools endpoint for bounded page text, links, headings, metadata, paragraphs, tables, and lists. Pyxis does not infer an active tab when multiple pages exist and does not acquire navigation or interaction authority from observation capability.
 - **Durable research evidence:** browser evidence can be composed into durable verified captures, reopened after Chromium exits, and used for explicit human selections, notes, comparisons, working sets, and rationale without silently promoting interpretation into source authority.
 - **Governed durable research continuity:** explicit revision segments can be inspected, revised, persisted, adopted, checkpointed, exited, and freshly re-entered from caller-supplied durable locators without ambient history discovery or a global latest/current/head model.
-- **Changed evidence-basis ancestry:** three distinct evidence-basis roots can be retained through explicit transition/root machinery. A persisted third basis epoch can be freshly re-entered and extended through repeatable cumulative ordinary continuation while retaining one direct 40B ancestry anchor and freshly re-earning first-, second-, and third-root ancestry.
-- **Inspection without authority promotion:** second-epoch launch provenance and current governed state share one application-owned projection consumable by Textual and deterministic `pyxis research-inspect` JSON output; presentation remains downstream of authority rather than a new authority source.
+- **Changed evidence-basis ancestry:** three distinct evidence-basis roots can be retained through explicit transition/root machinery. The concrete third epoch now has persisted Textual launch, first and repeatable cumulative checkpointing, explicit in-process handoff, and fresh re-entry while retaining one direct 40B ancestry anchor and freshly re-earning first-, second-, and third-root ancestry.
+- **Inspection without authority promotion:** second- and third-epoch launch provenance remain distinct from mutable current governed state through application-owned read-only projections. Both persisted families can emit deterministic `pyxis research-inspect` JSON without turning paths, hashes, or presentation into stronger authority; exact in-process handoffs do not invent persistent launch paths.
+- **Bounded cumulative reuse:** root-backed, second-epoch, and third-epoch continuation share only triply-proven private mechanics for fixed-anchor cumulative extension, checkpoint forms, explicit path submission, rollover gating, and visible post-proof promotion. Concrete persistence, ancestry proof, launch lineage, and root/epoch semantics remain concrete rather than becoming a generic `epoch[n]` model.
 - **Bounded compatibility:** package metadata declares Python `>=3.11,<3.15`, and the supported lanes are exercised across Python 3.11, 3.12, 3.13, and 3.14.
 
-The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), and [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
+The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), and [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
 
 ## Authority boundaries
 
@@ -89,7 +90,7 @@ Milestone 15D adds page-declared metadata without promoting declaration into pro
 
 Milestone 15E adds literal paragraph-level passage evidence without semantic segmentation: Pyxis can expose bounded DOM-order `<p>` elements with authored IDs and exact Unicode counts. Duplicate or empty IDs remain exactly as authored and are not promoted into stable citation locators.
 
-Milestone 15F adds literal HTML-table structure evidence without normalizing it into a dataset: Pyxis can expose bounded DOM-order tables, captions, rows, direct `TH`/`TD` cells, browser-exposed row/column spans, and exact counts. Spans remain spans; Pyxis does not synthesize grid cells, infer header relationships, coerce value types, flatten tables into CSV-like rows, or rank tables.
+Milestone 15F adds literal HTML-table structure evidence without normalizing it into a dataset: Pyxis can expose bounded DOM-order tables, captions, rows, direct `TH`/`TD` cells, browser-exposed row/column spans, and exact counts. Spans remain spans; Pyxis does not synthesize grid cells, infer header relationships, coerce values, flatten tables into CSV-like rows, or rank tables.
 
 Milestone 15G adds literal ordered/unordered list evidence without flattening or semantic repair: Pyxis can expose bounded global DOM-order `OL`/`UL` records, direct `LI` children, raw authored `start`/`value` attributes, and mechanical parent-list/item ordinals for nested lists. Parent-item direct text excludes descendant-list text so nested structure remains separate evidence; Pyxis does not repair numbering or turn DOM nesting into conceptual hierarchy.
 
@@ -495,7 +496,8 @@ For a fresh development session, use this compact orientation chain:
 2. [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md) — 25B–34B.
 3. [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md) — 35A–36D.
 4. [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md) — 37A–38F.
-5. [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md) — 39A–40D / D205, the current implemented frontier.
+5. [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md) — 39A–40D / D205.
+6. [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md) — 41A–43E / D217, the current implemented frontier and post-43E decision boundary.
 
 Then open the relevant milestone-specific document and implementation/tests for the decision being changed. The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
