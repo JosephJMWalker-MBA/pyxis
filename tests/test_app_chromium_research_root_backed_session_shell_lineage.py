@@ -5,12 +5,31 @@ from pathlib import Path
 
 import pytest
 
+from pyxis.app.chromium_research_root_backed_session_reentry import (
+    create_chromium_research_root_backed_session_reentry_plan,
+    reenter_chromium_research_root_backed_session,
+)
+from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
+    persist_chromium_research_root_backed_session_reentry_plan_document,
+)
 from pyxis.app.chromium_research_root_backed_session_shell_lineage import (
     ChromiumResearchRootBackedSessionContinuationShellLineage,
     ChromiumResearchRootBackedSessionShellLineage,
     ChromiumResearchRootBackedSessionShellLineageError,
     prove_chromium_research_root_backed_session_continuation_shell_lineage,
     prove_chromium_research_root_backed_session_shell_lineage,
+)
+from pyxis.app.chromium_research_session_working_set_transition_revision_root_edge_extension import (
+    create_chromium_research_session_working_set_transition_revision_root_edge_extension,
+)
+from pyxis.app.chromium_research_session_working_set_transition_revision_root_edge_extension_persistence import (
+    persist_chromium_research_session_working_set_transition_revision_root_edge_extension,
+)
+from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_load import (
+    load_chromium_research_working_set_note_revision_edge_sequence,
+)
+from pyxis.app.chromium_research_working_set_note_revision_edge_sequence_persistence import (
+    persist_chromium_research_working_set_note_revision_edge_sequence,
 )
 from test_app_chromium_research_root_backed_session_continuation_reentry_plan_document import (
     _persist_valid_continuation,
@@ -102,19 +121,62 @@ def test_45a_path_distinct_durably_equivalent_35c_overlay_is_valid_launch_contex
     assert lineage.reentry.controller.presentation == earned.controller.presentation
 
 
-def test_45a_different_35c_overlay_rejects(
+def test_45a_different_valid_35c_endpoint_rejects(
     tmp_path: Path,
 ) -> None:
-    first = tmp_path / "first"
-    second = tmp_path / "second"
-    first.mkdir()
-    second.mkdir()
-    _, _, earned, _, _, _ = _persist_valid_overlay(first, stem="first")
-    _, _, _, _, different_overlay, _ = _persist_valid_overlay(
-        second,
-        stem="different",
+    _, _, earned, prior_plan_source, _, _ = _persist_valid_overlay(
+        tmp_path,
+        stem="different-endpoint",
     )
 
+    alternate_extension = (
+        create_chromium_research_session_working_set_transition_revision_root_edge_extension(
+            earned.loaded_root,
+            revised_note_text="A genuinely different first post-root endpoint.",
+        )
+    )
+    alternate_edge = (
+        persist_chromium_research_session_working_set_transition_revision_root_edge_extension(
+            alternate_extension,
+            root_source=earned.plan.root_source,
+            destination=tmp_path / "alternate-root-edge.json",
+        )
+    )
+    alternate_sequence = load_chromium_research_working_set_note_revision_edge_sequence(
+        earned.loaded_root,
+        (alternate_edge.path,),
+    )
+    alternate_declaration = tmp_path / "alternate-root-backed-declaration.json"
+    persist_chromium_research_working_set_note_revision_edge_sequence(
+        alternate_sequence,
+        alternate_declaration,
+    )
+    alternate_plan = create_chromium_research_root_backed_session_reentry_plan(
+        earned.plan.prior_session_plan,
+        earned.plan.appended_working_set_members,
+        changed_working_set_source=earned.plan.changed_working_set_source,
+        changed_note_source=earned.plan.changed_note_source,
+        transition_source=earned.plan.transition_source,
+        root_source=earned.plan.root_source,
+        declared_edge_sources=(alternate_edge.path,),
+        declaration_source=alternate_declaration,
+    )
+    alternate_earned = reenter_chromium_research_root_backed_session(alternate_plan)
+    different_overlay = tmp_path / "alternate-root-backed.overlay.json"
+    persist_chromium_research_root_backed_session_reentry_plan_document(
+        alternate_earned,
+        prior_session_plan_source=prior_plan_source,
+        destination=different_overlay,
+    )
+
+    assert (
+        alternate_earned.loaded_root.verification.root_record_sha256
+        == earned.loaded_root.verification.root_record_sha256
+    )
+    assert (
+        alternate_earned.controller.declared_endpoint.verification.edge_record_sha256
+        != earned.controller.declared_endpoint.verification.edge_record_sha256
+    )
     with pytest.raises(
         ChromiumResearchRootBackedSessionShellLineageError,
         match="does not match",
