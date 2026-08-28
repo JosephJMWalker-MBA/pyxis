@@ -38,6 +38,7 @@ from .first_changed_basis_root_backed_reentry_overlay_research_session_shell imp
 from .first_changed_basis_root_backed_handoff_research_session_shell import (
     FirstChangedBasisRootBackedHandoffResearchSessionShell,
     create_first_changed_basis_root_backed_handoff_research_session_shell,
+    run_first_changed_basis_root_backed_handoff_research_session_shell,
 )
 from .research_workspace_shell import (
     WorkspaceShell,
@@ -68,4 +69,5 @@ __all__ = [
     "create_measurement_summary_shell",
     "create_research_session_shell",
     "create_workspace_shell",
+    "run_first_changed_basis_root_backed_handoff_research_session_shell",
 ]
