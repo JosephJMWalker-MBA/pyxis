@@ -73,7 +73,8 @@ class FirstChangedBasisRootBackedReentryOverlayResearchSessionShell(
                 self._persist_research_first_changed_basis_root_backed_reentry_overlay
             )
             return
-        super().on_button_pressed(event)
+        # Textual dispatches inherited message handlers through the MRO. Calling the
+        # parent handler manually here would schedule parent-owned actions twice.
 
     async def _verify_research_first_changed_basis_root_backed_reentry(self) -> None:
         """Run inherited 44F, then mount 44G only after one new exact proof."""
