@@ -357,50 +357,34 @@ class ThirdBasisEpochContinuationResearchSessionShell(ResearchSessionShell):
                 "Cumulative third-epoch checkpoint failed: displayed checkpoint does not match the shell's exact current typed continuation."
             )
             return
-        current_overlay = self.query_one(
-            "#research-third-basis-epoch-cumulative-checkpoint-current-overlay-source",
-            Input,
-        )
-        successor_source = self.query_one(
-            "#research-third-basis-epoch-cumulative-checkpoint-successor-source",
-            Input,
-        )
-        declaration_destination = self.query_one(
-            "#research-third-basis-epoch-cumulative-checkpoint-declaration-destination",
-            Input,
-        )
-        overlay_destination = self.query_one(
-            "#research-third-basis-epoch-cumulative-checkpoint-overlay-destination",
-            Input,
-        )
-        if not current_overlay.value.strip():
-            status.update(
+
+        submission = controls._collect_cumulative_checkpoint_path_submission(
+            current_overlay_required=(
                 "Cumulative third-epoch checkpoint failed: explicit current 40C/40D overlay path is required."
-            )
-            return
-        if not successor_source.value.strip():
-            status.update(
+            ),
+            successor_required=(
                 "Cumulative third-epoch checkpoint failed: explicit current successor edge path is required."
-            )
-            return
-        if not declaration_destination.value.strip():
-            status.update(
+            ),
+            declaration_required=(
                 "Cumulative third-epoch checkpoint failed: explicit no-overwrite cumulative declaration destination is required."
-            )
-            return
-        if not overlay_destination.value.strip():
-            status.update(
+            ),
+            next_overlay_required=(
                 "Cumulative third-epoch checkpoint failed: explicit no-overwrite next overlay destination is required."
-            )
+            ),
+        )
+        if submission is None:
             return
+
         try:
             checkpoint = persist_chromium_research_third_basis_epoch_continuation_checkpoint_extension(
                 current_reentry,
                 rollover,
-                current_overlay_source=Path(current_overlay.value),
-                successor_edge_source=Path(successor_source.value),
-                cumulative_declaration_destination=Path(declaration_destination.value),
-                next_overlay_destination=Path(overlay_destination.value),
+                current_overlay_source=submission.current_overlay_source,
+                successor_edge_source=submission.successor_edge_source,
+                cumulative_declaration_destination=(
+                    submission.cumulative_declaration_destination
+                ),
+                next_overlay_destination=submission.next_overlay_destination,
             )
         except Exception as exc:
             status.update(f"Cumulative third-epoch checkpoint failed: {exc}")
