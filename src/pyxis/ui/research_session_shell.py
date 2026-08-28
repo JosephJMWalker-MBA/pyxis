@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Input, Static, TextArea
 
+from pyxis.app.chromium_research_changed_basis_candidate_presentation import (
+    ChromiumResearchChangedBasisCandidatePresentation,
+    present_chromium_research_changed_basis_candidate,
+)
 from pyxis.app.chromium_research_session_continuation_reentry_plan import (
     ChromiumResearchSessionContinuationReentryPlanResult,
     persist_chromium_research_session_continuation_reentry_plan,
@@ -16,7 +21,15 @@ from pyxis.app.chromium_research_session_rollover import (
     ChromiumResearchSessionRolloverResult,
     rollover_chromium_research_session_to_persisted_successor,
 )
+from pyxis.app.chromium_research_session_working_set_extension import (
+    ChromiumResearchSessionWorkingSetExtensionPersistenceResult,
+    persist_chromium_research_session_working_set_extension,
+)
+from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingSetItem
 
+from .chromium_research_changed_basis_preparation_textual import (
+    ResearchChangedBasisPreparationControls,
+)
 from .chromium_research_endpoint_revision_textual import ResearchEndpointRevisionControls
 from .chromium_research_revision_edge_sequence_textual import (
     ResearchRevisionEdgeSequenceDetail,
@@ -41,6 +54,10 @@ class ResearchSessionShell(App[None]):
 
     An optional exact 31A re-entry result adds restart-lineage authority for the
     standalone product path. That lineage is never inferred from the controller.
+
+    44A may additionally be configured, before mounting, with exact already-loaded
+    candidate evidence. That opt-in surface can prepare a changed evidence basis but
+    cannot transition to it or alter root/epoch lineage.
     """
 
     TITLE = "Pyxis"
@@ -170,6 +187,42 @@ class ResearchSessionShell(App[None]):
         self.last_research_restart_plan: (
             ChromiumResearchSessionContinuationReentryPlanResult | None
         ) = None
+        self.changed_basis_candidate_items: (
+            tuple[ChromiumPageResearchWorkingSetItem, ...] | None
+        ) = None
+        self.changed_basis_candidate_presentation: (
+            ChromiumResearchChangedBasisCandidatePresentation | None
+        ) = None
+        self.changed_basis_candidate_controller: ChromiumResearchSessionController | None = None
+        self.changed_basis_candidate_endpoint: object | None = None
+        self.last_changed_basis_preparation: (
+            ChromiumResearchSessionWorkingSetExtensionPersistenceResult | None
+        ) = None
+
+    def configure_changed_basis_candidate(
+        self,
+        appended_items: Iterable[ChromiumPageResearchWorkingSetItem],
+    ) -> ChromiumResearchChangedBasisCandidatePresentation:
+        """Configure one exact in-process 44A candidate before the shell is mounted.
+
+        Candidate evidence is already-loaded application evidence. This method performs
+        no file/browser discovery and does not persist or adopt anything. The candidate
+        is bound to the exact current controller/declared endpoint so a later rollover
+        cannot silently retarget it.
+        """
+
+        if self.changed_basis_candidate_items is not None:
+            raise ValueError("Changed-basis candidate evidence is already configured.")
+        items = tuple(appended_items)
+        presentation = present_chromium_research_changed_basis_candidate(
+            self.research_controller,
+            items,
+        )
+        self.changed_basis_candidate_items = items
+        self.changed_basis_candidate_presentation = presentation
+        self.changed_basis_candidate_controller = self.research_controller
+        self.changed_basis_candidate_endpoint = self.research_controller.declared_endpoint
+        return presentation
 
     def compose(self) -> ComposeResult:
         yield ResearchRevisionEdgeSequenceDetail(
@@ -182,6 +235,10 @@ class ResearchSessionShell(App[None]):
         yield ResearchSessionRolloverControls(
             self.research_controller.last_endpoint_revision
         )
+        if self.changed_basis_candidate_presentation is not None:
+            yield ResearchChangedBasisPreparationControls(
+                self.changed_basis_candidate_presentation
+            )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Route only the governed standalone research mutation/checkpoint actions."""
@@ -197,6 +254,10 @@ class ResearchSessionShell(App[None]):
         if event.button.id == "save-research-session-restart-plan":
             event.stop()
             self.call_after_refresh(self._save_research_restart_plan)
+            return
+        if event.button.id == "persist-research-changed-basis-preparation":
+            event.stop()
+            self.call_after_refresh(self._persist_research_changed_basis_preparation)
 
     async def _persist_research_endpoint_revision(self) -> None:
         revised_note = self.query_one("#research-endpoint-revised-note", TextArea)
@@ -229,6 +290,85 @@ class ResearchSessionShell(App[None]):
             "#research-session-rollover-controls",
             ResearchSessionRolloverControls,
         ).enable_for_revision(result)
+
+    async def _persist_research_changed_basis_preparation(self) -> None:
+        controls = self.query_one(
+            "#research-changed-basis-preparation-controls",
+            ResearchChangedBasisPreparationControls,
+        )
+        status = self.query_one("#research-changed-basis-status", Static)
+        items = self.changed_basis_candidate_items
+        base_controller = self.changed_basis_candidate_controller
+        base_endpoint = self.changed_basis_candidate_endpoint
+        if items is None or base_controller is None or base_endpoint is None:
+            status.update(
+                "Preparation failed: no exact in-process candidate evidence is configured."
+            )
+            return
+        if controls.stale:
+            status.update(
+                "Preparation failed: candidate is stale and will not be silently retargeted."
+            )
+            return
+        if (
+            self.research_controller is not base_controller
+            or self.research_controller.declared_endpoint is not base_endpoint
+        ):
+            controls.mark_stale()
+            return
+
+        rationale = self.query_one("#research-changed-basis-rationale", TextArea)
+        working_set_destination = self.query_one(
+            "#research-changed-basis-working-set-destination", Input
+        )
+        note_destination = self.query_one(
+            "#research-changed-basis-note-destination", Input
+        )
+        if not working_set_destination.value.strip():
+            status.update(
+                "Preparation failed: explicit working-set destination path is required."
+            )
+            return
+        if not note_destination.value.strip():
+            status.update(
+                "Preparation failed: explicit working-set-note destination path is required."
+            )
+            return
+
+        try:
+            result = persist_chromium_research_session_working_set_extension(
+                base_controller,
+                items,
+                rationale_text=rationale.text,
+                working_set_destination=Path(working_set_destination.value),
+                note_destination=Path(note_destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Preparation failed: {exc}")
+            return
+
+        if result.prior_endpoint is not base_endpoint:
+            raise ValueError(
+                "Prepared changed basis did not retain the candidate's exact declared endpoint."
+            )
+        if result.prior_session is not base_controller.presentation:
+            raise ValueError(
+                "Prepared changed basis did not retain the candidate's exact prior session."
+            )
+        if len(result.appended_items) != len(items) or any(
+            observed is not supplied
+            for observed, supplied in zip(result.appended_items, items)
+        ):
+            raise ValueError(
+                "Prepared changed basis did not retain exact candidate item identity/order."
+            )
+        if self.research_controller is not base_controller:
+            raise ValueError(
+                "Governed research controller changed during changed-basis preparation."
+            )
+
+        self.last_changed_basis_preparation = result
+        controls.lock_after_success(result)
 
     async def _rollover_research_session(self) -> None:
         controls = self.query_one(
@@ -393,6 +533,12 @@ class ResearchSessionShell(App[None]):
             ResearchSessionRolloverControls,
         )
 
+        if len(self.query("#research-changed-basis-preparation-controls")) != 0:
+            candidate_controls = self.query_one(
+                "#research-changed-basis-preparation-controls",
+                ResearchChangedBasisPreparationControls,
+            )
+            candidate_controls.mark_stale()
         if len(self.query("#research-rollover-success-receipt")) != 0:
             await self.query_one("#research-rollover-success-receipt", Static).remove()
         if len(self.query("#research-session-restart-plan-controls")) != 0:
