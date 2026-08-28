@@ -32,7 +32,7 @@ class FirstChangedBasisRootBackedHandoffResearchSessionShell(
         height: auto;
         padding: 1 2;
         margin-top: 1;
-        border: round $success;
+        border: round $secondary;
     }
 
     #continue-first-changed-basis-root-backed-session {
