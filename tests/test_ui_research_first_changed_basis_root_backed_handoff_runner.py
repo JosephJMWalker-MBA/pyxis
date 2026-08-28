@@ -14,7 +14,7 @@ from test_app_chromium_research_session_working_set_extension import (
 )
 
 
-def test_44h_runner_chains_exact_explicit_handoff_into_existing_root_backed_shell(
+def test_44h_runner_chains_exact_explicit_handoff_into_inspectable_raw_receiver(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -51,7 +51,7 @@ def test_44h_runner_chains_exact_explicit_handoff_into_existing_root_backed_shel
     )
     monkeypatch.setattr(
         handoff_module,
-        "create_root_backed_research_session_shell",
+        "create_inspectable_root_backed_handoff_research_session_shell",
         fake_create_receiver,
     )
 
@@ -92,7 +92,7 @@ def test_44h_runner_normal_close_launches_nothing(
 
     monkeypatch.setattr(
         handoff_module,
-        "create_root_backed_research_session_shell",
+        "create_inspectable_root_backed_handoff_research_session_shell",
         fail_receiver,
     )
 
@@ -130,7 +130,7 @@ def test_44h_runner_rejects_untyped_shell_return_before_receiver_launch(
 
     monkeypatch.setattr(
         handoff_module,
-        "create_root_backed_research_session_shell",
+        "create_inspectable_root_backed_handoff_research_session_shell",
         fail_receiver,
     )
 

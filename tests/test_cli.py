@@ -6,6 +6,12 @@ from types import SimpleNamespace
 import pytest
 
 import pyxis.cli as cli
+from pyxis.app.chromium_research_root_backed_session_shell_lineage import (
+    ChromiumResearchRootBackedSessionContinuationShellLineage,
+    ChromiumResearchRootBackedSessionShellLineage,
+    prove_chromium_research_root_backed_session_continuation_shell_lineage,
+    prove_chromium_research_root_backed_session_shell_lineage,
+)
 from test_app_chromium_research_root_backed_session_continuation_checkpoint_extension import (
     _persist_extension,
 )
@@ -155,8 +161,8 @@ def test_research_shell_command_launches_explicit_35c_root_backed_overlay_with_t
     def fail_controller_only_shell(*args, **kwargs):
         raise AssertionError("35C launch must retain typed 35B lineage")
 
-    def fake_root_backed_shell(reentry) -> None:
-        observed["reentry"] = reentry
+    def fake_root_backed_shell(lineage) -> None:
+        observed["lineage"] = lineage
 
     monkeypatch.setattr(cli, "build_and_run_workspace", fail_workspace_build)
     monkeypatch.setattr(cli, "_run_research_session_shell", fail_ordinary_shell)
@@ -176,7 +182,10 @@ def test_research_shell_command_launches_explicit_35c_root_backed_overlay_with_t
     )
 
     assert exit_code == 0
-    reentry = observed["reentry"]
+    lineage = observed["lineage"]
+    assert isinstance(lineage, ChromiumResearchRootBackedSessionShellLineage)
+    assert lineage.overlay_source == overlay_path.resolve()
+    reentry = lineage.reentry
     assert reentry is not earned
     assert reentry.controller.presentation == earned.controller.presentation
     assert (
@@ -199,8 +208,8 @@ def test_research_shell_command_launches_explicit_35d_continuation_overlay_with_
     def fail_controller_only_shell(*args, **kwargs):
         raise AssertionError("35D launch must retain typed continuation lineage in 36C")
 
-    def fake_continuation_shell(reentry) -> None:
-        observed["reentry"] = reentry
+    def fake_continuation_shell(lineage) -> None:
+        observed["lineage"] = lineage
 
     monkeypatch.setattr(
         cli,
@@ -222,7 +231,10 @@ def test_research_shell_command_launches_explicit_35d_continuation_overlay_with_
     )
 
     assert exit_code == 0
-    reentry = observed["reentry"]
+    lineage = observed["lineage"]
+    assert isinstance(lineage, ChromiumResearchRootBackedSessionContinuationShellLineage)
+    assert lineage.overlay_source == overlay.resolve()
+    reentry = lineage.reentry
     assert reentry.controller.presentation == rollover.continuation_controller.presentation
     assert (
         reentry.controller.declared_endpoint.verification.edge_record_sha256
@@ -241,8 +253,8 @@ def test_research_shell_command_launches_35e_overlay_with_exact_cumulative_reent
     def fail_controller_only_shell(*args, **kwargs):
         raise AssertionError("35E launch must retain typed cumulative continuation lineage")
 
-    def fake_continuation_shell(reentry) -> None:
-        observed["reentry"] = reentry
+    def fake_continuation_shell(lineage) -> None:
+        observed["lineage"] = lineage
 
     monkeypatch.setattr(
         cli,
@@ -264,7 +276,10 @@ def test_research_shell_command_launches_35e_overlay_with_exact_cumulative_reent
     )
 
     assert exit_code == 0
-    reentry = observed["reentry"]
+    lineage = observed["lineage"]
+    assert isinstance(lineage, ChromiumResearchRootBackedSessionContinuationShellLineage)
+    assert lineage.overlay_source == next_overlay.resolve()
+    reentry = lineage.reentry
     assert (
         reentry.controller.declared_endpoint.verification.edge_record_sha256
         == extension.fresh_reentry.controller.declared_endpoint.verification.edge_record_sha256
@@ -275,43 +290,15 @@ def test_research_shell_command_launches_35e_overlay_with_exact_cumulative_reent
     )
 
 
-def test_root_backed_shell_factory_receives_exact_35b_reentry_not_ordinary_lineage(
+def test_root_backed_shell_factory_receives_exact_proven_35c_lineage(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    import pyxis.ui.root_backed_research_session_shell as shell_module
-
-    _, _, earned, _, _, _ = _persist_valid_overlay(tmp_path, stem="36b-ui")
-    observed: dict[str, object] = {}
-
-    class FakeShell:
-        def run(self) -> None:
-            observed["ran"] = True
-
-    def fake_create(reentry):
-        observed["reentry"] = reentry
-        return FakeShell()
-
-    monkeypatch.setattr(
-        shell_module,
-        "create_root_backed_research_session_shell",
-        fake_create,
+    _, _, earned, _, overlay, _ = _persist_valid_overlay(tmp_path, stem="36b-ui")
+    lineage = prove_chromium_research_root_backed_session_shell_lineage(
+        earned,
+        overlay_source=overlay,
     )
-
-    cli._run_root_backed_research_session_shell(earned)
-
-    assert observed["reentry"] is earned
-    assert observed["ran"] is True
-
-
-def test_root_backed_continuation_shell_factory_receives_exact_typed_reentry(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    import pyxis.ui.root_backed_continuation_research_session_shell as shell_module
-
-    *_, checkpoint = _persist_valid_continuation(tmp_path, stem="36c-ui")
-    reentry = checkpoint.fresh_reentry
     observed: dict[str, object] = {}
 
     class FakeShell:
@@ -319,18 +306,51 @@ def test_root_backed_continuation_shell_factory_receives_exact_typed_reentry(
             observed["ran"] = True
 
     def fake_create(received):
-        observed["reentry"] = received
+        observed["lineage"] = received
         return FakeShell()
 
     monkeypatch.setattr(
-        shell_module,
-        "create_root_backed_continuation_research_session_shell",
-        fake_create,
+        cli,
+        "_load_root_backed_research_shell_factory",
+        lambda: fake_create,
     )
 
-    cli._run_root_backed_continuation_research_session_shell(reentry)
+    cli._run_root_backed_research_session_shell(lineage)
 
-    assert observed["reentry"] is reentry
+    assert observed["lineage"] is lineage
+    assert observed["ran"] is True
+
+
+def test_root_backed_continuation_shell_factory_receives_exact_proven_lineage(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    values = _persist_valid_continuation(tmp_path, stem="36c-ui")
+    overlay = values[8]
+    reentry = values[9].fresh_reentry
+    lineage = prove_chromium_research_root_backed_session_continuation_shell_lineage(
+        reentry,
+        overlay_source=overlay,
+    )
+    observed: dict[str, object] = {}
+
+    class FakeShell:
+        def run(self) -> None:
+            observed["ran"] = True
+
+    def fake_create(received):
+        observed["lineage"] = received
+        return FakeShell()
+
+    monkeypatch.setattr(
+        cli,
+        "_load_root_backed_continuation_research_shell_factory",
+        lambda: fake_create,
+    )
+
+    cli._run_root_backed_continuation_research_session_shell(lineage)
+
+    assert observed["lineage"] is lineage
     assert observed["ran"] is True
 
 
@@ -452,8 +472,7 @@ def test_research_shell_ui_dependency_is_lazy_and_reports_install_hint(monkeypat
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
         if name in {
             "pyxis.ui.research_session_shell",
-            "pyxis.ui.root_backed_research_session_shell",
-            "pyxis.ui.root_backed_continuation_research_session_shell",
+            "pyxis.ui.root_backed_authority_inspection_shell",
         }:
             raise ModuleNotFoundError("No module named 'textual'", name="textual")
         return original_import(name, globals, locals, fromlist, level)
@@ -466,5 +485,7 @@ def test_research_shell_ui_dependency_is_lazy_and_reports_install_hint(monkeypat
         cli._run_root_backed_research_session_shell(object())  # type: ignore[arg-type]
     with pytest.raises(RuntimeError, match=r"pyxis\[ui\]"):
         cli._run_root_backed_continuation_research_session_shell(object())  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError, match=r"pyxis\[ui\]"):
+        cli._run_root_backed_continuation_handoff_research_session_shell(object())  # type: ignore[arg-type]
     with pytest.raises(RuntimeError, match=r"pyxis\[ui\]"):
         cli._run_controller_only_research_session_shell(object())  # type: ignore[arg-type]

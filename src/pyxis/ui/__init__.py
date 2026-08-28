@@ -40,6 +40,16 @@ from .first_changed_basis_root_backed_handoff_research_session_shell import (
     create_first_changed_basis_root_backed_handoff_research_session_shell,
     run_first_changed_basis_root_backed_handoff_research_session_shell,
 )
+from .root_backed_authority_inspection_shell import (
+    InspectableRootBackedContinuationHandoffResearchSessionShell,
+    InspectableRootBackedContinuationResearchSessionShell,
+    InspectableRootBackedHandoffResearchSessionShell,
+    InspectableRootBackedResearchSessionShell,
+    create_inspectable_root_backed_continuation_handoff_research_session_shell,
+    create_inspectable_root_backed_continuation_research_session_shell,
+    create_inspectable_root_backed_handoff_research_session_shell,
+    create_inspectable_root_backed_research_session_shell,
+)
 from .research_workspace_shell import (
     WorkspaceShell,
     create_workspace_shell,
@@ -54,6 +64,10 @@ __all__ = [
     "FirstChangedBasisRootEdgeResearchSessionShell",
     "FirstChangedBasisRootResearchSessionShell",
     "FirstChangedBasisSessionAdoptionResearchSessionShell",
+    "InspectableRootBackedContinuationHandoffResearchSessionShell",
+    "InspectableRootBackedContinuationResearchSessionShell",
+    "InspectableRootBackedHandoffResearchSessionShell",
+    "InspectableRootBackedResearchSessionShell",
     "MeasurementSummaryDetail",
     "MeasurementSummaryShell",
     "ResearchSessionShell",
@@ -66,6 +80,10 @@ __all__ = [
     "create_first_changed_basis_root_edge_research_session_shell",
     "create_first_changed_basis_root_research_session_shell",
     "create_first_changed_basis_session_adoption_research_session_shell",
+    "create_inspectable_root_backed_continuation_handoff_research_session_shell",
+    "create_inspectable_root_backed_continuation_research_session_shell",
+    "create_inspectable_root_backed_handoff_research_session_shell",
+    "create_inspectable_root_backed_research_session_shell",
     "create_measurement_summary_shell",
     "create_research_session_shell",
     "create_workspace_shell",
