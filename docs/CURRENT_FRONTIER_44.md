@@ -1,22 +1,20 @@
-# Pyxis Current Frontier — Milestones 44A through 44G
+# Pyxis Current Frontier — Milestones 44A through 44H
 
-> **Continuity status — implementation through Milestone 44G / D224.**  
+> **Continuity status — implementation through Milestone 44H / D225.**  
 > **Updated:** 2026-08-28  
-> This file is an additive continuation of `docs/CURRENT_FRONTIER_41_43.md`. It does not replace milestone records, implementation, tests, executed CI, or the earlier compact frontier documents.
+> This file is an additive continuation of `docs/CURRENT_FRONTIER_41_43.md`. It does not replace milestone records, implementation, tests, executed CI, or earlier compact frontier documents.
 
 ## Read this after `docs/CURRENT_FRONTIER_41_43.md`
 
-Milestones 41–43 closed the concrete third-epoch product loop, added read-only authority inspection, and extracted only the cumulative mechanics independently proven across one-, two-, and three-root continuation families.
+Milestones 41–43 closed the concrete third-epoch product loop, added read-only authority inspection, and extracted only cumulative mechanics independently proven across one-, two-, and three-root continuation families.
 
-The post-43E decision boundary deliberately rejected a fourth evidence-basis epoch or generic `epoch[n]` abstraction. The stronger product question was instead:
+The post-43E boundary deliberately rejected a fourth evidence-basis epoch or generic `epoch[n]` abstraction. The stronger product question was:
 
 > How can a researcher explicitly initiate one changed evidence basis from inside the existing governed product using already-proven concrete authority boundaries?
 
-Milestones 44A–44G answer that question for the first changed-basis path above an ordinary 31A-launched governed session.
+Milestones 44A–44H now answer that question end to end for the first changed-basis path above one ordinary 31A-launched governed session.
 
-## Current first changed-basis product flow
-
-The implemented product path is now:
+## Completed first changed-basis product flow
 
 ```text
 ordinary governed 31A-backed session
@@ -26,165 +24,124 @@ ordinary governed 31A-backed session
 → 44D persist first 34B post-root ordinary edge
 → 44E explicitly adopt the 35A root-backed governed session
 → 44F freshly prove 35B reconstructability
-→ 44G persist the verified session as a 35C restart overlay
+→ 44G persist the verified historical session as a 35C restart overlay
+→ 44H explicitly hand the exact fresh 35C proof into the established root-backed product
 ```
 
-Each arrow is a distinct authority step. The series deliberately does not collapse preparation, transition, root creation, governed-session adoption, fresh reconstruction, or restart persistence into one opaque action.
-
-The resulting 35C overlay is existing root-backed operational configuration. It is not evidence, a global branch pointer, a latest/current/head record, or permission to replace whichever controller the 44-series shell currently has mounted.
+Every arrow is a separate authority step. Preparation, transition, root creation, governed-session adoption, fresh reconstruction, durable restart configuration, and product handoff are not collapsed into one opaque action.
 
 ---
 
-## 44A / D218 — Explicit Changed-Evidence-Basis Preparation
+## 44A / D218 — Explicit changed-evidence-basis preparation
 
 44A exposes the established 33A preparation boundary from an already-governed research shell.
 
-The caller supplies one or more exact already-loaded/relinked application evidence objects. The researcher can inspect those objects only as candidate appended members, enter a new human rationale, and provide two explicit no-overwrite destinations for the changed working set and changed working-set note.
+The caller supplies exact already-loaded/relinked application evidence as candidate appended members. The researcher supplies a genuinely new rationale plus explicit no-overwrite destinations for the changed working set and changed working-set note.
 
-Persistence delegates to the public 33A boundary.
-
-A successful 44A action proves only:
+Successful 44A proves only:
 
 ```text
 current declared working set
-+ explicit candidate appended evidence
++ explicit candidate evidence
 + explicit human rationale
 → durable prepared changed basis
 ```
 
-It does not adopt that basis or alter the mounted governed controller.
+It does not adopt the basis or alter the mounted governed controller.
 
-### Staleness rule
-
-An unadopted endpoint-revision write does not invalidate the prepared candidate because `last_endpoint_revision` is not declared-session authority.
-
-An explicit 30A rollover that replaces the governed controller before preparation persistence makes the old unsaved form stale rather than silently retargeting it.
+An unadopted endpoint-revision write does not stale the candidate. An explicit rollover that replaces the governed controller before persistence does stale the old form rather than silently retargeting it.
 
 ---
 
-## 44B / D219 — Explicit First Changed-Basis Transition
+## 44B / D219 — Explicit first changed-basis transition
 
-44B exposes the existing 33B cross-working-set transition only where an exact ordinary `ChromiumResearchSessionReentryResult` proves the shell belongs to the pre-root ordinary launch family.
+44B exposes the established 33B cross-working-set transition only where an exact ordinary `ChromiumResearchSessionReentryResult` proves the shell belongs to the pre-root ordinary launch family.
 
-The action requires:
-
-1. one exact successful 44A preparation;
-2. the exact retained ordinary 31A re-entry;
-3. explicit current durable source for the declared endpoint;
-4. explicit durable sources for the prepared working set and note; and
-5. one explicit no-overwrite transition destination.
+The transition consumes one exact successful 44A preparation plus explicit current durable sources for the declared endpoint and prepared changed-basis artifacts and one explicit no-overwrite transition destination.
 
 All locator inputs begin blank.
 
-The product then delegates through existing 33B creation, persistence, and fresh relinking.
-
-Successful 44B persistence leaves the mounted governed session unchanged. The transition is durable historical evidence of an explicit evidence-basis crossing, not adoption of that branch.
+Successful 44B persistence leaves the mounted governed session unchanged. The transition is durable historical evidence of an explicit crossing, not adoption of that branch.
 
 ---
 
-## 44C / D220 — Explicit First Changed-Basis Revision Root
+## 44C / D220 — Explicit first changed-basis revision root
 
-44C exposes the existing 34A first revision-root boundary from one exact successful 44B transition.
+44C exposes the established 34A first revision-root boundary from one exact successful 44B transition.
 
-The researcher must author genuinely new rationale text and explicitly supply the five durable locations required by the established 34A boundary:
+The researcher supplies genuinely new rationale and five explicit durable locations: prior endpoint edge, changed working set, changed working-set note, 33B transition, and no-overwrite 34A root destination.
 
-- prior endpoint edge source;
-- changed working-set source;
-- changed working-set-note source;
-- 33B transition source;
-- no-overwrite 34A root destination.
+Historical receipt paths may be shown for context but are not copied into current locator fields.
 
-The 44A/44B output paths may be displayed as historical receipt context but are not copied into the inputs or promoted into continuing path authority.
+The transition is freshly relinked before root persistence and the new root is freshly reopened through the public 34A boundary before success.
 
-The application helper freshly relinks the transition before persistence and again through the public 34A loader after persistence.
-
-A successful root remains historical changed-basis lineage and does not itself replace the mounted controller.
+A successful root remains historical lineage and does not replace the mounted controller.
 
 ---
 
-## 44D / D221 — Explicit First Post-Root Ordinary Edge
+## 44D / D221 — Explicit first post-root ordinary edge
 
-44D exposes the existing 34B one-time bridge from the first 34A root back into ordinary 24B edge lineage.
+44D exposes the established 34B one-time bridge from the first 34A root back into ordinary 24B edge lineage.
 
 Inputs are deliberately narrow:
 
 - genuinely new human rationale;
-- explicit current durable 34A root source;
+- explicit current 34A root source;
 - explicit no-overwrite first-edge destination.
 
-Successful persistence uses the existing ordinary 24B edge format and then freshly reloads the edge through the root-specific 34B boundary.
+The persisted record remains the established 24B edge format and is freshly reopened through the root-specific 34B loader.
 
-The product still does not declare a sequence, construct a governed root-backed session, or alter whichever old-basis controller remains mounted.
+44D does not declare a sequence, adopt a root-backed controller, or alter whichever old-basis controller is mounted.
 
 ---
 
-## 44E / D222 — Explicit Changed-Basis Governed-Session Adoption
+## 44E / D222 — Explicit changed-basis governed-session adoption
 
 44E is the first 44-series action that intentionally changes the shell's governed branch.
 
-From one exact successful 44D result, the researcher supplies:
+From one exact successful 44D result, the researcher supplies an explicit current first-edge source and an explicit no-overwrite existing-format 26B declaration destination.
 
-- explicit current durable source for the first post-root edge; and
-- explicit no-overwrite destination for the existing-format 26B root-backed declaration.
+The exact loaded 34A root retained by 44D is already the explicit starting record, so no root path is invented.
 
-The exact loaded 34A root retained by the 44D result is already the explicit starting record, so no root path input is added.
-
-The established 35A machinery then performs:
+The established 35A machinery performs:
 
 ```text
 exact loaded 34A root
 + explicit first-edge source
-→ fresh root-started 26A sequence
+→ fresh root-started sequence
 → existing 26B declaration
-→ fresh 26C declaration relink
+→ fresh declaration relink
 → existing ChromiumResearchSessionController
 → explicit shell-local branch adoption
 ```
 
-After successful adoption, the new 35A controller becomes the shell's governed controller and the ordinary revision/rollover surface is rebuilt over that changed-basis session.
+After successful adoption, the root-backed controller becomes the shell's governed controller. This is shell-local user-authorized adoption, not a global latest/current/head claim.
 
-This is shell-local explicit branch adoption only. It creates no global latest/current/head authority.
-
-### No restart authority yet
-
-44E deliberately clears ordinary restart/re-entry authority after adoption.
-
-```text
-35A in-process governed-session adoption
-!=
-35B fresh-process reconstructability
-```
+44E deliberately creates no fresh-process restart authority.
 
 ---
 
-## 44F / D223 — Explicit Root-Backed Fresh-Process Verification
+## 44F / D223 — Explicit root-backed fresh-process verification
 
-44F exposes the established 35B reconstruction boundary as a separate verification action after exact 44E adoption.
+44F exposes the established 35B reconstruction boundary as a separate action after exact 44E adoption.
 
-The exact initial ordinary 31A plan remains retained application state from the launch lineage. All current durable locators required to reconstruct the changed-basis region begin blank and must be explicitly supplied again.
+The retained initial ordinary 31A plan remains typed application state. Every current durable locator required for the changed-basis region begins blank and must be explicitly supplied again.
 
-The application helper constructs the exact 35B typed plan and freshly reconstructs the historical 44E root-backed session.
+44F builds the exact 35B typed plan, freshly reconstructs the historical 44E root-backed session, and proves the expected root, declaration, endpoint, rationale, and governed presentation.
 
-It then proves at minimum that the fresh result retains the exact expected:
+Successful verification does not replace the currently mounted controller and writes no restart configuration.
 
-- root identity;
-- declaration identity;
-- declared endpoint identity and rationale; and
-- governed presentation.
-
-Successful 44F verification does **not** replace the currently mounted controller and does not write restart configuration.
-
-This remains true if the mounted 44E session has already rolled to a later continuation. 44F verifies the exact historical 44E target selected by the retained product evidence rather than silently retargeting to whatever is currently mounted.
+If the mounted 44E session has already rolled farther, 44F still verifies the exact historical 44E target rather than silently retargeting to the newer mounted continuation.
 
 ---
 
-## 44G / D224 — Persist Verified Root-Backed Restart Overlay
+## 44G / D224 — Persist verified root-backed restart overlay
 
-44G takes one exact successful 44F verification and exposes the established public 35C proof-gated persistence boundary.
+44G consumes one exact successful 44F verification and exposes the established public 35C proof-gated persistence boundary.
 
 Two explicit durable inputs begin blank:
 
-1. current durable source for the matching ordinary 31B v1 plan document; and
+1. current durable source for the matching ordinary 31B plan document;
 2. no-overwrite destination for `pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v1`.
 
 Public 35C remains authoritative for:
@@ -192,57 +149,105 @@ Public 35C remains authoritative for:
 ```text
 ordinary 31B decode
 → exact prior-plan equality
-→ fresh 35B reconstruction
+→ mandatory fresh 35B reconstruction
 → presentation/root/endpoint coherence
-→ exclusive no-overwrite overlay write
+→ no-overwrite overlay write
 → strict round-trip overlay decode
 ```
 
-44G adds only product-level identity checks against the exact 44F proof and a dedicated Textual persistence surface.
+44G adds only product-level coherence checks and a dedicated persistence surface.
 
-### Historical target semantics
+### Historical-target rule
 
-The 44G persistence subject is the exact historical session verified by 44F.
-
-If the mounted shell has subsequently rolled farther, persistence still writes restart configuration for the historical 44E/44F root-backed session while leaving the later mounted controller untouched.
-
-Therefore:
+44G persists the exact historical session selected by 44F, even if the 44-series shell currently mounts a later continuation. Persistence leaves that later mounted state untouched.
 
 ```text
-persisted 44G overlay target
+successful 44G persistence
 !=
-implicit claim about currently mounted session
+mounted-session replacement
 ```
 
-44G does not set `research_reentry`, replace `research_controller`, mount generic restart controls, relaunch from the overlay, or checkpoint a later 35D continuation.
-
-### Final validation
-
-PR #167 merged 44G from exact tested head:
-
-```text
-eb5599d71a571de4a2d2153059b4f8e8bf69e6e7
-```
-
-Repository Zero workflow run `33191039137` passed the complete suite on Python 3.11, 3.12, 3.13, and 3.14.
-
-The final 44G change remained exactly seven files with no workflow/debug-instrumentation changes.
+PR #167 merged the final 44G head `eb5599d71a571de4a2d2153059b4f8e8bf69e6e7`. Repository Zero run `33191039137` passed Python 3.11, 3.12, 3.13, and 3.14.
 
 ---
 
-## Reuse lessons reinforced by the 44-series
+## 44H / D225 — Explicit in-process handoff into the proven root-backed product
 
-### 1. Productization does not require duplicating lower-level authority
+44H closes the remaining product seam after 44G.
 
-44A–44G repeatedly expose already-proven 33A–35C application boundaries through narrow product wrappers and dedicated Textual surfaces.
+Successful 44G persistence contains two distinct fresh-process objects:
 
-The product layer may add exact retained-object and mounted-state coherence checks, but it does not become a second implementation of persistence, relinking, or ancestry proof.
+```text
+44F verification_result.fresh_reentry
+→ retained as 35C checkpoint.reentry
 
-### 2. Prior path use is not continuing path authority
+35C mandatory fresh reconstruction
+→ checkpoint.fresh_reentry
+```
 
-Every durable locator field that matters to the current operation begins blank unless an existing typed in-memory object already provides the required authority directly.
+The exact 44H handoff subject is the latter:
 
-Historical receipt paths may be shown for context, but they are not silently copied, searched, or treated as current.
+```text
+last_first_changed_basis_root_backed_reentry_overlay
+    .checkpoint
+    .fresh_reentry
+```
+
+It is **not**:
+
+- the 35C overlay path;
+- the earlier 44F fresh object merely because it represents equivalent durable state;
+- whatever controller happens to be mounted;
+- a newly reloaded object reconstructed from path text.
+
+### Explicit user choice
+
+Successful persistence alone does not change mode.
+
+Only after one exact successful 44G persistence does the dedicated 44H shell reveal one explicit action:
+
+```text
+Continue with verified changed-basis session
+```
+
+Pressing that action exits the shell with the exact retained `checkpoint.fresh_reentry` object. Normal close returns no handoff.
+
+### Bounded product runner
+
+44H also closes the product loop rather than stopping at a typed return value:
+
+```text
+run 44H shell
+→ None on normal close: stop
+→ exact ChromiumResearchRootBackedSessionReentryResult on explicit handoff
+→ validate typed result
+→ pass same object directly to existing RootBackedResearchSessionShell
+→ run existing receiver
+```
+
+No overlay path is supplied to the runner. No persistence, decode, path proof, discovery, or restart reconstruction occurs during the in-process transition.
+
+Deleting the just-written overlay after successful 44G persistence does not prevent the typed handoff because the transferred authority is the already-earned 35C fresh proof object.
+
+### Historical-target rule remains intact
+
+If the 44-series shell mounts a later continuation, 44G still proves/persists the historical target and 44H still returns that exact historical 35C fresh result only when the researcher explicitly chooses it.
+
+The button press is the branch-changing authority. No latest/current/preferred branch is inferred.
+
+PR #170 merged exact tested head `22797074c211eb4e6a718b2d7960c946be92e50d` as merge commit `d34b4e0baf3e0b822927a8adec7b7de0e7f68677`. Repository Zero run `33207716371` passed the complete suite on Python 3.11, 3.12, 3.13, and 3.14.
+
+---
+
+## Reuse lessons reinforced by 44A–44H
+
+### Productization does not duplicate lower-level authority
+
+The 44-series repeatedly exposes already-proven 33A–35C application boundaries through narrow product wrappers and dedicated UI surfaces. Product code may enforce retained-object and mounted-state coherence but does not become a second persistence/relinking implementation.
+
+### Prior path use is not continuing path authority
+
+Every durable locator relevant to a new operation begins blank unless exact typed application state already carries the necessary authority.
 
 ```text
 previously used path
@@ -250,72 +255,72 @@ previously used path
 currently authorized locator
 ```
 
-### 3. Historical durable lineage may coexist with later mounted work
+44H makes the inverse equally explicit:
 
-The 44B transition, 44C root, 44D first edge, 44F verification target, and 44G overlay can remain truthful historical records even while the mounted shell continues on another branch or later continuation.
+```text
+exact typed in-process proof
+!=
+persistent path authority
+```
 
-Coexistence does not itself establish chronology, preference, or head authority.
+### Historical durable lineage may coexist with later mounted work
 
-### 4. Explicit adoption is stronger than successful preparation or persistence
+44B transition, 44C root, 44D first edge, 44F verification target, 44G overlay, and the 44H handoff target may remain truthful historical relationships even while another controller is currently mounted.
 
-The 44-series has two places where user choice must remain especially visible:
+Coexistence does not establish chronology, preference, or head authority.
 
-- 44E explicitly adopts the changed-basis governed controller;
-- a later product boundary must explicitly decide whether a successful 44G result should be handed into the already-proven root-backed session shell.
+### Explicit adoption and handoff remain user-owned boundaries
 
-Neither action is allowed to occur merely because the required durable artifacts exist.
+44E explicitly adopts the new root-backed governed controller.
+
+44H separately and explicitly chooses whether to leave the current 44-series shell for the freshly proven 35C root-backed product.
+
+Neither action is authorized merely because the necessary durable artifacts exist.
 
 ---
 
 ## Authority boundaries still intentionally absent
 
-Through 44G, Pyxis still does **not** claim or infer:
+Through 44H, Pyxis still does **not** claim or infer:
 
 - a globally current/latest/canonical research session;
 - complete revision history or unique successor relationships;
 - chronology from paths, filenames, hashes, or filesystem timestamps;
 - branch preference merely because one durable lineage was persisted later;
 - durable identity from path equality;
-- persistent path authority from a successful prior operation;
+- persistent path authority from a prior operation or typed in-process handoff;
 - source authenticity, authorship, or trusted time from SHA-256 integrity;
 - semantic improvement from changed rationale text;
 - evidentiary support merely because human notes are attached to evidence;
 - quotation/citation authority from exact source selection alone;
 - browser navigation or autonomous interaction authority from read-only observation;
 - a generic fourth evidence-basis epoch or recursive `epoch[n]` ancestry model;
-- automatic restart/adoption merely because a valid 35C overlay was written.
+- automatic restart/adoption from valid persistence;
+- one-root launch-provenance/current-state inspection parity merely because second/third epoch inspection exists.
 
 These remain deliberate product constraints.
 
-## Current decision frontier after 44G
+## Current implemented frontier after 44H
 
-The implemented frontier is **44G / D224**.
+The 44-series is complete through **44H / D225**.
 
-The next approved product question is tracked as **44H / D225 in issue #168**:
+Its strongest compact statement is:
 
-> After successful 44G persistence, can the researcher explicitly leave the current 44-series shell and continue immediately in the already-proven root-backed product shell using the exact freshly proven in-memory 35C result, without reloading the just-written overlay or treating its path as current/head authority?
+> From one ordinary 31A-backed governed research session and exact already-loaded candidate evidence, Pyxis can explicitly prepare a changed evidence basis, persist the crossing and first root-backed lineage, explicitly adopt that governed branch, freshly verify and persist restartability, and—only on a separate explicit user action—transfer the exact fresh 35C proof into the established root-backed product without reloading or promoting the overlay path.
 
-The proposed handoff subject is exactly:
+That statement does **not** imply arbitrary-depth evidence-basis productization.
 
-```text
-44G result.checkpoint.fresh_reentry
-```
+## Next decision frontier — 45A / D226
 
-That object is already a freshly proven `ChromiumResearchRootBackedSessionReentryResult`, which is the existing input accepted by `RootBackedResearchSessionShell`.
+Issue #171 tracks the next separate product question:
 
-The intended distinction follows the already-proven 36D and 41E handoff pattern:
+> Can already-earned one-root authority become visibly inspectable across persisted 35C/35D/35E launches and in-process 44H/36D handoffs, while keeping immutable launch provenance separate from mutable current governed state and without inventing persistent paths for in-process launches?
 
-```text
-successful persistence
-!=
-automatic mode change
+This boundary is chosen before productizing a second changed evidence basis because the root-backed product now has four legitimate launch families while lacking the launch-provenance/current-state observability already proven for second and third epochs.
 
-explicit typed in-process handoff
-!=
-persistent path authority
-```
+45A is explicitly **not** implemented merely because this continuity document records the approved decision frontier.
 
-44H is not yet implemented merely because this continuity document records the decision frontier.
+It is also not a generic authority-inspection abstraction and does not authorize another evidence-basis epoch.
 
 ## Continuity rule
 
