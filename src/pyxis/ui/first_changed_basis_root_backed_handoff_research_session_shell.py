@@ -13,6 +13,7 @@ from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingS
 from .first_changed_basis_root_backed_reentry_overlay_research_session_shell import (
     FirstChangedBasisRootBackedReentryOverlayResearchSessionShell,
 )
+from .root_backed_research_session_shell import create_root_backed_research_session_shell
 
 
 class FirstChangedBasisRootBackedHandoffResearchSessionShell(
@@ -114,7 +115,33 @@ def create_first_changed_basis_root_backed_handoff_research_session_shell(
     )
 
 
+def run_first_changed_basis_root_backed_handoff_research_session_shell(
+    ordinary_reentry: ChromiumResearchSessionReentryResult,
+    appended_items: Iterable[ChromiumPageResearchWorkingSetItem],
+) -> ChromiumResearchRootBackedSessionReentryResult | None:
+    """Run 44H and chain only an explicit typed handoff into the existing receiver.
+
+    Normal close returns ``None`` and launches nothing. When the 44H shell returns one
+    exact root-backed re-entry result, this runner passes that same object directly to
+    the established `RootBackedResearchSessionShell` factory. No overlay path is read,
+    reconstructed, inferred, or carried forward by this orchestration seam.
+    """
+
+    handoff = create_first_changed_basis_root_backed_handoff_research_session_shell(
+        ordinary_reentry,
+        appended_items,
+    ).run()
+    if handoff is None:
+        return None
+    if not isinstance(handoff, ChromiumResearchRootBackedSessionReentryResult):
+        raise TypeError("44H shell returned an invalid root-backed handoff result.")
+
+    create_root_backed_research_session_shell(handoff).run()
+    return handoff
+
+
 __all__ = [
     "FirstChangedBasisRootBackedHandoffResearchSessionShell",
     "create_first_changed_basis_root_backed_handoff_research_session_shell",
+    "run_first_changed_basis_root_backed_handoff_research_session_shell",
 ]
