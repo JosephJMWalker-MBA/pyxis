@@ -83,7 +83,12 @@ def test_44g_different_valid_ordinary_plan_rejects_before_overlay_write(
     tmp_path: Path,
 ) -> None:
     _, _, _, _, _, _, _, verification = _verified_44f(tmp_path, stem="44g-wrong-prior")
-    other_fixture, *_ = _verified_44f_inputs(tmp_path, stem="44g-other-prior")
+    other_tmp_path = tmp_path / "other-ordinary-plan"
+    other_tmp_path.mkdir()
+    other_fixture, *_ = _verified_44f_inputs(
+        other_tmp_path,
+        stem="44g-other-prior",
+    )
     wrong_prior = tmp_path / "44g-wrong-prior-plan.json"
     persist_chromium_research_session_reentry_plan_document(other_fixture.plan, wrong_prior)
     destination = tmp_path / "44g-wrong-prior-overlay.json"
