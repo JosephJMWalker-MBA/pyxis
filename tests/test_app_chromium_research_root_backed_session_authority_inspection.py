@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -129,28 +130,32 @@ def test_45a_current_state_advances_without_replacing_launch_provenance(
     )
 
 
-def test_45a_projection_rejects_current_continuation_from_different_root(
+def test_45a_projection_rejects_current_continuation_when_launch_root_identity_differs(
     tmp_path: Path,
 ) -> None:
-    first = tmp_path / "first"
-    second = tmp_path / "second"
-    first.mkdir()
-    second.mkdir()
-    first_values = _persist_valid_continuation(first, stem="first")
-    second_values = _persist_valid_continuation(second, stem="different")
-    first_overlay = first_values[8]
-    first_current = first_values[9].fresh_reentry
-    different_current = second_values[9].fresh_reentry
+    values = _persist_valid_continuation(tmp_path, stem="45a-wrong-root")
+    overlay = values[8]
+    current = values[9].fresh_reentry
     lineage = prove_chromium_research_root_backed_session_continuation_shell_lineage(
-        first_current,
-        overlay_source=first_overlay,
+        current,
+        overlay_source=overlay,
     )
     inspection = inspect_chromium_research_root_backed_session_continuation_launch(lineage)
+    mismatched = replace(
+        inspection,
+        launch_provenance=replace(
+            inspection.launch_provenance,
+            root_sha256="0" * 64,
+        ),
+    )
 
+    assert current.prior_root_backed_reentry.loaded_root.verification.root_record_sha256 != (
+        mismatched.launch_provenance.root_sha256
+    )
     with pytest.raises(ValueError, match="root identity"):
         advance_chromium_research_root_backed_authority_from_continuation(
-            inspection,
-            different_current,
+            mismatched,
+            current,
             state_source="wrong root",
         )
 
