@@ -6,6 +6,13 @@ import json
 from pathlib import Path
 
 from pyxis.app import build_and_run_workspace
+from pyxis.app.chromium_research_root_backed_session_authority_inspection import (
+    inspect_chromium_research_root_backed_session_continuation_launch,
+    inspect_chromium_research_root_backed_session_launch,
+)
+from pyxis.app.chromium_research_root_backed_session_authority_inspection_report import (
+    serialize_chromium_research_root_backed_session_authority_inspection,
+)
 from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_document import (
     ChromiumResearchRootBackedSessionContinuationReentryResult,
     load_chromium_research_root_backed_session_continuation_reentry_plan_document,
@@ -181,11 +188,27 @@ def _build_parser() -> argparse.ArgumentParser:
     research_inspect_parser = subparsers.add_parser(
         "research-inspect",
         help=(
-            "Freshly prove one explicit persisted second- or third-epoch entry and emit a "
-            "deterministic read-only authority inspection report."
+            "Freshly prove one explicit persisted root-backed, second-, or third-epoch "
+            "entry and emit a deterministic read-only authority inspection report."
         ),
     )
     inspect_entry = research_inspect_parser.add_mutually_exclusive_group(required=True)
+    inspect_entry.add_argument(
+        "--root-backed-overlay",
+        type=Path,
+        help=(
+            "Explicit 35C root-backed locator overlay. The emitted path is launch "
+            "location context only, never current/latest/head authority."
+        ),
+    )
+    inspect_entry.add_argument(
+        "--root-backed-continuation-overlay",
+        type=Path,
+        help=(
+            "Explicit 35D/35E root-backed continuation overlay. The emitted path is "
+            "launch location context only, never current/latest/head authority."
+        ),
+    )
     inspect_entry.add_argument(
         "--second-basis-epoch-overlay",
         type=Path,
@@ -689,10 +712,40 @@ def _run_research_inspect_command(
     parser: argparse.ArgumentParser,
     args: argparse.Namespace,
 ) -> int:
-    """Freshly prove one explicit persisted second- or third-epoch launch and emit JSON."""
+    """Freshly prove one explicit persisted launch and emit deterministic JSON."""
 
     try:
-        if args.second_basis_epoch_overlay is not None:
+        if args.root_backed_overlay is not None:
+            plan = load_chromium_research_root_backed_session_reentry_plan_document(
+                args.root_backed_overlay
+            )
+            result = reenter_chromium_research_root_backed_session(plan)
+            lineage = prove_chromium_research_root_backed_session_shell_lineage(
+                result,
+                overlay_source=args.root_backed_overlay,
+            )
+            inspection = inspect_chromium_research_root_backed_session_launch(lineage)
+            report = serialize_chromium_research_root_backed_session_authority_inspection(
+                inspection
+            )
+        elif args.root_backed_continuation_overlay is not None:
+            plan = (
+                load_chromium_research_root_backed_session_continuation_reentry_plan_document(
+                    args.root_backed_continuation_overlay
+                )
+            )
+            result = reenter_chromium_research_root_backed_session_continuation(plan)
+            lineage = prove_chromium_research_root_backed_session_continuation_shell_lineage(
+                result,
+                overlay_source=args.root_backed_continuation_overlay,
+            )
+            inspection = inspect_chromium_research_root_backed_session_continuation_launch(
+                lineage
+            )
+            report = serialize_chromium_research_root_backed_session_authority_inspection(
+                inspection
+            )
+        elif args.second_basis_epoch_overlay is not None:
             plan = load_chromium_research_second_basis_epoch_reentry_plan_document(
                 args.second_basis_epoch_overlay
             )
@@ -760,7 +813,7 @@ def _run_research_inspect_command(
             )
         else:
             raise ValueError(
-                "research-inspect requires one explicit persisted second- or third-epoch entry configuration."
+                "research-inspect requires one explicit persisted entry configuration."
             )
         print(report, end="")
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
