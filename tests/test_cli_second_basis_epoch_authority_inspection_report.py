@@ -119,7 +119,7 @@ def test_research_inspect_invalid_overlay_fails_before_report_emission(
     assert "research-inspect failed" in captured.err
 
 
-def test_research_inspect_help_exposes_only_explicit_persisted_second_epoch_families(
+def test_research_inspect_help_exposes_only_explicit_persisted_families(
     capsys,
 ) -> None:
     with pytest.raises(SystemExit) as exc_info:
@@ -127,13 +127,18 @@ def test_research_inspect_help_exposes_only_explicit_persisted_second_epoch_fami
 
     output = capsys.readouterr().out
     assert exc_info.value.code == 0
-    assert "--second-basis-epoch-overlay" in output
-    assert "--second-basis-epoch-continuation-overlay" in output
+    for expected in (
+        "--root-backed-overlay",
+        "--root-backed-continuation-overlay",
+        "--second-basis-epoch-overlay",
+        "--second-basis-epoch-continuation-overlay",
+        "--third-basis-epoch-overlay",
+        "--third-basis-epoch-continuation-overlay",
+    ):
+        assert expected in output
 
     for forbidden in (
         "--plan",
-        "--root-backed-overlay",
-        "--root-backed-continuation-overlay",
         "--latest",
         "--head",
         "--directory",
