@@ -15,6 +15,10 @@ from pyxis.app.chromium_research_second_changed_basis_revision_root import (
     ChromiumResearchSecondChangedBasisRevisionRootResult,
     persist_chromium_research_second_changed_basis_revision_root,
 )
+from pyxis.app.chromium_research_second_changed_basis_root_edge import (
+    ChromiumResearchSecondChangedBasisRootEdgeResult,
+    persist_chromium_research_second_changed_basis_root_edge,
+)
 from pyxis.app.chromium_research_second_changed_basis_transition import (
     ChromiumResearchSecondChangedBasisTransitionResult,
     persist_chromium_research_second_changed_basis_transition,
@@ -35,6 +39,9 @@ from .chromium_research_root_backed_session_continuation_checkpoint_extension_te
 )
 from .chromium_research_second_changed_basis_revision_root_textual import (
     ResearchSecondChangedBasisRevisionRootControls,
+)
+from .chromium_research_second_changed_basis_root_edge_textual import (
+    ResearchSecondChangedBasisRootEdgeControls,
 )
 from .chromium_research_second_changed_basis_transition_textual import (
     ResearchSecondChangedBasisTransitionControls,
@@ -73,7 +80,8 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
     The base shell owns governed inspection, endpoint revision, explicit 30A rollover,
     and optional 44A changed-basis preparation. This subclass adds the 35E cumulative
     checkpoint transition and, only after exact predecessor successes, one explicit
-    46A second changed-basis 33B transition and one 46B second changed-basis 34A root.
+    46A second changed-basis 33B transition, one 46B second changed-basis 34A root,
+    and one 46C first ordinary 34B edge after that second root.
 
     A successful 35E checkpoint changes more than restart configuration: the freshly
     proven controller presents the cumulative post-root declaration. Therefore this
@@ -182,6 +190,40 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
     #persist-research-second-changed-basis-revision-root {
         margin-top: 1;
     }
+
+    #research-second-changed-basis-root-edge-controls {
+        width: 94%;
+        height: auto;
+        padding: 1 2;
+        margin-top: 1;
+        border: round $warning;
+    }
+
+    #research-second-changed-basis-root-edge-authority-notice,
+    #research-second-changed-basis-root-edge-root-summary,
+    #research-second-changed-basis-root-edge-rationale-label,
+    #research-second-changed-basis-root-edge-root-source-label,
+    #research-second-changed-basis-root-edge-destination-label,
+    #research-second-changed-basis-root-edge-status {
+        margin-top: 1;
+    }
+
+    #research-second-changed-basis-root-edge-title,
+    #research-second-changed-basis-root-edge-rationale-label,
+    #research-second-changed-basis-root-edge-root-source-label,
+    #research-second-changed-basis-root-edge-destination-label {
+        text-style: bold;
+    }
+
+    #research-second-changed-basis-root-edge-rationale {
+        width: 100%;
+        height: 8;
+        margin-top: 1;
+    }
+
+    #persist-research-second-changed-basis-root-edge {
+        margin-top: 1;
+    }
     """
 
     def __init__(
@@ -206,8 +248,15 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
         self.last_second_changed_basis_revision_root: (
             ChromiumResearchSecondChangedBasisRevisionRootResult | None
         ) = None
+        self.last_second_changed_basis_root_edge: (
+            ChromiumResearchSecondChangedBasisRootEdgeResult | None
+        ) = None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "persist-research-second-changed-basis-root-edge":
+            event.stop()
+            self.call_after_refresh(self._persist_second_changed_basis_root_edge)
+            return
         if event.button.id == "persist-research-second-changed-basis-revision-root":
             event.stop()
             self.call_after_refresh(self._persist_second_changed_basis_revision_root)
@@ -417,6 +466,76 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
             )
 
         self.last_second_changed_basis_revision_root = result
+        controls.lock_after_success(result)
+        if len(self.query("#research-second-changed-basis-root-edge-controls")) != 0:
+            raise ValueError("Post-second-root edge controls are already mounted.")
+        await self.mount(ResearchSecondChangedBasisRootEdgeControls(result))
+
+    async def _persist_second_changed_basis_root_edge(self) -> None:
+        controls = self.query_one(
+            "#research-second-changed-basis-root-edge-controls",
+            ResearchSecondChangedBasisRootEdgeControls,
+        )
+        status = self.query_one(
+            "#research-second-changed-basis-root-edge-status", Static
+        )
+        root_result = self.last_second_changed_basis_revision_root
+        if root_result is None or controls.root_result is not root_result:
+            status.update(
+                "Edge failed: no exact successful 46B second root owns this form."
+            )
+            return
+
+        rationale = self.query_one(
+            "#research-second-changed-basis-root-edge-rationale", TextArea
+        )
+        if not rationale.text.strip():
+            status.update("Edge failed: a new human rationale is required.")
+            return
+
+        root_source = self.query_one(
+            "#research-second-changed-basis-root-edge-root-source", Input
+        )
+        destination = self.query_one(
+            "#research-second-changed-basis-root-edge-destination", Input
+        )
+        if not root_source.value.strip():
+            status.update("Edge failed: explicit current second-root path is required.")
+            return
+        if not destination.value.strip():
+            status.update(
+                "Edge failed: explicit first post-second-root edge destination path is required."
+            )
+            return
+
+        mounted_controller = self.research_controller
+        mounted_session = self.research_session
+        mounted_reentry = self.root_backed_continuation_reentry
+        try:
+            result = persist_chromium_research_second_changed_basis_root_edge(
+                root_result,
+                revised_note_text=rationale.text,
+                root_source=Path(root_source.value),
+                destination=Path(destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Edge failed: {exc}")
+            return
+
+        if result.root_result is not root_result:
+            raise ValueError(
+                "Post-second-root edge did not retain the exact successful 46B root."
+            )
+        if (
+            self.research_controller is not mounted_controller
+            or self.research_session is not mounted_session
+            or self.root_backed_continuation_reentry is not mounted_reentry
+        ):
+            raise ValueError(
+                "Mounted one-root continuation changed during post-second-root edge persistence."
+            )
+
+        self.last_second_changed_basis_root_edge = result
         controls.lock_after_success(result)
 
     async def _mount_research_rollover(
