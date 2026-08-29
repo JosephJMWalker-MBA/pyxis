@@ -79,7 +79,6 @@ class SecondChangedBasisSessionAdoptionResearchSessionShell(
             event.stop()
             self.call_after_refresh(self._adopt_second_changed_basis_session)
             return
-        super().on_button_pressed(event)
 
     async def _persist_second_changed_basis_root_edge(self) -> None:
         """Run inherited 46C, then mount 46D only after one new exact success."""
