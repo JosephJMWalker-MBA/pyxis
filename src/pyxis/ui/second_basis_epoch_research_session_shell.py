@@ -119,6 +119,7 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
             )
         super().__init__(lineage.reentry.controller)
         self.second_basis_epoch_launch_lineage = lineage
+        self.second_basis_epoch_reentry = lineage.reentry
         self.last_second_basis_epoch_continuation_checkpoint: (
             ChromiumResearchSecondBasisEpochContinuationCheckpointResult | None
         ) = None
@@ -213,7 +214,7 @@ class SecondBasisEpochResearchSessionShell(ResearchSessionShell):
                 "Second-epoch checkpoint failed: explicit no-overwrite 37C overlay destination is required."
             )
             return
-        prior = self.second_basis_epoch_launch_lineage.reentry
+        prior = self.second_basis_epoch_reentry
         try:
             checkpoint = (
                 persist_chromium_research_second_basis_epoch_continuation_checkpoint(

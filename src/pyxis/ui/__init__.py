@@ -52,6 +52,19 @@ from .second_changed_basis_epoch_reentry_overlay_research_session_shell import (
     SecondChangedBasisEpochReentryOverlayResearchSessionShell,
     create_second_changed_basis_epoch_reentry_overlay_research_session_shell,
 )
+from .second_changed_basis_epoch_handoff_research_session_shell import (
+    SecondChangedBasisEpochHandoffResearchSessionShell,
+    create_second_changed_basis_epoch_handoff_research_session_shell,
+    run_second_changed_basis_epoch_handoff_research_session_shell,
+)
+from .second_basis_epoch_cumulative_handoff_shell import (
+    SecondBasisEpochHandoffResearchSessionShell,
+    create_second_basis_epoch_handoff_research_session_shell,
+)
+from .second_basis_epoch_session_handoff_authority_inspection_shell import (
+    InspectableSecondBasisEpochHandoffResearchSessionShell,
+    create_inspectable_second_basis_epoch_handoff_research_session_shell,
+)
 from .root_backed_authority_inspection_shell import (
     InspectableRootBackedContinuationHandoffResearchSessionShell,
     InspectableRootBackedContinuationResearchSessionShell,
@@ -80,9 +93,12 @@ __all__ = [
     "InspectableRootBackedContinuationResearchSessionShell",
     "InspectableRootBackedHandoffResearchSessionShell",
     "InspectableRootBackedResearchSessionShell",
+    "InspectableSecondBasisEpochHandoffResearchSessionShell",
     "MeasurementSummaryDetail",
     "MeasurementSummaryShell",
     "ResearchSessionShell",
+    "SecondBasisEpochHandoffResearchSessionShell",
+    "SecondChangedBasisEpochHandoffResearchSessionShell",
     "SecondChangedBasisEpochReentryOverlayResearchSessionShell",
     "SecondChangedBasisEpochReentryResearchSessionShell",
     "SecondChangedBasisSessionAdoptionResearchSessionShell",
@@ -99,11 +115,15 @@ __all__ = [
     "create_inspectable_root_backed_continuation_research_session_shell",
     "create_inspectable_root_backed_handoff_research_session_shell",
     "create_inspectable_root_backed_research_session_shell",
+    "create_inspectable_second_basis_epoch_handoff_research_session_shell",
     "create_measurement_summary_shell",
     "create_research_session_shell",
+    "create_second_basis_epoch_handoff_research_session_shell",
+    "create_second_changed_basis_epoch_handoff_research_session_shell",
     "create_second_changed_basis_epoch_reentry_overlay_research_session_shell",
     "create_second_changed_basis_epoch_reentry_research_session_shell",
     "create_second_changed_basis_session_adoption_research_session_shell",
     "create_workspace_shell",
     "run_first_changed_basis_root_backed_handoff_research_session_shell",
+    "run_second_changed_basis_epoch_handoff_research_session_shell",
 ]
