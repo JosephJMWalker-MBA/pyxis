@@ -40,6 +40,10 @@ from .first_changed_basis_root_backed_handoff_research_session_shell import (
     create_first_changed_basis_root_backed_handoff_research_session_shell,
     run_first_changed_basis_root_backed_handoff_research_session_shell,
 )
+from .second_changed_basis_session_adoption_research_session_shell import (
+    SecondChangedBasisSessionAdoptionResearchSessionShell,
+    create_second_changed_basis_session_adoption_research_session_shell,
+)
 from .root_backed_authority_inspection_shell import (
     InspectableRootBackedContinuationHandoffResearchSessionShell,
     InspectableRootBackedContinuationResearchSessionShell,
@@ -71,6 +75,7 @@ __all__ = [
     "MeasurementSummaryDetail",
     "MeasurementSummaryShell",
     "ResearchSessionShell",
+    "SecondChangedBasisSessionAdoptionResearchSessionShell",
     "WorkspaceDetail",
     "WorkspaceShell",
     "create_first_changed_basis_research_session_shell",
@@ -86,6 +91,7 @@ __all__ = [
     "create_inspectable_root_backed_research_session_shell",
     "create_measurement_summary_shell",
     "create_research_session_shell",
+    "create_second_changed_basis_session_adoption_research_session_shell",
     "create_workspace_shell",
     "run_first_changed_basis_root_backed_handoff_research_session_shell",
 ]
