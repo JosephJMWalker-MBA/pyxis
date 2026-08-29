@@ -91,4 +91,4 @@ async def test_46d_inspection_advances_after_post_adoption_ordinary_rollover(
             shell.research_controller.declared_endpoint.verification.edge_record_sha256
         )
         assert len(shell.query("#research-root-backed-cumulative-checkpoint-controls")) == 0
-        assert shell.root_backed_continuation_reentry is reentry
+        assert shell.root_backed_continuation_reentry is lineage.reentry
