@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from textual.widgets import Button, Static
+from pathlib import Path
+
+from textual.widgets import Button, Input, Static
 
 from pyxis.app.chromium_research_root_backed_session_continuation_checkpoint_extension import (
     ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
@@ -8,6 +10,10 @@ from pyxis.app.chromium_research_root_backed_session_continuation_checkpoint_ext
 )
 from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_document import (
     ChromiumResearchRootBackedSessionContinuationReentryResult,
+)
+from pyxis.app.chromium_research_second_changed_basis_transition import (
+    ChromiumResearchSecondChangedBasisTransitionResult,
+    persist_chromium_research_second_changed_basis_transition,
 )
 from pyxis.app.chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 
@@ -22,6 +28,9 @@ from .chromium_research_cumulative_checkpoint_rollover_textual import (
 from .chromium_research_root_backed_session_continuation_checkpoint_extension_textual import (
     RootBackedResearchSessionCumulativeCheckpointControls,
     cumulative_checkpoint_success_receipt,
+)
+from .chromium_research_second_changed_basis_transition_textual import (
+    ResearchSecondChangedBasisTransitionControls,
 )
 from .research_session_shell import ResearchSessionShell
 
@@ -54,8 +63,10 @@ _ROOT_BACKED_CUMULATIVE_ROLLOVER = _CumulativeCheckpointRolloverMountSpec(
 class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
     """Repeatable Textual shell for one exact persisted 35D/35E continuation lineage.
 
-    The base shell owns governed inspection, endpoint revision, and explicit 30A
-    rollover. This subclass adds only the 35E cumulative checkpoint transition.
+    The base shell owns governed inspection, endpoint revision, explicit 30A rollover,
+    and optional 44A changed-basis preparation. This subclass adds the 35E cumulative
+    checkpoint transition and, only after one newly successful inherited preparation,
+    one explicit 46A second changed-basis 33B transition.
 
     A successful 35E checkpoint changes more than restart configuration: the freshly
     proven controller presents the cumulative post-root declaration. Therefore this
@@ -94,6 +105,36 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
     #save-research-root-backed-cumulative-checkpoint {
         margin-top: 1;
     }
+
+    #research-second-changed-basis-transition-controls {
+        width: 94%;
+        height: auto;
+        padding: 1 2;
+        margin-top: 1;
+        border: round $warning;
+    }
+
+    #research-second-changed-basis-transition-authority-notice,
+    #research-second-changed-basis-transition-prepared-summary,
+    #research-second-changed-basis-transition-prior-edge-source-label,
+    #research-second-changed-basis-transition-working-set-source-label,
+    #research-second-changed-basis-transition-note-source-label,
+    #research-second-changed-basis-transition-destination-label,
+    #research-second-changed-basis-transition-status {
+        margin-top: 1;
+    }
+
+    #research-second-changed-basis-transition-title,
+    #research-second-changed-basis-transition-prior-edge-source-label,
+    #research-second-changed-basis-transition-working-set-source-label,
+    #research-second-changed-basis-transition-note-source-label,
+    #research-second-changed-basis-transition-destination-label {
+        text-style: bold;
+    }
+
+    #persist-research-second-changed-basis-transition {
+        margin-top: 1;
+    }
     """
 
     def __init__(
@@ -112,20 +153,144 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
         self.last_root_backed_cumulative_checkpoint: (
             ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult | None
         ) = None
+        self.last_second_changed_basis_transition: (
+            ChromiumResearchSecondChangedBasisTransitionResult | None
+        ) = None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "persist-research-second-changed-basis-transition":
+            event.stop()
+            self.call_after_refresh(self._persist_second_changed_basis_transition)
+            return
         if event.button.id == "save-research-root-backed-cumulative-checkpoint":
             event.stop()
             self.call_after_refresh(self._save_root_backed_cumulative_checkpoint)
             return
         super().on_button_pressed(event)
 
+    async def _persist_research_changed_basis_preparation(self) -> None:
+        """Run inherited 44A, then expose 46A only for a new exact continuation success."""
+
+        prior = self.last_changed_basis_preparation
+        await super()._persist_research_changed_basis_preparation()
+        prepared = self.last_changed_basis_preparation
+        if prepared is None or prepared is prior:
+            return
+        current_reentry = self.root_backed_continuation_reentry
+        if self.research_controller is not current_reentry.controller:
+            raise ValueError(
+                "Second changed-basis preparation no longer belongs to the exact retained continuation controller."
+            )
+        if self.research_controller.declared_endpoint is not prepared.prior_endpoint:
+            raise ValueError(
+                "Second changed-basis preparation does not retain the mounted continuation endpoint."
+            )
+        if len(self.query("#research-second-changed-basis-transition-controls")) != 0:
+            raise ValueError("Second changed-basis transition controls are already mounted.")
+        await self.mount(ResearchSecondChangedBasisTransitionControls(prepared))
+
+    async def _persist_second_changed_basis_transition(self) -> None:
+        controls = self.query_one(
+            "#research-second-changed-basis-transition-controls",
+            ResearchSecondChangedBasisTransitionControls,
+        )
+        status = self.query_one(
+            "#research-second-changed-basis-transition-status", Static
+        )
+        if controls.stale:
+            status.update(
+                "Second transition failed: this prepared basis is stale and will not be silently retargeted."
+            )
+            return
+
+        prepared = self.last_changed_basis_preparation
+        current_reentry = self.root_backed_continuation_reentry
+        if prepared is None or controls.prepared is not prepared:
+            status.update(
+                "Second transition failed: no exact successful 44A preparation owns this transition form."
+            )
+            return
+        if (
+            self.research_controller is not current_reentry.controller
+            or self.research_controller.declared_endpoint is not prepared.prior_endpoint
+        ):
+            controls.mark_stale()
+            return
+
+        prior_edge_source = self.query_one(
+            "#research-second-changed-basis-transition-prior-edge-source", Input
+        )
+        working_set_source = self.query_one(
+            "#research-second-changed-basis-transition-working-set-source", Input
+        )
+        note_source = self.query_one(
+            "#research-second-changed-basis-transition-note-source", Input
+        )
+        destination = self.query_one(
+            "#research-second-changed-basis-transition-destination", Input
+        )
+        required = (
+            (prior_edge_source, "explicit current prior endpoint edge path"),
+            (working_set_source, "explicit prepared working-set path"),
+            (note_source, "explicit prepared working-set-note path"),
+            (destination, "explicit second transition destination path"),
+        )
+        for widget, label in required:
+            if not widget.value.strip():
+                status.update(f"Second transition failed: {label} is required.")
+                return
+
+        controller = self.research_controller
+        session = self.research_session
+        try:
+            result = persist_chromium_research_second_changed_basis_transition(
+                controller,
+                current_reentry,
+                prepared,
+                prior_edge_source=Path(prior_edge_source.value),
+                working_set_source=Path(working_set_source.value),
+                note_source=Path(note_source.value),
+                destination=Path(destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Second transition failed: {exc}")
+            return
+
+        if result.controller is not controller:
+            raise ValueError(
+                "Second changed-basis transition did not retain the exact mounted controller."
+            )
+        if result.continuation_reentry is not current_reentry:
+            raise ValueError(
+                "Second changed-basis transition did not retain the exact continuation re-entry."
+            )
+        if result.prepared is not prepared:
+            raise ValueError(
+                "Second changed-basis transition did not retain the exact prepared basis."
+            )
+        if (
+            self.research_controller is not controller
+            or self.research_session is not session
+            or self.root_backed_continuation_reentry is not current_reentry
+        ):
+            raise ValueError(
+                "Mounted one-root continuation changed during second changed-basis transition persistence."
+            )
+
+        self.last_second_changed_basis_transition = result
+        controls.lock_after_success(result)
+
     async def _mount_research_rollover(
         self,
         result: ChromiumResearchSessionRolloverResult,
     ) -> None:
-        """Mount one-hop continuation, then lock it pending explicit 35E proof."""
+        """Mount one-hop continuation, staling 46A, then lock pending explicit 35E proof."""
 
+        if len(self.query("#research-second-changed-basis-transition-controls")) != 0:
+            self.query_one(
+                "#research-second-changed-basis-transition-controls",
+                ResearchSecondChangedBasisTransitionControls,
+            ).mark_stale()
         current_reentry = self.root_backed_continuation_reentry
         await super()._mount_research_rollover(result)
 
