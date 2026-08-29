@@ -5,6 +5,9 @@ from textual.widgets import Button, Static
 from pyxis.app.chromium_research_second_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchSecondBasisEpochContinuationReentryResult,
 )
+from pyxis.app.chromium_research_second_basis_epoch_reentry import (
+    ChromiumResearchSecondBasisEpochReentryResult,
+)
 from pyxis.app.chromium_research_second_basis_epoch_shell_lineage import (
     ChromiumResearchSecondBasisEpochShellLineage,
 )
@@ -87,6 +90,30 @@ class SecondBasisEpochCumulativeHandoffResearchSessionShell(
         # Deliberately do not unlock revision or auto-exit after checkpoint success.
 
 
+class SecondBasisEpochHandoffResearchSessionShell(
+    SecondBasisEpochCumulativeHandoffResearchSessionShell
+):
+    """Established first-checkpoint behavior from one exact pathless 46G handoff.
+
+    The supplied second-epoch re-entry was freshly earned by public 37B during 46F in
+    the same process. This receiver deliberately bypasses persisted 38B launch-lineage
+    construction: no 37B path is loaded, stored, inferred, or promoted as launch
+    provenance. Existing 37C and 38F behavior is inherited unchanged.
+    """
+
+    def __init__(self, reentry: ChromiumResearchSecondBasisEpochReentryResult) -> None:
+        if type(reentry) is not ChromiumResearchSecondBasisEpochReentryResult:
+            raise TypeError(
+                "reentry must be exactly ChromiumResearchSecondBasisEpochReentryResult."
+            )
+
+        ResearchSessionShell.__init__(self, reentry.controller)
+        self.second_basis_epoch_launch_lineage = None
+        self.second_basis_epoch_handoff_reentry = reentry
+        self.second_basis_epoch_reentry = reentry
+        self.last_second_basis_epoch_continuation_checkpoint = None
+
+
 class SecondBasisEpochContinuationHandoffResearchSessionShell(
     SecondBasisEpochContinuationResearchSessionShell
 ):
@@ -131,6 +158,14 @@ def create_second_basis_epoch_cumulative_handoff_research_session_shell(
     return SecondBasisEpochCumulativeHandoffResearchSessionShell(lineage)
 
 
+def create_second_basis_epoch_handoff_research_session_shell(
+    reentry: ChromiumResearchSecondBasisEpochReentryResult,
+) -> SecondBasisEpochHandoffResearchSessionShell:
+    """Create first-checkpoint mode directly from one exact 46G typed handoff."""
+
+    return SecondBasisEpochHandoffResearchSessionShell(reentry)
+
+
 def create_second_basis_epoch_continuation_handoff_research_session_shell(
     reentry: ChromiumResearchSecondBasisEpochContinuationReentryResult,
 ) -> SecondBasisEpochContinuationHandoffResearchSessionShell:
@@ -142,6 +177,8 @@ def create_second_basis_epoch_continuation_handoff_research_session_shell(
 __all__ = [
     "SecondBasisEpochContinuationHandoffResearchSessionShell",
     "SecondBasisEpochCumulativeHandoffResearchSessionShell",
+    "SecondBasisEpochHandoffResearchSessionShell",
     "create_second_basis_epoch_continuation_handoff_research_session_shell",
     "create_second_basis_epoch_cumulative_handoff_research_session_shell",
+    "create_second_basis_epoch_handoff_research_session_shell",
 ]
