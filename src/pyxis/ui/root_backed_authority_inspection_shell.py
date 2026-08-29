@@ -15,15 +15,18 @@ from pyxis.app.chromium_research_root_backed_session_shell_lineage import (
     ChromiumResearchRootBackedSessionContinuationShellLineage,
     ChromiumResearchRootBackedSessionShellLineage,
 )
+from pyxis.app.chromium_research_second_changed_basis_session_adoption import (
+    ChromiumResearchSecondChangedBasisSessionAdoptionResult,
+)
 from pyxis.app.chromium_research_session_rollover import ChromiumResearchSessionRolloverResult
 
 from .chromium_research_root_backed_session_authority_inspection_textual import (
     RootBackedAuthorityInspectionPanel,
 )
-from .root_backed_continuation_research_session_shell import (
-    RootBackedContinuationResearchSessionShell,
-)
 from .root_backed_research_session_shell import RootBackedResearchSessionShell
+from .second_changed_basis_session_adoption_research_session_shell import (
+    SecondChangedBasisSessionAdoptionResearchSessionShell,
+)
 
 
 _INSPECTION_CSS = """
@@ -107,11 +110,11 @@ class InspectableRootBackedHandoffResearchSessionShell(RootBackedResearchSession
 
 
 class InspectableRootBackedContinuationResearchSessionShell(
-    RootBackedContinuationResearchSessionShell
+    SecondChangedBasisSessionAdoptionResearchSessionShell
 ):
-    """Path-proofed 35D/35E cumulative shell with immutable launch inspection."""
+    """Path-proofed 35D/35E/46D shell with immutable launch inspection."""
 
-    CSS = RootBackedContinuationResearchSessionShell.CSS + _INSPECTION_CSS
+    CSS = SecondChangedBasisSessionAdoptionResearchSessionShell.CSS + _INSPECTION_CSS
 
     def __init__(
         self,
@@ -149,13 +152,29 @@ class InspectableRootBackedContinuationResearchSessionShell(
             state_source="35E cumulative promotion",
         )
 
+    async def _promote_second_changed_basis_session_adoption(
+        self,
+        result: ChromiumResearchSecondChangedBasisSessionAdoptionResult,
+    ) -> None:
+        launch = self.root_backed_authority_inspection.launch_provenance
+        await super()._promote_second_changed_basis_session_adoption(result)
+        if self.root_backed_authority_inspection.launch_provenance is not launch:
+            raise ValueError(
+                "46D adoption must not replace immutable persisted root-backed continuation launch provenance."
+            )
+        self.root_backed_authority_inspection.update_current_from_controller(
+            self.research_controller,
+            state_kind="adopted second changed-basis governed session",
+            state_source="explicit 46D second changed-basis adoption",
+        )
+
 
 class InspectableRootBackedContinuationHandoffResearchSessionShell(
-    RootBackedContinuationResearchSessionShell
+    SecondChangedBasisSessionAdoptionResearchSessionShell
 ):
-    """Raw 36D cumulative handoff shell with no persistent launch path."""
+    """Raw 36D/46D shell with no persistent launch path."""
 
-    CSS = RootBackedContinuationResearchSessionShell.CSS + _INSPECTION_CSS
+    CSS = SecondChangedBasisSessionAdoptionResearchSessionShell.CSS + _INSPECTION_CSS
 
     def __init__(
         self,
@@ -183,6 +202,22 @@ class InspectableRootBackedContinuationHandoffResearchSessionShell(
         self.root_backed_authority_inspection.update_current_from_continuation(
             self.root_backed_continuation_reentry,
             state_source="35E cumulative promotion after in-process 36D handoff",
+        )
+
+    async def _promote_second_changed_basis_session_adoption(
+        self,
+        result: ChromiumResearchSecondChangedBasisSessionAdoptionResult,
+    ) -> None:
+        launch = self.root_backed_authority_inspection.launch_provenance
+        await super()._promote_second_changed_basis_session_adoption(result)
+        if self.root_backed_authority_inspection.launch_provenance is not launch:
+            raise ValueError(
+                "46D adoption must not replace immutable 36D handoff provenance."
+            )
+        self.root_backed_authority_inspection.update_current_from_controller(
+            self.research_controller,
+            state_kind="adopted second changed-basis governed session",
+            state_source="explicit 46D second changed-basis adoption after in-process 36D handoff",
         )
 
 
