@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from textual.widgets import Button, Input, Static
+from textual.widgets import Button, Input, Static, TextArea
 
 from pyxis.app.chromium_research_root_backed_session_continuation_checkpoint_extension import (
     ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
@@ -10,6 +10,10 @@ from pyxis.app.chromium_research_root_backed_session_continuation_checkpoint_ext
 )
 from pyxis.app.chromium_research_root_backed_session_continuation_reentry_plan_document import (
     ChromiumResearchRootBackedSessionContinuationReentryResult,
+)
+from pyxis.app.chromium_research_second_changed_basis_revision_root import (
+    ChromiumResearchSecondChangedBasisRevisionRootResult,
+    persist_chromium_research_second_changed_basis_revision_root,
 )
 from pyxis.app.chromium_research_second_changed_basis_transition import (
     ChromiumResearchSecondChangedBasisTransitionResult,
@@ -28,6 +32,9 @@ from .chromium_research_cumulative_checkpoint_rollover_textual import (
 from .chromium_research_root_backed_session_continuation_checkpoint_extension_textual import (
     RootBackedResearchSessionCumulativeCheckpointControls,
     cumulative_checkpoint_success_receipt,
+)
+from .chromium_research_second_changed_basis_revision_root_textual import (
+    ResearchSecondChangedBasisRevisionRootControls,
 )
 from .chromium_research_second_changed_basis_transition_textual import (
     ResearchSecondChangedBasisTransitionControls,
@@ -65,8 +72,8 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
 
     The base shell owns governed inspection, endpoint revision, explicit 30A rollover,
     and optional 44A changed-basis preparation. This subclass adds the 35E cumulative
-    checkpoint transition and, only after one newly successful inherited preparation,
-    one explicit 46A second changed-basis 33B transition.
+    checkpoint transition and, only after exact predecessor successes, one explicit
+    46A second changed-basis 33B transition and one 46B second changed-basis 34A root.
 
     A successful 35E checkpoint changes more than restart configuration: the freshly
     proven controller presents the cumulative post-root declaration. Therefore this
@@ -135,6 +142,46 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
     #persist-research-second-changed-basis-transition {
         margin-top: 1;
     }
+
+    #research-second-changed-basis-revision-root-controls {
+        width: 94%;
+        height: auto;
+        padding: 1 2;
+        margin-top: 1;
+        border: round $warning;
+    }
+
+    #research-second-changed-basis-revision-root-authority-notice,
+    #research-second-changed-basis-revision-root-transition-summary,
+    #research-second-changed-basis-revision-root-rationale-label,
+    #research-second-changed-basis-revision-root-prior-edge-source-label,
+    #research-second-changed-basis-revision-root-working-set-source-label,
+    #research-second-changed-basis-revision-root-note-source-label,
+    #research-second-changed-basis-revision-root-transition-source-label,
+    #research-second-changed-basis-revision-root-destination-label,
+    #research-second-changed-basis-revision-root-status {
+        margin-top: 1;
+    }
+
+    #research-second-changed-basis-revision-root-title,
+    #research-second-changed-basis-revision-root-rationale-label,
+    #research-second-changed-basis-revision-root-prior-edge-source-label,
+    #research-second-changed-basis-revision-root-working-set-source-label,
+    #research-second-changed-basis-revision-root-note-source-label,
+    #research-second-changed-basis-revision-root-transition-source-label,
+    #research-second-changed-basis-revision-root-destination-label {
+        text-style: bold;
+    }
+
+    #research-second-changed-basis-revision-root-rationale {
+        width: 100%;
+        height: 8;
+        margin-top: 1;
+    }
+
+    #persist-research-second-changed-basis-revision-root {
+        margin-top: 1;
+    }
     """
 
     def __init__(
@@ -156,8 +203,15 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
         self.last_second_changed_basis_transition: (
             ChromiumResearchSecondChangedBasisTransitionResult | None
         ) = None
+        self.last_second_changed_basis_revision_root: (
+            ChromiumResearchSecondChangedBasisRevisionRootResult | None
+        ) = None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "persist-research-second-changed-basis-revision-root":
+            event.stop()
+            self.call_after_refresh(self._persist_second_changed_basis_revision_root)
+            return
         if event.button.id == "persist-research-second-changed-basis-transition":
             event.stop()
             self.call_after_refresh(self._persist_second_changed_basis_transition)
@@ -279,12 +333,97 @@ class RootBackedContinuationResearchSessionShell(ResearchSessionShell):
 
         self.last_second_changed_basis_transition = result
         controls.lock_after_success(result)
+        if len(self.query("#research-second-changed-basis-revision-root-controls")) != 0:
+            raise ValueError("Second changed-basis revision-root controls are already mounted.")
+        await self.mount(ResearchSecondChangedBasisRevisionRootControls(result))
+
+    async def _persist_second_changed_basis_revision_root(self) -> None:
+        controls = self.query_one(
+            "#research-second-changed-basis-revision-root-controls",
+            ResearchSecondChangedBasisRevisionRootControls,
+        )
+        status = self.query_one(
+            "#research-second-changed-basis-revision-root-status", Static
+        )
+        transition_result = self.last_second_changed_basis_transition
+        if transition_result is None or controls.transition_result is not transition_result:
+            status.update(
+                "Second root failed: no exact successful 46A transition owns this root form."
+            )
+            return
+
+        rationale = self.query_one(
+            "#research-second-changed-basis-revision-root-rationale", TextArea
+        )
+        if not rationale.text.strip():
+            status.update("Second root failed: a new human rationale is required.")
+            return
+
+        prior_edge_source = self.query_one(
+            "#research-second-changed-basis-revision-root-prior-edge-source", Input
+        )
+        working_set_source = self.query_one(
+            "#research-second-changed-basis-revision-root-working-set-source", Input
+        )
+        note_source = self.query_one(
+            "#research-second-changed-basis-revision-root-note-source", Input
+        )
+        transition_source = self.query_one(
+            "#research-second-changed-basis-revision-root-transition-source", Input
+        )
+        destination = self.query_one(
+            "#research-second-changed-basis-revision-root-destination", Input
+        )
+        required = (
+            (prior_edge_source, "explicit prior endpoint edge path"),
+            (working_set_source, "explicit changed working-set path"),
+            (note_source, "explicit changed working-set-note path"),
+            (transition_source, "explicit second changed-basis transition path"),
+            (destination, "explicit second revision-root destination path"),
+        )
+        for widget, label in required:
+            if not widget.value.strip():
+                status.update(f"Second root failed: {label} is required.")
+                return
+
+        mounted_controller = self.research_controller
+        mounted_session = self.research_session
+        mounted_reentry = self.root_backed_continuation_reentry
+        try:
+            result = persist_chromium_research_second_changed_basis_revision_root(
+                transition_result,
+                revised_note_text=rationale.text,
+                prior_edge_source=Path(prior_edge_source.value),
+                working_set_source=Path(working_set_source.value),
+                note_source=Path(note_source.value),
+                transition_source=Path(transition_source.value),
+                destination=Path(destination.value),
+            )
+        except Exception as exc:
+            status.update(f"Second root failed: {exc}")
+            return
+
+        if result.transition_result is not transition_result:
+            raise ValueError(
+                "Second changed-basis root did not retain the exact successful 46A transition."
+            )
+        if (
+            self.research_controller is not mounted_controller
+            or self.research_session is not mounted_session
+            or self.root_backed_continuation_reentry is not mounted_reentry
+        ):
+            raise ValueError(
+                "Mounted one-root continuation changed during second root persistence."
+            )
+
+        self.last_second_changed_basis_revision_root = result
+        controls.lock_after_success(result)
 
     async def _mount_research_rollover(
         self,
         result: ChromiumResearchSessionRolloverResult,
     ) -> None:
-        """Mount one-hop continuation, staling 46A, then lock pending explicit 35E proof."""
+        """Mount one-hop continuation, staling unsaved 46A, then require 35E proof."""
 
         if len(self.query("#research-second-changed-basis-transition-controls")) != 0:
             self.query_one(
