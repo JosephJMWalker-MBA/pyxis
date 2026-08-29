@@ -24,8 +24,8 @@ from .chromium_research_root_backed_session_authority_inspection_textual import 
     RootBackedAuthorityInspectionPanel,
 )
 from .root_backed_research_session_shell import RootBackedResearchSessionShell
-from .second_changed_basis_session_adoption_research_session_shell import (
-    SecondChangedBasisSessionAdoptionResearchSessionShell,
+from .second_changed_basis_epoch_reentry_research_session_shell import (
+    SecondChangedBasisEpochReentryResearchSessionShell,
 )
 
 
@@ -110,11 +110,11 @@ class InspectableRootBackedHandoffResearchSessionShell(RootBackedResearchSession
 
 
 class InspectableRootBackedContinuationResearchSessionShell(
-    SecondChangedBasisSessionAdoptionResearchSessionShell
+    SecondChangedBasisEpochReentryResearchSessionShell
 ):
-    """Path-proofed 35D/35E/46D shell with immutable launch inspection."""
+    """Path-proofed 35D/35E/46E shell with immutable launch inspection."""
 
-    CSS = SecondChangedBasisSessionAdoptionResearchSessionShell.CSS + _INSPECTION_CSS
+    CSS = SecondChangedBasisEpochReentryResearchSessionShell.CSS + _INSPECTION_CSS
 
     def __init__(
         self,
@@ -188,11 +188,11 @@ class InspectableRootBackedContinuationResearchSessionShell(
 
 
 class InspectableRootBackedContinuationHandoffResearchSessionShell(
-    SecondChangedBasisSessionAdoptionResearchSessionShell
+    SecondChangedBasisEpochReentryResearchSessionShell
 ):
-    """Raw 36D/46D shell with no persistent launch path."""
+    """Raw 36D/46E shell with no persistent launch path."""
 
-    CSS = SecondChangedBasisSessionAdoptionResearchSessionShell.CSS + _INSPECTION_CSS
+    CSS = SecondChangedBasisEpochReentryResearchSessionShell.CSS + _INSPECTION_CSS
 
     def __init__(
         self,
