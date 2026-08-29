@@ -46,7 +46,9 @@ async def _press(shell, pilot, button_id: str) -> None:
 
 
 def _continuation(tmp_path: Path, *, stem: str):
-    values = _persist_valid_continuation(tmp_path, stem=stem)
+    fixture_dir = tmp_path / f"{stem}-continuation-fixture"
+    fixture_dir.mkdir()
+    values = _persist_valid_continuation(fixture_dir, stem=stem)
     return values, values[-1].fresh_reentry
 
 
