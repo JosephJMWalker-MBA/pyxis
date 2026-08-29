@@ -137,6 +137,24 @@ class InspectableRootBackedContinuationResearchSessionShell(
         yield self.root_backed_authority_inspection
         yield from super().compose()
 
+    async def _mount_research_rollover(
+        self,
+        result: ChromiumResearchSessionRolloverResult,
+    ) -> None:
+        launch = self.root_backed_authority_inspection.launch_provenance
+        adoption = self.last_second_changed_basis_session_adoption
+        await super()._mount_research_rollover(result)
+        if self.root_backed_authority_inspection.launch_provenance is not launch:
+            raise ValueError(
+                "Rollover must not replace immutable persisted root-backed continuation launch provenance."
+            )
+        if adoption is not None:
+            self.root_backed_authority_inspection.update_current_from_controller(
+                self.research_controller,
+                state_kind="visible continuation after second changed-basis adoption",
+                state_source="explicit rollover after 46D second changed-basis adoption",
+            )
+
     async def _promote_cumulative_checkpoint(
         self,
         result: ChromiumResearchRootBackedSessionContinuationCheckpointExtensionResult,
@@ -188,6 +206,26 @@ class InspectableRootBackedContinuationHandoffResearchSessionShell(
     def compose(self) -> ComposeResult:
         yield self.root_backed_authority_inspection
         yield from super().compose()
+
+    async def _mount_research_rollover(
+        self,
+        result: ChromiumResearchSessionRolloverResult,
+    ) -> None:
+        launch = self.root_backed_authority_inspection.launch_provenance
+        adoption = self.last_second_changed_basis_session_adoption
+        await super()._mount_research_rollover(result)
+        if self.root_backed_authority_inspection.launch_provenance is not launch:
+            raise ValueError(
+                "Rollover must not replace immutable 36D handoff provenance."
+            )
+        if adoption is not None:
+            self.root_backed_authority_inspection.update_current_from_controller(
+                self.research_controller,
+                state_kind="visible continuation after second changed-basis adoption",
+                state_source=(
+                    "explicit rollover after 46D adoption from in-process 36D handoff"
+                ),
+            )
 
     async def _promote_cumulative_checkpoint(
         self,
