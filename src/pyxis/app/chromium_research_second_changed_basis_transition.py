@@ -62,9 +62,9 @@ def persist_chromium_research_second_changed_basis_transition(
     """Persist and freshly relink one explicit second changed-basis transition.
 
     Eligibility is deliberately concrete. The caller must provide an exact one-root
-    continuation re-entry result coherent with the supplied controller. This does not
-    generalize 44B's first-crossing authority and does not create an Nth-transition
-    abstraction.
+    continuation re-entry result whose retained controller is the supplied controller.
+    This does not generalize 44B's first-crossing authority and does not create an
+    Nth-transition abstraction.
 
     Every durable locator remains explicit. No path is taken from preparation
     receipts, continuation plans, persisted launch provenance, checkpoint paths, or
@@ -166,6 +166,10 @@ def _require_continuation_reentry_matches_controller(
     continuation_reentry: ChromiumResearchRootBackedSessionContinuationReentryResult,
 ) -> None:
     reentered = continuation_reentry.controller
+    if reentered is not controller:
+        raise ChromiumResearchSecondChangedBasisTransitionError(
+            "Root-backed continuation re-entry controller does not match the supplied exact controller object."
+        )
     if reentered.presentation != controller.presentation:
         raise ChromiumResearchSecondChangedBasisTransitionError(
             "Root-backed continuation re-entry does not describe the supplied controller presentation."
