@@ -50,12 +50,14 @@ async def _press(shell, pilot, button_id: str) -> None:
 def _continuation(tmp_path: Path, *, stem: str):
     values = _persist_valid_continuation(tmp_path, stem=stem)
     overlay = values[6]
-    reentry = values[8].fresh_reentry
+    earned = values[8].fresh_reentry
     lineage = prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
-        reentry,
+        earned,
         overlay_source=overlay,
     )
-    return values, overlay, reentry, lineage
+    # Persisted second-epoch shells launch from the fresh proof-carrying re-entry,
+    # not the pre-proof earned object supplied to the lineage verifier.
+    return values, overlay, lineage.reentry, lineage
 
 
 def _prepare_direct(tmp_path: Path, reentry, member, *, stem: str):
@@ -183,7 +185,6 @@ def test_47a_rejects_structurally_equivalent_fresh_controller_without_exact_obje
             note_source=prepared.note_persistence.path,
             destination=destination,
         )
-
     assert not destination.exists()
 
 
@@ -254,7 +255,6 @@ def test_47a_wrong_explicit_locator_rejects_without_successful_destination(
             note_source=note,
             destination=destination,
         )
-
     assert not destination.exists()
 
 
@@ -275,7 +275,6 @@ def test_47a_existing_destination_survives_no_overwrite_failure(tmp_path: Path) 
             note_source=prepared.note_persistence.path,
             destination=destination,
         )
-
     assert destination.read_text(encoding="utf-8") == "preserve exactly\n"
 
 
@@ -283,7 +282,7 @@ def test_47a_existing_destination_survives_no_overwrite_failure(tmp_path: Path) 
 async def test_47a_persisted_product_mounts_only_after_44a_and_does_not_adopt_transition(
     tmp_path: Path,
 ) -> None:
-    _, _, reentry, lineage = _continuation(tmp_path, stem="47a-ui")
+    _, _, _, lineage = _continuation(tmp_path, stem="47a-ui")
     member, _ = _new_paragraph_member(tmp_path, stem="47a-ui-member")
     shell = create_third_changed_basis_transition_research_session_shell(lineage)
     shell.configure_changed_basis_candidate((member,))
@@ -294,7 +293,6 @@ async def test_47a_persisted_product_mounts_only_after_44a_and_does_not_adopt_tr
     async with shell.run_test(size=(190, 250)) as pilot:
         await pilot.pause()
         assert len(shell.query(ResearchThirdChangedBasisTransitionControls)) == 0
-
         prepared = await _prepare_in_shell(shell, pilot, tmp_path, stem="47a-ui")
         controls = shell.query_one(ResearchThirdChangedBasisTransitionControls)
         summary = str(
@@ -315,7 +313,6 @@ async def test_47a_persisted_product_mounts_only_after_44a_and_does_not_adopt_tr
 
         destination = tmp_path / "47a-ui-transition.json"
         await _persist_third_transition(shell, pilot, prepared, destination)
-
         result = shell.last_third_changed_basis_transition
         assert result is not None
         assert result.continuation_reentry is original_reentry
@@ -352,7 +349,6 @@ async def test_47a_rollover_stales_unsaved_transition_without_retargeting(
         await pilot.pause()
         await _prepare_in_shell(shell, pilot, tmp_path, stem="47a-stale")
         controls = shell.query_one(ResearchThirdChangedBasisTransitionControls)
-
         successor = tmp_path / "47a-stale-successor.json"
         shell.query_one("#research-endpoint-revised-note", TextArea).text = (
             "Explicit one-hop second-epoch continuation before saving the third basis transition."
