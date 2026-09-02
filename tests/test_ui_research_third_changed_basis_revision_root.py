@@ -37,10 +37,12 @@ from test_ui_research_third_changed_basis_transition import (
 
 
 def _third_transition_direct(tmp_path: Path, *, stem: str):
-    _, _, reentry, lineage = _continuation(tmp_path, stem=stem)
-    member, _ = _new_paragraph_member(tmp_path, stem=f"{stem}-member")
-    prepared = _prepare_direct(tmp_path, reentry, member, stem=stem)
-    destination = tmp_path / f"{stem}-transition.json"
+    fixture_root = tmp_path / stem
+    fixture_root.mkdir()
+    _, _, reentry, lineage = _continuation(fixture_root, stem=stem)
+    member, _ = _new_paragraph_member(fixture_root, stem=f"{stem}-member")
+    prepared = _prepare_direct(fixture_root, reentry, member, stem=stem)
+    destination = fixture_root / f"{stem}-transition.json"
     transition = persist_chromium_research_third_changed_basis_transition(
         reentry.controller,
         reentry,
