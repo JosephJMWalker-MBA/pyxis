@@ -5,7 +5,7 @@ Pyxis is an **evidence-first Python research system** with two proven, connected
 1. a transparent architecture-to-code compiler/runtime that keeps human intent, canonical state, generated products, runtime evidence, revisions, and export boundaries inspectable; and
 2. a read-only Chromium research workflow that preserves observation, human selection, comparison, rationale, and revision history without silently promoting any layer into stronger authority.
 
-## Current status — through Milestone 44G / D224
+## Current status — through Milestone 47D / D238
 
 Pyxis currently proves:
 
@@ -14,13 +14,13 @@ Pyxis currently proves:
 - **Read-only Chromium research:** caller-owned Chromium pages can be observed through an explicit DevTools endpoint for bounded page text, links, headings, metadata, paragraphs, tables, and lists. Pyxis does not infer an active tab when multiple pages exist and does not acquire navigation or interaction authority from observation capability.
 - **Durable research evidence:** browser evidence can be composed into durable verified captures, reopened after Chromium exits, and used for explicit human selections, notes, comparisons, working sets, and rationale without silently promoting interpretation into source authority.
 - **Governed durable research continuity:** explicit revision segments can be inspected, revised, persisted, adopted, checkpointed, exited, and freshly re-entered from caller-supplied durable locators without ambient history discovery or a global latest/current/head model.
-- **Changed evidence-basis ancestry:** three distinct evidence-basis roots can be retained through explicit transition/root machinery. The concrete third epoch now has persisted Textual launch, first and repeatable cumulative checkpointing, explicit in-process handoff, and fresh re-entry while retaining one direct 40B ancestry anchor and freshly re-earning first-, second-, and third-root ancestry.
-- **Inspection without authority promotion:** second- and third-epoch launch provenance remain distinct from mutable current governed state through application-owned read-only projections. Both persisted families can emit deterministic `pyxis research-inspect` JSON without turning paths, hashes, or presentation into stronger authority; exact in-process handoffs do not invent persistent launch paths.
-- **Bounded cumulative reuse:** root-backed, second-epoch, and third-epoch continuation share only triply-proven private mechanics for fixed-anchor cumulative extension, checkpoint forms, explicit path submission, rollover gating, and visible post-proof promotion. Concrete persistence, ancestry proof, launch lineage, and root/epoch semantics remain concrete rather than becoming a generic `epoch[n]` model.
-- **First changed-basis product path:** one ordinary 31A-backed governed session can explicitly prepare a changed working set, persist the 33B transition, create the first 34A root and 34B post-root edge, explicitly adopt the 35A root-backed governed session, freshly verify 35B reconstructability, and persist the exact verified historical session through the established 35C overlay boundary without silently replacing whichever controller is currently mounted.
+- **Three concrete changed-basis product crossings:** the first changed-basis flow reaches exact 35C proof and explicit 44H handoff into the root-backed product; the second reaches fresh 37B proof and explicit 46G handoff into the second-basis-epoch product; the third now reaches an exact third public-33B transition, third public-34A root, first post-third-root public-34B edge, and explicit 47D shell-local adoption of the resulting governed session.
+- **Third-crossing boundary remains narrow:** 47D deliberately stops at in-process adoption. It does not perform 40A third-epoch fresh-process reconstruction, persist a 40B restart overlay, create third-epoch launch provenance, infer a current/latest/head branch, or generalize the concrete lineage into an arbitrary `epoch[n]` model.
+- **Inspection without authority promotion:** one-root, second-epoch, and third-epoch launch provenance remain distinct from mutable current governed state through application-owned read-only projections. Persisted launch families can emit deterministic `pyxis research-inspect` JSON without turning paths, hashes, or presentation into stronger authority; exact in-process handoffs do not invent persistent launch paths.
+- **Bounded cumulative reuse:** root-backed, second-epoch, and third-epoch continuation share only triply-proven private mechanics for fixed-anchor cumulative extension, checkpoint forms, explicit path submission, rollover gating, and visible post-proof promotion. Concrete persistence, ancestry proof, launch lineage, and root/epoch semantics remain concrete rather than becoming a generic recursive authority model.
 - **Bounded compatibility:** package metadata declares Python `>=3.11,<3.15`, and the supported lanes are exercised across Python 3.11, 3.12, 3.13, and 3.14.
 
-The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md), and [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
+The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md), [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md), [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md), [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md), [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md), [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md), and [`docs/MILESTONE_47A.md`](docs/MILESTONE_47A.md) through [`docs/MILESTONE_47D.md`](docs/MILESTONE_47D.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
 
 ## Authority boundaries
 
@@ -499,7 +499,16 @@ For a fresh development session, use this compact orientation chain:
 4. [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md) — 37A–38F.
 5. [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md) — 39A–40D / D205.
 6. [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md) — 41A–43E / D217.
-7. [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md) — 44A–44G / D224, the current implemented frontier; 44H / D225 is the next explicit handoff decision tracked in issue #168.
+7. [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md) — 44A–44G / D224.
+8. [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md) — D225, explicit exact-35C in-process handoff into the root-backed product.
+9. [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md) and [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md) — D226–D227, one-root authority inspection parity and deterministic persisted inspection.
+10. [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md) — 46A–46G / D228–D234, the completed second changed-basis product flow.
+11. [`docs/MILESTONE_47A.md`](docs/MILESTONE_47A.md) — D235, explicit third changed-basis transition.
+12. [`docs/MILESTONE_47B.md`](docs/MILESTONE_47B.md) — D236, explicit third changed-basis revision root.
+13. [`docs/MILESTONE_47C.md`](docs/MILESTONE_47C.md) — D237, explicit first post-third-root edge.
+14. [`docs/MILESTONE_47D.md`](docs/MILESTONE_47D.md) — D238, explicit third changed-basis governed-session adoption; this is the current implemented frontier.
+
+The next distinct boundary is fresh-process verification of that exact adopted third-root-backed governed state through the existing 40A reconstruction machinery. That remains separate from 47D and must not be collapsed into adoption.
 
 Then open the relevant milestone-specific document and implementation/tests for the decision being changed. The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
