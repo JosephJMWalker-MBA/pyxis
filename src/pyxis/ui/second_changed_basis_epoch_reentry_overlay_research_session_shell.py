@@ -9,11 +9,25 @@ from pyxis.app.chromium_research_second_changed_basis_epoch_reentry_overlay impo
     persist_chromium_research_second_changed_basis_epoch_reentry_overlay,
 )
 
+from .chromium_research_changed_basis_restart_persistence_textual import (
+    _ChangedBasisRestartPersistenceMountSpec,
+    _mount_changed_basis_restart_persistence_after_new_verification,
+)
 from .chromium_research_second_changed_basis_epoch_reentry_overlay_textual import (
     ResearchSecondChangedBasisEpochReentryOverlayControls,
 )
 from .second_changed_basis_epoch_reentry_research_session_shell import (
     SecondChangedBasisEpochReentryResearchSessionShell,
+)
+
+
+_SECOND_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = (
+    _ChangedBasisRestartPersistenceMountSpec(
+        controls_selector="#research-second-changed-basis-epoch-reentry-overlay-controls",
+        duplicate_controls_error=(
+            "Second-basis re-entry overlay controls are already mounted."
+        ),
+    )
 )
 
 
@@ -71,12 +85,12 @@ class SecondChangedBasisEpochReentryOverlayResearchSessionShell(
         prior = self.last_second_changed_basis_epoch_reentry_verification
         await super()._verify_second_changed_basis_epoch_reentry()
         verification = self.last_second_changed_basis_epoch_reentry_verification
-        if verification is None or verification is prior:
-            return
-        if len(self.query("#research-second-changed-basis-epoch-reentry-overlay-controls")) != 0:
-            raise ValueError("Second-basis re-entry overlay controls are already mounted.")
-        await self.mount(
-            ResearchSecondChangedBasisEpochReentryOverlayControls(verification)
+        await _mount_changed_basis_restart_persistence_after_new_verification(
+            self,
+            previous_verification=prior,
+            current_verification=verification,
+            spec=_SECOND_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT,
+            create_controls=ResearchSecondChangedBasisEpochReentryOverlayControls,
         )
 
     async def _persist_second_changed_basis_epoch_reentry_overlay(self) -> None:
