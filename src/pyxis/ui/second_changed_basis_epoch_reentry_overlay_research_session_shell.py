@@ -21,10 +21,15 @@ from .second_changed_basis_epoch_reentry_research_session_shell import (
 )
 
 
-_SECOND_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = _ChangedBasisRestartPersistenceMountSpec(
-    controls_selector="#research-second-changed-basis-epoch-reentry-overlay-controls",
-    duplicate_controls_error="Second-basis re-entry overlay controls are already mounted.",
+_SECOND_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = (
+    _ChangedBasisRestartPersistenceMountSpec(
+        controls_selector="#research-second-changed-basis-epoch-reentry-overlay-controls",
+        duplicate_controls_error=(
+            "Second-basis re-entry overlay controls are already mounted."
+        ),
+    )
 )
+
 
 class SecondChangedBasisEpochReentryOverlayResearchSessionShell(
     SecondChangedBasisEpochReentryResearchSessionShell
