@@ -20,7 +20,7 @@ Pyxis currently proves:
 - **Bounded cumulative reuse:** root-backed, second-epoch, and third-epoch continuation share only triply-proven private mechanics for fixed-anchor cumulative extension, checkpoint forms, explicit path submission, rollover gating, and visible post-proof promotion. Concrete persistence, ancestry proof, launch lineage, and root/epoch semantics remain concrete rather than becoming a generic recursive authority model.
 - **Bounded compatibility:** package metadata declares Python `>=3.11,<3.15`, and the supported lanes are exercised across Python 3.11, 3.12, 3.13, and 3.14.
 
-The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md), [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md), [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md), [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md), [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md), [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md), and [`docs/MILESTONE_47A.md`](docs/MILESTONE_47A.md) through [`docs/MILESTONE_47G.md`](docs/MILESTONE_47G.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
+The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md), [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md), [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md), [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md), [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md), [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md), and [`docs/CURRENT_FRONTIER_47.md`](docs/CURRENT_FRONTIER_47.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
 
 ## Authority boundaries
 
@@ -503,15 +503,9 @@ For a fresh development session, use this compact orientation chain:
 8. [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md) — D225, explicit exact-35C in-process handoff into the root-backed product.
 9. [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md) and [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md) — D226–D227, one-root authority inspection parity and deterministic persisted inspection.
 10. [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md) — 46A–46G / D228–D234, the completed second changed-basis product flow.
-11. [`docs/MILESTONE_47A.md`](docs/MILESTONE_47A.md) — D235, explicit third changed-basis transition.
-12. [`docs/MILESTONE_47B.md`](docs/MILESTONE_47B.md) — D236, explicit third changed-basis revision root.
-13. [`docs/MILESTONE_47C.md`](docs/MILESTONE_47C.md) — D237, explicit first post-third-root edge.
-14. [`docs/MILESTONE_47D.md`](docs/MILESTONE_47D.md) — D238, explicit third changed-basis governed-session adoption.
-15. [`docs/MILESTONE_47E.md`](docs/MILESTONE_47E.md) — D239, explicit fresh-process verification of that exact adopted third-basis session through existing 40A.
-16. [`docs/MILESTONE_47F.md`](docs/MILESTONE_47F.md) — D240, proof-gated persistence of strict 40B restart configuration for that exact historical third-basis session.
-17. [`docs/MILESTONE_47G.md`](docs/MILESTONE_47G.md) — D241, explicit typed handoff of the exact public-40B fresh result into the pathless third-basis-epoch first-checkpoint product; this is the current implemented frontier.
+11. [`docs/CURRENT_FRONTIER_47.md`](docs/CURRENT_FRONTIER_47.md) — 47A–47G / D235–D241, the completed third changed-basis product flow and post-47G reuse frontier.
 
-The next development decision should not be inferred from numbering alone. Review the established third-basis-epoch first-checkpoint product together with existing 40C/40D continuation, 41E handoff, and inspection surfaces, and add another milestone only for a concrete missing product seam.
+The next development decision should not be inferred from numbering alone. The compact 47 frontier records the stronger next question: which mechanics have now been demonstrated across all three complete changed-basis crossings and can be privately shared while concrete ancestry authority remains explicit.
 
 Then open the relevant milestone-specific document and implementation/tests for the decision being changed. The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
