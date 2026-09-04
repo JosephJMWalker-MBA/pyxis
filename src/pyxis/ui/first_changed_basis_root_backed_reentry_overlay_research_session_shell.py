@@ -12,6 +12,10 @@ from pyxis.app.chromium_research_first_changed_basis_root_backed_reentry_overlay
 from pyxis.app.chromium_research_session_reentry import ChromiumResearchSessionReentryResult
 from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingSetItem
 
+from .chromium_research_changed_basis_restart_persistence_textual import (
+    _ChangedBasisRestartPersistenceMountSpec,
+    _mount_changed_basis_restart_persistence_after_new_verification,
+)
 from .chromium_research_first_changed_basis_root_backed_reentry_overlay_textual import (
     ResearchFirstChangedBasisRootBackedReentryOverlayControls,
 )
@@ -19,6 +23,11 @@ from .first_changed_basis_root_backed_reentry_research_session_shell import (
     FirstChangedBasisRootBackedReentryResearchSessionShell,
 )
 
+
+_FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_MOUNT = _ChangedBasisRestartPersistenceMountSpec(
+    controls_selector="#research-first-changed-basis-root-backed-reentry-overlay-controls",
+    duplicate_controls_error="44G overlay persistence controls are already mounted.",
+)
 
 class FirstChangedBasisRootBackedReentryOverlayResearchSessionShell(
     FirstChangedBasisRootBackedReentryResearchSessionShell
@@ -82,16 +91,12 @@ class FirstChangedBasisRootBackedReentryOverlayResearchSessionShell(
         prior = self.last_first_changed_basis_root_backed_reentry_verification
         await super()._verify_research_first_changed_basis_root_backed_reentry()
         verification = self.last_first_changed_basis_root_backed_reentry_verification
-        if verification is None or verification is prior:
-            return
-        if len(
-            self.query(
-                "#research-first-changed-basis-root-backed-reentry-overlay-controls"
-            )
-        ) != 0:
-            raise ValueError("44G overlay persistence controls are already mounted.")
-        await self.mount(
-            ResearchFirstChangedBasisRootBackedReentryOverlayControls(verification)
+        await _mount_changed_basis_restart_persistence_after_new_verification(
+            self,
+            previous_verification=prior,
+            current_verification=verification,
+            spec=_FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_MOUNT,
+            create_controls=ResearchFirstChangedBasisRootBackedReentryOverlayControls,
         )
 
     async def _persist_research_first_changed_basis_root_backed_reentry_overlay(
