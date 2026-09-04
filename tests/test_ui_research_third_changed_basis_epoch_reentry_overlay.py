@@ -23,6 +23,7 @@ from pyxis.ui.chromium_research_third_changed_basis_epoch_reentry_overlay_textua
 )
 from pyxis.ui.third_changed_basis_epoch_reentry_overlay_research_session_shell import (
     create_inspectable_third_changed_basis_epoch_reentry_overlay_handoff_research_session_shell,
+    create_third_changed_basis_epoch_reentry_overlay_handoff_research_session_shell,
     create_third_changed_basis_epoch_reentry_overlay_research_session_shell,
 )
 from pyxis.ui.third_changed_basis_epoch_reentry_research_session_shell import (
@@ -351,3 +352,17 @@ async def test_plain_47e_product_does_not_gain_47f_persistence_surface(
         assert shell.last_third_changed_basis_epoch_reentry_verification is not None
         assert not hasattr(shell, "last_third_changed_basis_epoch_reentry_overlay")
         assert len(shell.query(ResearchThirdChangedBasisEpochReentryOverlayControls)) == 0
+
+
+def test_47f_product_factories_reject_wrong_authority_family() -> None:
+    with pytest.raises(
+        TypeError,
+        match="ChromiumResearchSecondBasisEpochContinuationShellLineage",
+    ):
+        create_third_changed_basis_epoch_reentry_overlay_research_session_shell(object())  # type: ignore[arg-type]
+
+    with pytest.raises(
+        TypeError,
+        match="exactly ChromiumResearchSecondBasisEpochContinuationReentryResult",
+    ):
+        create_third_changed_basis_epoch_reentry_overlay_handoff_research_session_shell(object())  # type: ignore[arg-type]
