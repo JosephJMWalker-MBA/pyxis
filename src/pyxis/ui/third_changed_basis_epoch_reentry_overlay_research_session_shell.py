@@ -55,10 +55,15 @@ _THIRD_CHANGED_BASIS_EPOCH_REENTRY_OVERLAY_CSS = """
 """
 
 
-_THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = _ChangedBasisRestartPersistenceMountSpec(
-    controls_selector="#research-third-changed-basis-epoch-reentry-overlay-controls",
-    duplicate_controls_error="Third-basis re-entry overlay controls are already mounted.",
+_THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = (
+    _ChangedBasisRestartPersistenceMountSpec(
+        controls_selector="#research-third-changed-basis-epoch-reentry-overlay-controls",
+        duplicate_controls_error=(
+            "Third-basis re-entry overlay controls are already mounted."
+        ),
+    )
 )
+
 
 class _ThirdChangedBasisEpochReentryOverlayProductMixin:
     """47F-only persistence behavior shared by the four dedicated 47E products."""
