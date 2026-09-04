@@ -322,6 +322,24 @@ def test_verify_exact_range_selection_rejects_digest_mismatch_and_noncanonical_b
             ].__setitem__("start_offset", -1),
             "start offset",
         ),
+        (
+            lambda document: document["selection_record"]["selection"][
+                "paragraph"
+            ].__setitem__("ordinal", 0),
+            "paragraph ordinal",
+        ),
+        (
+            lambda document: document["selection_record"]["selection"][
+                "text_range"
+            ].__setitem__("end_offset", 1),
+            "end offset",
+        ),
+        (
+            lambda document: document["selection_record"][
+                "source_capture"
+            ].__setitem__("format", "other-capture-format"),
+            "source capture format",
+        ),
     ],
 )
 def test_verify_exact_range_selection_rejects_malformed_domain_fields(
