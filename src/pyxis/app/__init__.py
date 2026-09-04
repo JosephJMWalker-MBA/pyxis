@@ -69,6 +69,13 @@ from .chromium_research_paragraph_text_selection import (
     ChromiumPageResearchParagraphTextSelectionEvidence,
     select_chromium_research_paragraph_text,
 )
+from .chromium_research_paragraph_text_selection_persistence import (
+    ChromiumPageResearchParagraphTextSelectionPersistenceEvidence,
+    ChromiumPageResearchParagraphTextSelectionVerificationEvidence,
+    ChromiumResearchParagraphTextSelectionIntegrityError,
+    persist_chromium_research_paragraph_text_selection,
+    verify_chromium_research_paragraph_text_selection,
+)
 from .chromium_research_paragraph_text_selection_comparison import (
     ChromiumPageResearchParagraphTextSelectionComparisonRecord,
     create_chromium_research_paragraph_text_selection_comparison,
@@ -375,4 +382,9 @@ __all__ = [
     "verify_chromium_research_paragraph_note",
     "verify_chromium_research_paragraph_text_selection_comparison_note",
     "verify_chromium_research_paragraph_text_selection_note",
+    "ChromiumPageResearchParagraphTextSelectionPersistenceEvidence",
+    "ChromiumPageResearchParagraphTextSelectionVerificationEvidence",
+    "ChromiumResearchParagraphTextSelectionIntegrityError",
+    "persist_chromium_research_paragraph_text_selection",
+    "verify_chromium_research_paragraph_text_selection",
 ]
