@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from textual.widgets import Button, Static
+from textual.widgets import Button
 
 from pyxis.app.chromium_research_second_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchSecondBasisEpochContinuationReentryResult,
@@ -15,6 +15,11 @@ from pyxis.app.chromium_research_third_basis_epoch_reentry import (
 )
 from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingSetItem
 
+from .chromium_research_changed_basis_typed_handoff_textual import (
+    _ChangedBasisTypedHandoffSurfaceSpec,
+    _mount_changed_basis_typed_handoff_after_new_persistence,
+    _require_changed_basis_checkpoint_fresh_handoff,
+)
 from .third_basis_epoch_session_handoff_authority_inspection_shell import (
     create_inspectable_third_basis_epoch_handoff_research_session_shell,
 )
@@ -41,22 +46,45 @@ _HANDOFF_CSS = """
 """
 
 
+_THIRD_CHANGED_BASIS_EPOCH_HANDOFF = _ChangedBasisTypedHandoffSurfaceSpec(
+    button_id="continue-third-changed-basis-epoch-session",
+    notice_id="research-third-changed-basis-epoch-handoff-notice",
+    notice_text=(
+        "47F persistence is complete and the currently mounted changed-basis "
+        "product remains unchanged. Choose the explicit handoff below to leave "
+        "that state and continue with the exact freshly proven third-basis-epoch "
+        "session in the established first-checkpoint product. This transfers "
+        "typed in-memory proof; the saved 40B overlay path is not reloaded or "
+        "promoted to current/latest/head authority."
+    ),
+    button_label="Continue with verified third-basis-epoch session",
+    missing_result_error=(
+        "47G handoff requires one exact successful retained 47F persistence result."
+    ),
+    invalid_handoff_error=(
+        "47F checkpoint fresh re-entry must be exactly ChromiumResearchThirdBasisEpochReentryResult."
+    ),
+    duplicate_controls_error=(
+        "47G handoff controls are already mounted after successful 47F persistence."
+    ),
+)
+
+
+def _is_third_changed_basis_epoch_handoff(value: object) -> bool:
+    return type(value) is ChromiumResearchThirdBasisEpochReentryResult
+
+
 class _ThirdChangedBasisEpochHandoffProductMixin:
     """47G-only explicit typed handoff after one exact successful 47F persistence."""
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "continue-third-changed-basis-epoch-session":
+        if event.button.id == _THIRD_CHANGED_BASIS_EPOCH_HANDOFF.button_id:
             event.stop()
-            result = self.last_third_changed_basis_epoch_reentry_overlay
-            if result is None:
-                raise ValueError(
-                    "47G handoff requires one exact successful retained 47F persistence result."
-                )
-            handoff = result.checkpoint.fresh_reentry
-            if type(handoff) is not ChromiumResearchThirdBasisEpochReentryResult:
-                raise TypeError(
-                    "47F checkpoint fresh re-entry must be exactly ChromiumResearchThirdBasisEpochReentryResult."
-                )
+            handoff = _require_changed_basis_checkpoint_fresh_handoff(
+                self.last_third_changed_basis_epoch_reentry_overlay,
+                spec=_THIRD_CHANGED_BASIS_EPOCH_HANDOFF,
+                validate_handoff=_is_third_changed_basis_epoch_handoff,
+            )
             self.exit(handoff)
         # Textual dispatches inherited message handlers through the MRO. Do not call
         # a parent handler manually or inherited 47A–47F actions will run twice.
@@ -67,37 +95,12 @@ class _ThirdChangedBasisEpochHandoffProductMixin:
         prior = self.last_third_changed_basis_epoch_reentry_overlay
         await super()._persist_third_changed_basis_epoch_reentry_overlay()
         result = self.last_third_changed_basis_epoch_reentry_overlay
-        if result is None or result is prior:
-            return
-
-        handoff = result.checkpoint.fresh_reentry
-        if type(handoff) is not ChromiumResearchThirdBasisEpochReentryResult:
-            raise TypeError(
-                "47F checkpoint fresh re-entry must be exactly ChromiumResearchThirdBasisEpochReentryResult."
-            )
-        if len(self.query("#research-third-changed-basis-epoch-handoff-notice")) != 0:
-            raise ValueError(
-                "47G handoff controls are already mounted after successful 47F persistence."
-            )
-
-        await self.mount(
-            Static(
-                "47F persistence is complete and the currently mounted changed-basis "
-                "product remains unchanged. Choose the explicit handoff below to leave "
-                "that state and continue with the exact freshly proven third-basis-epoch "
-                "session in the established first-checkpoint product. This transfers "
-                "typed in-memory proof; the saved 40B overlay path is not reloaded or "
-                "promoted to current/latest/head authority.",
-                id="research-third-changed-basis-epoch-handoff-notice",
-                markup=False,
-            )
-        )
-        await self.mount(
-            Button(
-                "Continue with verified third-basis-epoch session",
-                id="continue-third-changed-basis-epoch-session",
-                variant="primary",
-            )
+        await _mount_changed_basis_typed_handoff_after_new_persistence(
+            self,
+            previous_result=prior,
+            current_result=result,
+            spec=_THIRD_CHANGED_BASIS_EPOCH_HANDOFF,
+            validate_handoff=_is_third_changed_basis_epoch_handoff,
         )
 
 
