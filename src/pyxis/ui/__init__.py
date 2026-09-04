@@ -65,6 +65,14 @@ from .second_basis_epoch_session_handoff_authority_inspection_shell import (
     InspectableSecondBasisEpochHandoffResearchSessionShell,
     create_inspectable_second_basis_epoch_handoff_research_session_shell,
 )
+from .third_basis_epoch_cumulative_handoff_shell import (
+    ThirdBasisEpochHandoffResearchSessionShell,
+    create_third_basis_epoch_handoff_research_session_shell,
+)
+from .third_basis_epoch_session_handoff_authority_inspection_shell import (
+    InspectableThirdBasisEpochHandoffResearchSessionShell,
+    create_inspectable_third_basis_epoch_handoff_research_session_shell,
+)
 from .third_changed_basis_transition_research_session_shell import (
     InspectableThirdChangedBasisTransitionHandoffResearchSessionShell,
     InspectableThirdChangedBasisTransitionResearchSessionShell,
@@ -124,6 +132,17 @@ from .third_changed_basis_epoch_reentry_overlay_research_session_shell import (
     create_inspectable_third_changed_basis_epoch_reentry_overlay_research_session_shell,
     create_third_changed_basis_epoch_reentry_overlay_handoff_research_session_shell,
     create_third_changed_basis_epoch_reentry_overlay_research_session_shell,
+)
+from .third_changed_basis_epoch_handoff_research_session_shell import (
+    InspectableThirdChangedBasisEpochPersistedSourceHandoffResearchSessionShell,
+    InspectableThirdChangedBasisEpochRawSourceHandoffResearchSessionShell,
+    ThirdChangedBasisEpochPersistedSourceHandoffResearchSessionShell,
+    ThirdChangedBasisEpochRawSourceHandoffResearchSessionShell,
+    create_inspectable_third_changed_basis_epoch_persisted_source_handoff_research_session_shell,
+    create_inspectable_third_changed_basis_epoch_raw_source_handoff_research_session_shell,
+    create_third_changed_basis_epoch_persisted_source_handoff_research_session_shell,
+    create_third_changed_basis_epoch_raw_source_handoff_research_session_shell,
+    run_third_changed_basis_epoch_handoff_research_session_shell,
 )
 from .root_backed_authority_inspection_shell import (
     InspectableRootBackedContinuationHandoffResearchSessionShell,
@@ -234,4 +253,17 @@ __all__ = [
     "create_workspace_shell",
     "run_first_changed_basis_root_backed_handoff_research_session_shell",
     "run_second_changed_basis_epoch_handoff_research_session_shell",
+    "InspectableThirdBasisEpochHandoffResearchSessionShell",
+    "ThirdBasisEpochHandoffResearchSessionShell",
+    "InspectableThirdChangedBasisEpochPersistedSourceHandoffResearchSessionShell",
+    "InspectableThirdChangedBasisEpochRawSourceHandoffResearchSessionShell",
+    "ThirdChangedBasisEpochPersistedSourceHandoffResearchSessionShell",
+    "ThirdChangedBasisEpochRawSourceHandoffResearchSessionShell",
+    "create_inspectable_third_basis_epoch_handoff_research_session_shell",
+    "create_third_basis_epoch_handoff_research_session_shell",
+    "create_inspectable_third_changed_basis_epoch_persisted_source_handoff_research_session_shell",
+    "create_inspectable_third_changed_basis_epoch_raw_source_handoff_research_session_shell",
+    "create_third_changed_basis_epoch_persisted_source_handoff_research_session_shell",
+    "create_third_changed_basis_epoch_raw_source_handoff_research_session_shell",
+    "run_third_changed_basis_epoch_handoff_research_session_shell",
 ]
