@@ -15,6 +15,10 @@ from pyxis.app.chromium_research_third_changed_basis_epoch_reentry_overlay impor
     persist_chromium_research_third_changed_basis_epoch_reentry_overlay,
 )
 
+from .chromium_research_changed_basis_restart_persistence_textual import (
+    _ChangedBasisRestartPersistenceMountSpec,
+    _mount_changed_basis_restart_persistence_after_new_verification,
+)
 from .chromium_research_third_changed_basis_epoch_reentry_overlay_textual import (
     ResearchThirdChangedBasisEpochReentryOverlayControls,
 )
@@ -51,6 +55,11 @@ _THIRD_CHANGED_BASIS_EPOCH_REENTRY_OVERLAY_CSS = """
 """
 
 
+_THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = _ChangedBasisRestartPersistenceMountSpec(
+    controls_selector="#research-third-changed-basis-epoch-reentry-overlay-controls",
+    duplicate_controls_error="Third-basis re-entry overlay controls are already mounted.",
+)
+
 class _ThirdChangedBasisEpochReentryOverlayProductMixin:
     """47F-only persistence behavior shared by the four dedicated 47E products."""
 
@@ -77,12 +86,12 @@ class _ThirdChangedBasisEpochReentryOverlayProductMixin:
         prior = self.last_third_changed_basis_epoch_reentry_verification
         await super()._verify_third_changed_basis_epoch_reentry()
         verification = self.last_third_changed_basis_epoch_reentry_verification
-        if verification is None or verification is prior:
-            return
-        if len(self.query("#research-third-changed-basis-epoch-reentry-overlay-controls")) != 0:
-            raise ValueError("Third-basis re-entry overlay controls are already mounted.")
-        await self.mount(
-            ResearchThirdChangedBasisEpochReentryOverlayControls(verification)
+        await _mount_changed_basis_restart_persistence_after_new_verification(
+            self,
+            previous_verification=prior,
+            current_verification=verification,
+            spec=_THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT,
+            create_controls=ResearchThirdChangedBasisEpochReentryOverlayControls,
         )
 
     async def _persist_third_changed_basis_epoch_reentry_overlay(self) -> None:
