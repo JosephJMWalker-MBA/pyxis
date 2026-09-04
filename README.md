@@ -5,7 +5,7 @@ Pyxis is an **evidence-first Python research system** with two proven, connected
 1. a transparent architecture-to-code compiler/runtime that keeps human intent, canonical state, generated products, runtime evidence, revisions, and export boundaries inspectable; and
 2. a read-only Chromium research workflow that preserves observation, human selection, comparison, rationale, and revision history without silently promoting any layer into stronger authority.
 
-## Current status — through Milestone 47G / D241
+## Current status — through Milestone 48B / D243
 
 Pyxis currently proves:
 
@@ -18,9 +18,10 @@ Pyxis currently proves:
 - **Third-crossing boundary remains narrow:** 47G transfers only the exact public-40B fresh typed result after explicit human choice. It does not reload or promote the saved 40B path as in-process launch provenance, auto-checkpoint 40C, infer a current/latest/head branch, or generalize the concrete lineage into an arbitrary `epoch[n]` model.
 - **Inspection without authority promotion:** one-root, second-epoch, and third-epoch launch provenance remain distinct from mutable current governed state through application-owned read-only projections. Persisted launch families can emit deterministic `pyxis research-inspect` JSON without turning paths, hashes, or presentation into stronger authority; exact in-process handoffs do not invent persistent launch paths.
 - **Bounded cumulative reuse:** root-backed, second-epoch, and third-epoch continuation share only triply-proven private mechanics for fixed-anchor cumulative extension, checkpoint forms, explicit path submission, rollover gating, and visible post-proof promotion. Concrete persistence, ancestry proof, launch lineage, and root/epoch semantics remain concrete rather than becoming a generic recursive authority model.
+- **Bounded changed-basis reuse:** after three complete concrete changed-basis product crossings, 48A–48B privately share only the triply-proven post-persistence typed-handoff surface mechanics and normal-close/validate/receiver-run runner mechanics. Source construction, result typing, ancestry, persistence, public runners, receiver selection, and root/epoch semantics remain concrete.
 - **Bounded compatibility:** package metadata declares Python `>=3.11,<3.15`, and the supported lanes are exercised across Python 3.11, 3.12, 3.13, and 3.14.
 
-The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md), [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md), [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md), [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md), [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md), [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md), and [`docs/CURRENT_FRONTIER_47.md`](docs/CURRENT_FRONTIER_47.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
+The detailed narrative below remains the original central proof trail through **Milestone 18C / D137** and is intentionally preserved rather than rewritten wholesale. For current orientation, continue through [`docs/CURRENT_FRONTIER.md`](docs/CURRENT_FRONTIER.md), [`docs/CURRENT_FRONTIER_35_36.md`](docs/CURRENT_FRONTIER_35_36.md), [`docs/CURRENT_FRONTIER_37_38.md`](docs/CURRENT_FRONTIER_37_38.md), [`docs/CURRENT_FRONTIER_39_40.md`](docs/CURRENT_FRONTIER_39_40.md), [`docs/CURRENT_FRONTIER_41_43.md`](docs/CURRENT_FRONTIER_41_43.md), [`docs/CURRENT_FRONTIER_44.md`](docs/CURRENT_FRONTIER_44.md), [`docs/MILESTONE_44H.md`](docs/MILESTONE_44H.md), [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md), [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md), [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md), and [`docs/CURRENT_FRONTIER_47.md`](docs/CURRENT_FRONTIER_47.md), then [`docs/MILESTONE_48A.md`](docs/MILESTONE_48A.md) and [`docs/MILESTONE_48B.md`](docs/MILESTONE_48B.md). Milestone-specific records, implementation, tests, and executed CI remain stronger authority than any compact summary.
 
 ## Authority boundaries
 
@@ -504,8 +505,10 @@ For a fresh development session, use this compact orientation chain:
 9. [`docs/MILESTONE_45A.md`](docs/MILESTONE_45A.md) and [`docs/MILESTONE_45B.md`](docs/MILESTONE_45B.md) — D226–D227, one-root authority inspection parity and deterministic persisted inspection.
 10. [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md) — 46A–46G / D228–D234, the completed second changed-basis product flow.
 11. [`docs/CURRENT_FRONTIER_47.md`](docs/CURRENT_FRONTIER_47.md) — 47A–47G / D235–D241, the completed third changed-basis product flow and post-47G reuse frontier.
+12. [`docs/MILESTONE_48A.md`](docs/MILESTONE_48A.md) — D242, private extraction of triply-proven changed-basis typed-handoff Textual mechanics.
+13. [`docs/MILESTONE_48B.md`](docs/MILESTONE_48B.md) — D243, private extraction of triply-proven changed-basis runner orchestration mechanics; this is the current implemented frontier.
 
-The next development decision should not be inferred from numbering alone. The compact 47 frontier records the stronger next question: which mechanics have now been demonstrated across all three complete changed-basis crossings and can be privately shared while concrete ancestry authority remains explicit.
+The next development decision should remain a bounded-reuse review, not a numbering exercise. Extract another procedure only if all three changed-basis products independently demonstrate the same mechanics and concrete authority semantics can remain outside the helper.
 
 Then open the relevant milestone-specific document and implementation/tests for the decision being changed. The repository also keeps three complementary detailed records so future development does not depend on chat history:
 
