@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from textual.widgets import Static
 
@@ -9,13 +11,30 @@ import pyxis.ui.second_changed_basis_epoch_reentry_overlay_research_session_shel
 import pyxis.ui.third_changed_basis_epoch_reentry_overlay_research_session_shell as third
 
 
+class _FakeInput:
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+
+class _FakeStatus:
+    def __init__(self) -> None:
+        self.value = ""
+
+    def update(self, value: str) -> None:
+        self.value = value
+
+
 class _FakeShell:
     def __init__(self) -> None:
         self.existing_selectors: set[str] = set()
         self.mounted: list[object] = []
+        self.inputs: dict[str, _FakeInput] = {}
 
     def query(self, selector: str):
         return [object()] if selector in self.existing_selectors else []
+
+    def query_one(self, selector: str, widget_type):
+        return self.inputs[selector]
 
     async def mount(self, widget) -> None:
         self.mounted.append(widget)
@@ -156,6 +175,136 @@ def test_48c_three_concrete_products_retain_specs_and_share_only_mount_procedure
             ),
             duplicate_controls_error=(
                 "Third-basis re-entry overlay controls are already mounted."
+            ),
+        )
+    )
+
+
+def _path_spec() -> kernel._ChangedBasisRestartPersistencePathSpec:
+    return kernel._ChangedBasisRestartPersistencePathSpec(
+        source_selector="#test-restart-source",
+        destination_selector="#test-restart-destination",
+        missing_source_error="missing exact restart source",
+        missing_destination_error="missing exact restart destination",
+    )
+
+
+def test_48d_blank_source_fails_before_destination() -> None:
+    shell = _FakeShell()
+    spec = _path_spec()
+    shell.inputs[spec.source_selector] = _FakeInput("   ")
+    shell.inputs[spec.destination_selector] = _FakeInput("")
+    status = _FakeStatus()
+
+    result = kernel._collect_changed_basis_restart_persistence_path_submission(
+        shell,  # type: ignore[arg-type]
+        status=status,  # type: ignore[arg-type]
+        spec=spec,
+    )
+
+    assert result is None
+    assert status.value == "missing exact restart source"
+
+
+def test_48d_blank_destination_fails_only_after_nonblank_source() -> None:
+    shell = _FakeShell()
+    spec = _path_spec()
+    shell.inputs[spec.source_selector] = _FakeInput("source.json")
+    shell.inputs[spec.destination_selector] = _FakeInput("\t  ")
+    status = _FakeStatus()
+
+    result = kernel._collect_changed_basis_restart_persistence_path_submission(
+        shell,  # type: ignore[arg-type]
+        status=status,  # type: ignore[arg-type]
+        spec=spec,
+    )
+
+    assert result is None
+    assert status.value == "missing exact restart destination"
+
+
+def test_48d_success_uses_exact_unstripped_path_strings() -> None:
+    shell = _FakeShell()
+    spec = _path_spec()
+    source_value = "  explicit/source.json  "
+    destination_value = "  explicit/destination.json  "
+    shell.inputs[spec.source_selector] = _FakeInput(source_value)
+    shell.inputs[spec.destination_selector] = _FakeInput(destination_value)
+    status = _FakeStatus()
+
+    result = kernel._collect_changed_basis_restart_persistence_path_submission(
+        shell,  # type: ignore[arg-type]
+        status=status,  # type: ignore[arg-type]
+        spec=spec,
+    )
+
+    assert result is not None
+    assert result.source == Path(source_value)
+    assert result.destination == Path(destination_value)
+    assert str(result.source) == source_value
+    assert str(result.destination) == destination_value
+    assert status.value == ""
+
+
+def test_48d_three_concrete_products_retain_exact_path_specs_and_shared_collector() -> None:
+    assert (
+        first._collect_changed_basis_restart_persistence_path_submission
+        is kernel._collect_changed_basis_restart_persistence_path_submission
+    )
+    assert (
+        second._collect_changed_basis_restart_persistence_path_submission
+        is kernel._collect_changed_basis_restart_persistence_path_submission
+    )
+    assert (
+        third._collect_changed_basis_restart_persistence_path_submission
+        is kernel._collect_changed_basis_restart_persistence_path_submission
+    )
+
+    assert first._FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_PATHS == (
+        kernel._ChangedBasisRestartPersistencePathSpec(
+            source_selector=(
+                "#research-first-changed-basis-root-backed-reentry-overlay-prior-plan-source"
+            ),
+            destination_selector=(
+                "#research-first-changed-basis-root-backed-reentry-overlay-destination"
+            ),
+            missing_source_error=(
+                "Overlay persistence failed: explicit ordinary 31B plan-document path is required."
+            ),
+            missing_destination_error=(
+                "Overlay persistence failed: explicit no-overwrite 35C overlay destination is required."
+            ),
+        )
+    )
+    assert second._SECOND_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_PATHS == (
+        kernel._ChangedBasisRestartPersistencePathSpec(
+            source_selector=(
+                "#research-second-changed-basis-epoch-reentry-overlay-prior-continuation-overlay-source"
+            ),
+            destination_selector=(
+                "#research-second-changed-basis-epoch-reentry-overlay-destination"
+            ),
+            missing_source_error=(
+                "Overlay persistence failed: explicit current prior 35D/35E continuation-overlay path is required."
+            ),
+            missing_destination_error=(
+                "Overlay persistence failed: explicit no-overwrite 37B destination is required."
+            ),
+        )
+    )
+    assert third._THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_PATHS == (
+        kernel._ChangedBasisRestartPersistencePathSpec(
+            source_selector=(
+                "#research-third-changed-basis-epoch-reentry-overlay-prior-continuation-overlay-source"
+            ),
+            destination_selector=(
+                "#research-third-changed-basis-epoch-reentry-overlay-destination"
+            ),
+            missing_source_error=(
+                "Overlay persistence failed: explicit current prior 37C/37D second-epoch continuation-overlay path is required."
+            ),
+            missing_destination_error=(
+                "Overlay persistence failed: explicit no-overwrite 40B destination is required."
             ),
         )
     )

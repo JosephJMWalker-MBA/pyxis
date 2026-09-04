@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from textual.widget import Widget
+from textual.widgets import Input, Static
 
 from .research_session_shell import ResearchSessionShell
 
@@ -15,6 +17,53 @@ class _ChangedBasisRestartPersistenceMountSpec:
 
     controls_selector: str
     duplicate_controls_error: str
+
+
+@dataclass(frozen=True, slots=True)
+class _ChangedBasisRestartPersistencePathSpec:
+    """Concrete selectors and blank-error wording for two explicit path inputs."""
+
+    source_selector: str
+    destination_selector: str
+    missing_source_error: str
+    missing_destination_error: str
+
+
+@dataclass(frozen=True, slots=True)
+class _ChangedBasisRestartPersistencePathSubmission:
+    """Exact caller-entered restart-persistence paths after ordered blank checks."""
+
+    source: Path
+    destination: Path
+
+
+def _collect_changed_basis_restart_persistence_path_submission(
+    shell: ResearchSessionShell,
+    *,
+    status: Static,
+    spec: _ChangedBasisRestartPersistencePathSpec,
+) -> _ChangedBasisRestartPersistencePathSubmission | None:
+    """Read two explicit path fields without granting path-discovery authority.
+
+    str.strip is used only to decide whether a field is blank. Successful conversion
+    preserves the exact original entered string in Path(...) rather than normalizing
+    or substituting the stripped value.
+    """
+
+    source = shell.query_one(spec.source_selector, Input)
+    destination = shell.query_one(spec.destination_selector, Input)
+
+    if not source.value.strip():
+        status.update(spec.missing_source_error)
+        return None
+    if not destination.value.strip():
+        status.update(spec.missing_destination_error)
+        return None
+
+    return _ChangedBasisRestartPersistencePathSubmission(
+        source=Path(source.value),
+        destination=Path(destination.value),
+    )
 
 
 async def _mount_changed_basis_restart_persistence_after_new_verification(

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from textual.widgets import Button, Input, Static
+from textual.widgets import Button, Static
 
 from pyxis.app.chromium_research_second_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchSecondBasisEpochContinuationReentryResult,
@@ -17,6 +15,8 @@ from pyxis.app.chromium_research_third_changed_basis_epoch_reentry_overlay impor
 
 from .chromium_research_changed_basis_restart_persistence_textual import (
     _ChangedBasisRestartPersistenceMountSpec,
+    _ChangedBasisRestartPersistencePathSpec,
+    _collect_changed_basis_restart_persistence_path_submission,
     _mount_changed_basis_restart_persistence_after_new_verification,
 )
 from .chromium_research_third_changed_basis_epoch_reentry_overlay_textual import (
@@ -60,6 +60,24 @@ _THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_MOUNT = (
         controls_selector="#research-third-changed-basis-epoch-reentry-overlay-controls",
         duplicate_controls_error=(
             "Third-basis re-entry overlay controls are already mounted."
+        ),
+    )
+)
+
+
+_THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_PATHS = (
+    _ChangedBasisRestartPersistencePathSpec(
+        source_selector=(
+            "#research-third-changed-basis-epoch-reentry-overlay-prior-continuation-overlay-source"
+        ),
+        destination_selector=(
+            "#research-third-changed-basis-epoch-reentry-overlay-destination"
+        ),
+        missing_source_error=(
+            "Overlay persistence failed: explicit current prior 37C/37D second-epoch continuation-overlay path is required."
+        ),
+        missing_destination_error=(
+            "Overlay persistence failed: explicit no-overwrite 40B destination is required."
         ),
     )
 )
@@ -115,23 +133,12 @@ class _ThirdChangedBasisEpochReentryOverlayProductMixin:
             )
             return
 
-        prior_overlay = self.query_one(
-            "#research-third-changed-basis-epoch-reentry-overlay-prior-continuation-overlay-source",
-            Input,
+        paths = _collect_changed_basis_restart_persistence_path_submission(
+            self,
+            status=status,
+            spec=_THIRD_CHANGED_BASIS_EPOCH_RESTART_PERSISTENCE_PATHS,
         )
-        destination = self.query_one(
-            "#research-third-changed-basis-epoch-reentry-overlay-destination",
-            Input,
-        )
-        if not prior_overlay.value.strip():
-            status.update(
-                "Overlay persistence failed: explicit current prior 37C/37D second-epoch continuation-overlay path is required."
-            )
-            return
-        if not destination.value.strip():
-            status.update(
-                "Overlay persistence failed: explicit no-overwrite 40B destination is required."
-            )
+        if paths is None:
             return
 
         mounted_controller = self.research_controller
@@ -141,10 +148,8 @@ class _ThirdChangedBasisEpochReentryOverlayProductMixin:
         try:
             result = persist_chromium_research_third_changed_basis_epoch_reentry_overlay(
                 verification,
-                prior_second_basis_epoch_continuation_overlay_source=Path(
-                    prior_overlay.value
-                ),
-                destination=Path(destination.value),
+                prior_second_basis_epoch_continuation_overlay_source=paths.source,
+                destination=paths.destination,
             )
         except Exception as exc:
             status.update(f"Overlay persistence failed: {exc}")
