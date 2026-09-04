@@ -69,6 +69,11 @@ from .chromium_research_paragraph_text_selection import (
     ChromiumPageResearchParagraphTextSelectionEvidence,
     select_chromium_research_paragraph_text,
 )
+from .chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+    ChromiumResearchParagraphTextSelectionSourceMismatchError,
+    load_chromium_research_paragraph_text_selection,
+)
 from .chromium_research_paragraph_text_selection_persistence import (
     ChromiumPageResearchParagraphTextSelectionPersistenceEvidence,
     ChromiumPageResearchParagraphTextSelectionVerificationEvidence,
@@ -387,4 +392,7 @@ __all__ = [
     "ChromiumResearchParagraphTextSelectionIntegrityError",
     "persist_chromium_research_paragraph_text_selection",
     "verify_chromium_research_paragraph_text_selection",
+    "ChromiumPageResearchLoadedParagraphTextSelectionRecord",
+    "ChromiumResearchParagraphTextSelectionSourceMismatchError",
+    "load_chromium_research_paragraph_text_selection",
 ]
