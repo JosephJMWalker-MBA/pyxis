@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from pathlib import Path
-
-from textual.widgets import Button, Input, Static
+from textual.widgets import Button, Static
 
 from pyxis.app.chromium_research_first_changed_basis_root_backed_reentry_overlay import (
     ChromiumResearchFirstChangedBasisRootBackedReentryOverlayResult,
@@ -14,6 +12,8 @@ from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingS
 
 from .chromium_research_changed_basis_restart_persistence_textual import (
     _ChangedBasisRestartPersistenceMountSpec,
+    _ChangedBasisRestartPersistencePathSpec,
+    _collect_changed_basis_restart_persistence_path_submission,
     _mount_changed_basis_restart_persistence_after_new_verification,
 )
 from .chromium_research_first_changed_basis_root_backed_reentry_overlay_textual import (
@@ -28,6 +28,24 @@ _FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_MOUNT = (
     _ChangedBasisRestartPersistenceMountSpec(
         controls_selector="#research-first-changed-basis-root-backed-reentry-overlay-controls",
         duplicate_controls_error="44G overlay persistence controls are already mounted.",
+    )
+)
+
+
+_FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_PATHS = (
+    _ChangedBasisRestartPersistencePathSpec(
+        source_selector=(
+            "#research-first-changed-basis-root-backed-reentry-overlay-prior-plan-source"
+        ),
+        destination_selector=(
+            "#research-first-changed-basis-root-backed-reentry-overlay-destination"
+        ),
+        missing_source_error=(
+            "Overlay persistence failed: explicit ordinary 31B plan-document path is required."
+        ),
+        missing_destination_error=(
+            "Overlay persistence failed: explicit no-overwrite 35C overlay destination is required."
+        ),
     )
 )
 
@@ -120,23 +138,12 @@ class FirstChangedBasisRootBackedReentryOverlayResearchSessionShell(
             )
             return
 
-        prior_plan_source = self.query_one(
-            "#research-first-changed-basis-root-backed-reentry-overlay-prior-plan-source",
-            Input,
+        paths = _collect_changed_basis_restart_persistence_path_submission(
+            self,
+            status=status,
+            spec=_FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_PATHS,
         )
-        destination = self.query_one(
-            "#research-first-changed-basis-root-backed-reentry-overlay-destination",
-            Input,
-        )
-        if not prior_plan_source.value.strip():
-            status.update(
-                "Overlay persistence failed: explicit ordinary 31B plan-document path is required."
-            )
-            return
-        if not destination.value.strip():
-            status.update(
-                "Overlay persistence failed: explicit no-overwrite 35C overlay destination is required."
-            )
+        if paths is None:
             return
 
         mounted_controller = self.research_controller
@@ -145,8 +152,8 @@ class FirstChangedBasisRootBackedReentryOverlayResearchSessionShell(
         try:
             result = persist_chromium_research_first_changed_basis_root_backed_reentry_overlay(
                 verification,
-                prior_session_plan_source=Path(prior_plan_source.value),
-                destination=Path(destination.value),
+                prior_session_plan_source=paths.source,
+                destination=paths.destination,
             )
         except Exception as exc:
             status.update(f"Overlay persistence failed: {exc}")
