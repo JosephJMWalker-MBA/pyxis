@@ -15,6 +15,9 @@ from pyxis.app.chromium_research_third_basis_epoch_reentry import (
 )
 from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingSetItem
 
+from .chromium_research_changed_basis_typed_handoff_runner import (
+    _run_changed_basis_typed_handoff,
+)
 from .chromium_research_changed_basis_typed_handoff_textual import (
     _ChangedBasisTypedHandoffSurfaceSpec,
     _mount_changed_basis_typed_handoff_after_new_persistence,
@@ -222,17 +225,16 @@ def run_third_changed_basis_epoch_handoff_research_session_shell(
     is loaded, reconstructed, inferred, or carried as launch provenance.
     """
 
-    handoff = create_third_changed_basis_epoch_persisted_source_handoff_research_session_shell(
+    source = create_third_changed_basis_epoch_persisted_source_handoff_research_session_shell(
         lineage,
         appended_items,
-    ).run()
-    if handoff is None:
-        return None
-    if type(handoff) is not ChromiumResearchThirdBasisEpochReentryResult:
-        raise TypeError("47G shell returned an invalid third-basis-epoch handoff result.")
-
-    create_inspectable_third_basis_epoch_handoff_research_session_shell(handoff).run()
-    return handoff
+    )
+    return _run_changed_basis_typed_handoff(
+        run_source=source.run,
+        validate_handoff=_is_third_changed_basis_epoch_handoff,
+        invalid_handoff_error="47G shell returned an invalid third-basis-epoch handoff result.",
+        create_receiver=create_inspectable_third_basis_epoch_handoff_research_session_shell,
+    )
 
 
 __all__ = [
