@@ -24,10 +24,13 @@ from .first_changed_basis_root_backed_reentry_research_session_shell import (
 )
 
 
-_FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_MOUNT = _ChangedBasisRestartPersistenceMountSpec(
-    controls_selector="#research-first-changed-basis-root-backed-reentry-overlay-controls",
-    duplicate_controls_error="44G overlay persistence controls are already mounted.",
+_FIRST_CHANGED_BASIS_ROOT_BACKED_RESTART_PERSISTENCE_MOUNT = (
+    _ChangedBasisRestartPersistenceMountSpec(
+        controls_selector="#research-first-changed-basis-root-backed-reentry-overlay-controls",
+        duplicate_controls_error="44G overlay persistence controls are already mounted.",
+    )
 )
+
 
 class FirstChangedBasisRootBackedReentryOverlayResearchSessionShell(
     FirstChangedBasisRootBackedReentryResearchSessionShell
