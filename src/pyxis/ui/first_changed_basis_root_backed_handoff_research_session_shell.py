@@ -10,6 +10,9 @@ from pyxis.app.chromium_research_root_backed_session_reentry import (
 from pyxis.app.chromium_research_session_reentry import ChromiumResearchSessionReentryResult
 from pyxis.app.chromium_research_working_set import ChromiumPageResearchWorkingSetItem
 
+from .chromium_research_changed_basis_typed_handoff_runner import (
+    _run_changed_basis_typed_handoff,
+)
 from .chromium_research_changed_basis_typed_handoff_textual import (
     _ChangedBasisTypedHandoffSurfaceSpec,
     _mount_changed_basis_typed_handoff_after_new_persistence,
@@ -131,17 +134,16 @@ def run_first_changed_basis_root_backed_handoff_research_session_shell(
     records that this launch has no persistent path provenance.
     """
 
-    handoff = create_first_changed_basis_root_backed_handoff_research_session_shell(
+    source = create_first_changed_basis_root_backed_handoff_research_session_shell(
         ordinary_reentry,
         appended_items,
-    ).run()
-    if handoff is None:
-        return None
-    if not isinstance(handoff, ChromiumResearchRootBackedSessionReentryResult):
-        raise TypeError("44H shell returned an invalid root-backed handoff result.")
-
-    create_inspectable_root_backed_handoff_research_session_shell(handoff).run()
-    return handoff
+    )
+    return _run_changed_basis_typed_handoff(
+        run_source=source.run,
+        validate_handoff=_is_first_changed_basis_root_backed_handoff,
+        invalid_handoff_error="44H shell returned an invalid root-backed handoff result.",
+        create_receiver=create_inspectable_root_backed_handoff_research_session_shell,
+    )
 
 
 __all__ = [
