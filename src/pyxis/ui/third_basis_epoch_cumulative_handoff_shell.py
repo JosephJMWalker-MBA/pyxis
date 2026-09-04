@@ -5,6 +5,9 @@ from textual.widgets import Button, Static
 from pyxis.app.chromium_research_third_basis_epoch_continuation_reentry_plan_document import (
     ChromiumResearchThirdBasisEpochContinuationReentryResult,
 )
+from pyxis.app.chromium_research_third_basis_epoch_reentry import (
+    ChromiumResearchThirdBasisEpochReentryResult,
+)
 from pyxis.app.chromium_research_third_basis_epoch_shell_lineage import (
     ChromiumResearchThirdBasisEpochShellLineage,
 )
@@ -87,6 +90,30 @@ class ThirdBasisEpochCumulativeHandoffResearchSessionShell(
         # Deliberately do not unlock revision or auto-exit after checkpoint success.
 
 
+class ThirdBasisEpochHandoffResearchSessionShell(
+    ThirdBasisEpochCumulativeHandoffResearchSessionShell
+):
+    """Established first-checkpoint behavior from one exact pathless 47G handoff.
+
+    The supplied third-epoch re-entry was freshly earned by public 40B during 47F in
+    the same process. This receiver deliberately bypasses persisted 41A launch-lineage
+    construction: no 40B path is loaded, stored, inferred, or promoted as launch
+    provenance. Existing 40C and 41E behavior is inherited unchanged.
+    """
+
+    def __init__(self, reentry: ChromiumResearchThirdBasisEpochReentryResult) -> None:
+        if type(reentry) is not ChromiumResearchThirdBasisEpochReentryResult:
+            raise TypeError(
+                "reentry must be exactly ChromiumResearchThirdBasisEpochReentryResult."
+            )
+
+        ResearchSessionShell.__init__(self, reentry.controller)
+        self.third_basis_epoch_launch_lineage = None
+        self.third_basis_epoch_handoff_reentry = reentry
+        self.third_basis_epoch_reentry = reentry
+        self.last_third_basis_epoch_continuation_checkpoint = None
+
+
 class ThirdBasisEpochContinuationHandoffResearchSessionShell(
     ThirdBasisEpochContinuationResearchSessionShell
 ):
@@ -131,6 +158,14 @@ def create_third_basis_epoch_cumulative_handoff_research_session_shell(
     return ThirdBasisEpochCumulativeHandoffResearchSessionShell(lineage)
 
 
+def create_third_basis_epoch_handoff_research_session_shell(
+    reentry: ChromiumResearchThirdBasisEpochReentryResult,
+) -> ThirdBasisEpochHandoffResearchSessionShell:
+    """Create first-checkpoint mode directly from one exact 47G typed handoff."""
+
+    return ThirdBasisEpochHandoffResearchSessionShell(reentry)
+
+
 def create_third_basis_epoch_continuation_handoff_research_session_shell(
     reentry: ChromiumResearchThirdBasisEpochContinuationReentryResult,
 ) -> ThirdBasisEpochContinuationHandoffResearchSessionShell:
@@ -142,6 +177,8 @@ def create_third_basis_epoch_continuation_handoff_research_session_shell(
 __all__ = [
     "ThirdBasisEpochContinuationHandoffResearchSessionShell",
     "ThirdBasisEpochCumulativeHandoffResearchSessionShell",
+    "ThirdBasisEpochHandoffResearchSessionShell",
     "create_third_basis_epoch_continuation_handoff_research_session_shell",
     "create_third_basis_epoch_cumulative_handoff_research_session_shell",
+    "create_third_basis_epoch_handoff_research_session_shell",
 ]
