@@ -5,6 +5,15 @@ from dataclasses import dataclass
 import hmac
 from typing import TypeAlias
 
+from .chromium_research_paragraph_text_selection import (
+    select_chromium_research_paragraph_text,
+)
+from .chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
+from .chromium_research_paragraph_text_selection_persistence import (
+    ChromiumPageResearchParagraphTextSelectionVerificationEvidence,
+)
 from .chromium_research_paragraph_text_selection_comparison_note import (
     create_chromium_research_paragraph_text_selection_comparison_note,
 )
@@ -36,6 +45,7 @@ _WORKING_SET_MODE = "caller_explicit_ordered_relinked_research_working_set"
 
 ChromiumPageResearchWorkingSetItem: TypeAlias = (
     ChromiumPageResearchLoadedParagraphNoteRecord
+    | ChromiumPageResearchLoadedParagraphTextSelectionRecord
     | ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord
     | ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord
 )
@@ -68,12 +78,13 @@ def create_chromium_research_working_set(
     Duplicate records are retained because Pyxis does not infer that repetition is
     accidental or semantically redundant.
 
-    Each member must be one of the three currently established relinked research
-    record families: 17D paragraph note, 18D exact-range note, or 19D comparison
-    note. The operation re-establishes each member's in-memory note/selection
-    contract through the existing public 17B/18B/19B constructors and checks that
-    the retained sidecar-verification facts still agree with the nested reconstructed
-    source/selection/note objects. It deliberately does not reread any sidecar file.
+    Each member must be one of the established relinked research record families:
+    17D paragraph note, 49B bare exact-range selection, 18D exact-range note, or
+    19D comparison note. The operation re-establishes each member's in-memory
+    selection/note contract through existing public selectors/constructors and checks
+    that the retained sidecar-verification facts still agree with the nested
+    reconstructed source/selection/note objects. It deliberately does not reread
+    any sidecar file.
 
     Therefore successful creation proves working-set membership over coherent
     already-loaded application evidence. It is not fresh file verification or
@@ -106,6 +117,9 @@ def _validate_working_set_item(
     if isinstance(item, ChromiumPageResearchLoadedParagraphNoteRecord):
         _validate_loaded_paragraph_note(item, index=index)
         return
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        _validate_loaded_exact_range_selection(item, index=index)
+        return
     if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord):
         _validate_loaded_exact_range_note(item, index=index)
         return
@@ -116,8 +130,8 @@ def _validate_working_set_item(
         _validate_loaded_comparison_note(item, index=index)
         return
     raise TypeError(
-        f"items[{index}] must be a supported relinked paragraph-note, "
-        "exact-range-note, or comparison-note record."
+        f"items[{index}] must be a supported relinked paragraph-note, bare "
+        "exact-range-selection, exact-range-note, or comparison-note record."
     )
 
 
@@ -150,6 +164,53 @@ def _validate_loaded_paragraph_note(
     ):
         raise ValueError(
             f"items[{index}] paragraph-note verification is incoherent with its loaded note."
+        )
+
+
+def _validate_loaded_exact_range_selection(
+    item: ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+    *,
+    index: int,
+) -> None:
+    verification = item.verification
+    selection = item.selection
+    if not isinstance(
+        verification,
+        ChromiumPageResearchParagraphTextSelectionVerificationEvidence,
+    ):
+        raise TypeError(
+            f"items[{index}] bare exact-range-selection verification evidence is unsupported."
+        )
+
+    paragraph_selection = selection.source
+    rebuilt = select_chromium_research_paragraph_text(
+        paragraph_selection,
+        start_offset=selection.start_offset,
+        end_offset=selection.end_offset,
+    )
+    source_verification = paragraph_selection.source.verification
+    if (
+        rebuilt.source is not paragraph_selection
+        or rebuilt.selection_mode != selection.selection_mode
+        or rebuilt.offset_unit != selection.offset_unit
+        or rebuilt.start_offset != selection.start_offset
+        or rebuilt.end_offset != selection.end_offset
+        or rebuilt.selected_text != selection.selected_text
+        or verification.source_capture_format != source_verification.capture_format
+        or not _same_digest(
+            verification.source_bundle_sha256,
+            source_verification.bundle_sha256,
+        )
+        or verification.paragraph_selection_mode != paragraph_selection.selection_mode
+        or verification.paragraph_ordinal != paragraph_selection.paragraph.ordinal
+        or verification.text_selection_mode != selection.selection_mode
+        or verification.offset_unit != selection.offset_unit
+        or verification.start_offset != selection.start_offset
+        or verification.end_offset != selection.end_offset
+    ):
+        raise ValueError(
+            f"items[{index}] bare exact-range-selection verification is incoherent "
+            "with its loaded selection."
         )
 
 

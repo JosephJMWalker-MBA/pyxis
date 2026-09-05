@@ -5,7 +5,7 @@ Pyxis is an **evidence-first Python research system** with two proven, connected
 1. a transparent architecture-to-code compiler/runtime that keeps human intent, canonical state, generated products, runtime evidence, revisions, and export boundaries inspectable; and
 2. a read-only Chromium research workflow that preserves observation, human selection, comparison, rationale, and revision history without silently promoting any layer into stronger authority.
 
-## Current status — through Milestone 49B / D247
+## Current status — through Milestone 49C / D248
 
 Pyxis currently proves:
 
@@ -13,7 +13,7 @@ Pyxis currently proves:
 - **Evidence-preserving UI and measurement:** a Textual Workspace shell renders application-owned evidence; descriptive measurement remains provenance-heavy and explicitly non-causal.
 - **Read-only Chromium research:** caller-owned Chromium pages can be observed through an explicit DevTools endpoint for bounded page text, links, headings, metadata, paragraphs, tables, and lists. Pyxis does not infer an active tab when multiple pages exist and does not acquire navigation or interaction authority from observation capability.
 - **Durable research evidence:** browser evidence can be composed into durable verified captures, reopened after Chromium exits, and used for explicit human selections, notes, comparisons, working sets, and rationale without silently promoting interpretation into source authority.
-- **Durable exact passage selection:** one caller-owned 18A paragraph-text range can now be persisted independently of any note or comparison as canonical no-overwrite JSON containing only durable capture identity plus explicit paragraph/range coordinates. File-local verification stores no selected text or source path; 49B then allows an explicit caller-supplied matching loaded capture to re-establish the paragraph and range through public 17A/18A selectors, failing closed on source or coordinate mismatch without fuzzy re-anchoring.
+- **Durable exact passage selection:** one caller-owned 18A paragraph-text range can now be persisted independently of any note or comparison as canonical no-overwrite JSON containing only durable capture identity plus explicit paragraph/range coordinates. File-local verification stores no selected text or source path; 49B explicitly relinks the range to one caller-supplied matching loaded capture through public 17A/18A selectors, and 49C permits that already-relinked bare selection to join the existing human-owned in-memory 20A working set before per-selection interpretation. The durable `research_working_set.v1` format remains intentionally unchanged and rejects the new member family.
 - **Governed durable research continuity:** explicit revision segments can be inspected, revised, persisted, adopted, checkpointed, exited, and freshly re-entered from caller-supplied durable locators without ambient history discovery or a global latest/current/head model.
 - **Three concrete changed-basis product crossings:** the first changed-basis flow reaches exact 35C proof and explicit 44H handoff into the root-backed product; the second reaches fresh 37B proof and explicit 46G handoff into the second-basis-epoch product; the third now reaches an exact third public-33B transition, third public-34A root, first post-third-root public-34B edge, explicit 47D shell-local adoption, 47E fresh-process verification through existing 40A, 47F proof-gated persistence of strict 40B restart configuration, and 47G explicit typed handoff into the established third-basis-epoch first-checkpoint product.
 - **Third-crossing boundary remains narrow:** 47G transfers only the exact public-40B fresh typed result after explicit human choice. It does not reload or promote the saved 40B path as in-process launch provenance, auto-checkpoint 40C, infer a current/latest/head branch, or generalize the concrete lineage into an arbitrary `epoch[n]` model.
@@ -507,9 +507,10 @@ For a fresh development session, use this compact orientation chain:
 10. [`docs/CURRENT_FRONTIER_46.md`](docs/CURRENT_FRONTIER_46.md) — 46A–46G / D228–D234, the completed second changed-basis product flow.
 11. [`docs/CURRENT_FRONTIER_47.md`](docs/CURRENT_FRONTIER_47.md) — 47A–47G / D235–D241, the completed third changed-basis product flow and post-47G reuse frontier.
 12. [`docs/CURRENT_FRONTIER_48.md`](docs/CURRENT_FRONTIER_48.md) — 48A–48D / D242–D245, the completed bounded changed-basis reuse pass and reuse-saturation frontier.
-13. [`docs/CURRENT_FRONTIER_49.md`](docs/CURRENT_FRONTIER_49.md) — 49A–49B / D246–D247, durable exact-range save/verify/relink plus the post-49B product-gap review; this is the current implemented frontier.
+13. [`docs/CURRENT_FRONTIER_49.md`](docs/CURRENT_FRONTIER_49.md) — 49A–49B / D246–D247, durable exact-range save/verify/relink plus the post-49B product-gap review.
+14. [`docs/MILESTONE_49C.md`](docs/MILESTONE_49C.md) — D248, bare relinked exact-range selections become a fourth in-memory 20A working-set member family while durable working-set v1 remains closed; this is the current implemented frontier.
 
-49A–49B now provide a complete save → verify → explicitly relink passage lifecycle without quote copying, source discovery, fuzzy re-anchoring, or citation/semantic authority. The strongest next question is whether bare relinked exact-range selections should enter the established working-set lifecycle before per-selection interpretation; that requires an explicit compatibility/presentation review rather than an automatic format widening.
+49A–49C now provide save → verify → explicit relink → in-memory organization of exact passages before per-selection interpretation. The next distinct boundary is durable representation of that expanded working-set membership; it requires an explicit format-versioning and downstream compatibility decision rather than silently widening `pyxis.chromium.research_working_set.v1`.
 
 Then open the relevant milestone-specific document and implementation/tests for the decision being changed. The repository also keeps three complementary detailed records so future development does not depend on chat history:
 

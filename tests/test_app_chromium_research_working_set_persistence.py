@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from test_app_chromium_research_working_set import _loaded_records
+from test_app_chromium_research_working_set import (
+    _loaded_bare_selection,
+    _loaded_records,
+)
 from pyxis.app.chromium_research_working_set import create_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_persistence import (
     ChromiumPageResearchWorkingSetPersistenceEvidence,
@@ -202,3 +205,22 @@ def test_working_set_persistence_module_is_publicly_importable(tmp_path: Path) -
 
     assert persisted.working_set is working_set
     assert verified.items[0].member_format == "pyxis.chromium.research_paragraph_note.v1"
+
+
+def test_49c_existing_v1_persistence_rejects_bare_selection_member_without_write(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    working_set = create_chromium_research_working_set((bare,))
+    destination = tmp_path / "working-set-v1-must-not-widen.json"
+
+    with pytest.raises(
+        TypeError,
+        match=r"working_set\.items\[0\] has an unsupported member family",
+    ):
+        persist_chromium_research_working_set(
+            working_set,
+            destination,
+        )
+
+    assert not destination.exists()
