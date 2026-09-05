@@ -15,8 +15,14 @@ from .chromium_research_working_set_note_revision_load import (
 )
 
 
-_NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
-_REVISION_FORMAT = "pyxis.chromium.research_working_set_note_revision.v1"
+_NOTE_FORMAT_V1 = "pyxis.chromium.research_working_set_note.v1"
+_NOTE_FORMAT_V2 = "pyxis.chromium.research_working_set_note.v2"
+_REVISION_FORMAT_V1 = "pyxis.chromium.research_working_set_note_revision.v1"
+_REVISION_FORMAT_V2 = "pyxis.chromium.research_working_set_note_revision.v2"
+_REVISION_NOTE_FORMATS = {
+    _REVISION_FORMAT_V1: _NOTE_FORMAT_V1,
+    _REVISION_FORMAT_V2: _NOTE_FORMAT_V2,
+}
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 _CONTINUATION_MODE = (
@@ -54,6 +60,11 @@ def create_chromium_research_working_set_note_revision_continuation(
     relationships from existing public 21A/22A constructors plus retained durable
     identity facts. The exact caller-supplied loaded predecessor object is kept.
 
+    The in-memory action is intentionally revision-format agnostic across the two
+    explicitly supported 22C families. Durable continuation format choice remains a
+    later boundary: the established 23B v1 writer still accepts only revision-v1
+    predecessors.
+
     The new revision is then created through public 22A over exactly
     `prior_revision.revision.revised_note`. Exact textual no-ops therefore remain
     rejected by 22A. No persistence, chain traversal, revision numbering,
@@ -86,9 +97,10 @@ def _validate_loaded_prior_revision(
     loaded_prior_note = prior_revision.prior_note
     loaded_revision = prior_revision.revision
 
-    if verification.revision_format != _REVISION_FORMAT:
+    expected_note_format = _REVISION_NOTE_FORMATS.get(verification.revision_format)
+    if expected_note_format is None:
         raise ValueError("loaded predecessor uses an unsupported revision format.")
-    if verification.prior_note_format != _NOTE_FORMAT:
+    if verification.prior_note_format != expected_note_format:
         raise ValueError("loaded predecessor references an unsupported note format.")
     if verification.revision_mode != _REVISION_MODE:
         raise ValueError("loaded predecessor uses an unsupported revision mode.")
