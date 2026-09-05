@@ -110,7 +110,7 @@ def persist_chromium_research_working_set(
     return _persist_working_set(
         working_set,
         destination,
-        working_set_format=document["format"],
+        working_set_format=_WORKING_SET_FORMAT,
         member_reference=_member_reference,
     )
 
@@ -225,7 +225,7 @@ def verify_chromium_research_working_set(
     )
     return ChromiumPageResearchWorkingSetVerificationEvidence(
         path=path,
-        working_set_format=_WORKING_SET_FORMAT,
+        working_set_format=document["format"],
         working_set_record_sha256=recorded_sha256,
         byte_count=len(raw),
         working_set_mode=working_set_record["working_set_mode"],
