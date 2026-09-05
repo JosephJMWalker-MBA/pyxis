@@ -289,6 +289,23 @@ Whitespace, Unicode, line breaks, punctuation, uncertainty, and tentative phrasi
 
 No semantic diff, correction, confidence score, or reason-for-change field is inferred.
 
+## 23A remains an in-memory action across explicit revision versions
+
+Repository Zero exposed one important boundary during 49F CI: the existing 23A constructor rejected a freshly loaded revision-v2 predecessor before the intended 23B persistence gate could be exercised.
+
+That was stricter than the already-established separation between in-memory human action and durable format choice.
+
+49F therefore makes **only the in-memory 23A predecessor validation** version-aware across the two explicit 22C families:
+
+```text
+revision v1 → note v1
+revision v2 → note v2
+```
+
+23A still performs no persistence and introduces no continuation-v2 file format. It simply permits the same human action — “revise this already-loaded revision again” — over either supported loaded revision family while re-establishing the exact revision/note pairing and retained object graph.
+
+This mirrors the earlier 22A result: application-level human revision mechanics need not inherit durable file-version restrictions.
+
 ## Continuation v1 remains closed
 
 49F deliberately does not widen:
@@ -304,17 +321,18 @@ A revision-v2 artifact can therefore:
 - persist;
 - verify;
 - relink through 22C;
+- participate in the in-memory 23A continuation action;
 
-but cannot become a continuation-v1 predecessor.
+but cannot become a continuation-v1 durable predecessor.
 
 The existing 23B persistence boundary rejects it before writing.
 
 This preserves:
 
 ```text
-one durable v2 revision
+in-memory second human change
 !=
-versioned durable multi-step revision history
+durable versioned multi-step revision history
 ```
 
 ## Focused falsification
@@ -335,13 +353,15 @@ versioned durable multi-step revision history
 12. a file-valid wrong predecessor digest fails 22C;
 13. a file-valid exact-text no-op fails public 22A reconstruction through 22C;
 14. member sidecars are not reread;
-15. continuation-v1 persistence rejects a revision-v2 predecessor before write.
+15. 23A can express a second in-memory human change over a revision-v2 predecessor while continuation-v1 persistence still rejects that predecessor before write.
 
 Repository Zero full-suite CI on Python 3.11–3.14 remains the executable gate.
 
 ## Compatibility
 
 49F adds one explicit durable revision version and additive generic verification/relinking support.
+
+It also broadens only the in-memory 23A predecessor validator from revision-v1-only to the two exact supported 22C revision families.
 
 It changes no:
 
@@ -351,7 +371,7 @@ It changes no:
 - exact no-op rule;
 - old revision-v1 bytes;
 - source/member discovery policy;
-- continuation-v1 semantics;
+- continuation-v1 durable format semantics;
 - browser behavior;
 - UI;
 - CLI;
@@ -359,13 +379,13 @@ It changes no:
 
 ## Next boundary
 
-The next distinct human action is continuation:
+The next distinct human action is durable continuation:
 
 > I revised the v2 rationale once, then changed it again. Preserve another append-only step against the exact durable revision-v2 predecessor.
 
-The v1 product already owns that action through 23A–23C.
+The v1 product already owns that durable action through 23B–23C, while 23A now already owns the in-memory action for either explicit revision family.
 
-Supporting it on the v2 line requires a separate durable continuation version.
+Supporting durable continuation on the v2 line requires a separate continuation format version.
 
 That is not part of 49F.
 
@@ -375,7 +395,7 @@ That is not part of 49F.
 
 - automatic revision version migration;
 - mutation of old revision files;
-- continuation v2;
+- continuation-v2 durable format;
 - revision-edge/history/sequence versioning;
 - timestamps;
 - revision numbers;
@@ -393,4 +413,4 @@ That is not part of 49F.
 
 49F permits only this statement:
 
-> One existing append-only 22A human revision can be explicitly persisted and relinked against one exact durable note-v2 predecessor through a new `research_working_set_note_revision.v2` contract. Revision v1 remains frozen, predecessor correctness and exact-text revision validity are still earned by explicit relinking, and downstream continuation/history authority remains closed.
+> One existing append-only 22A human revision can be explicitly persisted and relinked against one exact durable note-v2 predecessor through a new `research_working_set_note_revision.v2` contract. The in-memory 23A continuation action can consume either exact supported loaded revision family, but durable continuation v1 remains frozen to revision-v1 predecessors. Predecessor correctness and exact-text revision validity are still earned by explicit relinking, and versioned multi-step durable history authority remains closed.
