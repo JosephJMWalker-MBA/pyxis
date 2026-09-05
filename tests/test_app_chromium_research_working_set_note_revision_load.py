@@ -10,6 +10,7 @@ from test_app_chromium_research_working_set_note_revision_persistence import (
     _canonical_bytes,
     _canonical_document_bytes,
     _durable_prior,
+    _durable_prior_v2,
 )
 from pyxis.app.chromium_research_working_set_note import (
     create_chromium_research_working_set_note,
@@ -28,6 +29,7 @@ from pyxis.app.chromium_research_working_set_note_revision_load import (
 from pyxis.app.chromium_research_working_set_note_revision_persistence import (
     ChromiumResearchWorkingSetNoteRevisionIntegrityError,
     persist_chromium_research_working_set_note_revision,
+    persist_chromium_research_working_set_note_revision_v2,
     verify_chromium_research_working_set_note_revision,
 )
 
@@ -63,6 +65,48 @@ def _durable_revision(
         paragraph_note,
         exact_note,
         comparison_note,
+        working_set,
+        working_set_path,
+        prior_note,
+        prior_note_path,
+        prior_persisted,
+        revision,
+        revision_path,
+        revision_persisted,
+    )
+
+
+def _durable_revision_v2(
+    tmp_path: Path,
+    *,
+    prior_text: str = "Initial durable v2 rationale.",
+    revised_text: str = "Revised durable v2 rationale.",
+):
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        working_set,
+        working_set_path,
+        prior_note,
+        prior_note_path,
+        prior_persisted,
+    ) = _durable_prior_v2(tmp_path, note_text=prior_text)
+    revision = create_chromium_research_working_set_note_revision(
+        prior_note,
+        revised_note_text=revised_text,
+    )
+    revision_path = tmp_path / "revision-v2.json"
+    revision_persisted = persist_chromium_research_working_set_note_revision_v2(
+        revision,
+        working_set_path,
+        prior_note_path,
+        revision_path,
+    )
+    return (
+        paragraph_note,
+        bare,
+        bare_path,
         working_set,
         working_set_path,
         prior_note,
@@ -361,3 +405,172 @@ def test_working_set_note_revision_load_module_is_publicly_importable(
     )
 
     assert loaded.revision.revised_note.note_text == "Loaded durable revision."
+
+
+def test_49f_load_v2_revision_relinks_exact_note_v2_predecessor(
+    tmp_path: Path,
+) -> None:
+    revised_text = "  Revised interpretation over v2 rationale 😀\nStill human-owned.  "
+    (
+        paragraph_note,
+        bare,
+        _,
+        _,
+        working_set_path,
+        _,
+        prior_note_path,
+        _,
+        _,
+        revision_path,
+        revision_persisted,
+    ) = _durable_revision_v2(
+        tmp_path,
+        revised_text=revised_text,
+    )
+
+    loaded = load_chromium_research_working_set_note_revision(
+        (bare, paragraph_note, bare),
+        working_set_path,
+        prior_note_path,
+        revision_path,
+    )
+
+    assert loaded.verification.revision_format == (
+        "pyxis.chromium.research_working_set_note_revision.v2"
+    )
+    assert loaded.verification.prior_note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert loaded.verification.revision_record_sha256 == (
+        revision_persisted.revision_record_sha256
+    )
+    assert loaded.prior_note.verification.note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert loaded.revision.prior_note is loaded.prior_note.note
+    assert loaded.revision.revised_note.working_set is loaded.prior_note.note.working_set
+    assert loaded.revision.revised_note.note_text == revised_text
+    assert loaded.prior_note.note.working_set.items[0] is bare
+    assert loaded.prior_note.note.working_set.items[1] is paragraph_note
+    assert loaded.prior_note.note.working_set.items[2] is bare
+
+
+def test_49f_load_v2_revision_rejects_file_valid_wrong_predecessor_digest(
+    tmp_path: Path,
+) -> None:
+    (
+        paragraph_note,
+        bare,
+        _,
+        _,
+        working_set_path,
+        _,
+        prior_note_path,
+        _,
+        _,
+        revision_path,
+        _,
+    ) = _durable_revision_v2(tmp_path)
+
+    document = json.loads(revision_path.read_text(encoding="utf-8"))
+    wrong_digest = "f" * 64
+    document["revision_record"]["prior_note_reference"]["note_record_sha256"] = (
+        wrong_digest
+    )
+    document["revision_record_sha256"] = hashlib.sha256(
+        _canonical_bytes(document["revision_record"])
+    ).hexdigest()
+    revision_path.write_bytes(_canonical_document_bytes(document))
+
+    verified = verify_chromium_research_working_set_note_revision(revision_path)
+    assert verified.revision_format == (
+        "pyxis.chromium.research_working_set_note_revision.v2"
+    )
+    assert verified.prior_note_record_sha256 == wrong_digest
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetNoteRevisionRelinkError,
+        match="different predecessor note record",
+    ):
+        load_chromium_research_working_set_note_revision(
+            (bare, paragraph_note, bare),
+            working_set_path,
+            prior_note_path,
+            revision_path,
+        )
+
+
+def test_49f_load_v2_revision_rejects_file_valid_exact_text_noop(
+    tmp_path: Path,
+) -> None:
+    prior_text = "The real v2 predecessor wording."
+    (
+        paragraph_note,
+        bare,
+        _,
+        _,
+        working_set_path,
+        _,
+        prior_note_path,
+        _,
+        _,
+        revision_path,
+        _,
+    ) = _durable_revision_v2(
+        tmp_path,
+        prior_text=prior_text,
+        revised_text="A real revision before tampering.",
+    )
+
+    document = json.loads(revision_path.read_text(encoding="utf-8"))
+    document["revision_record"]["revision"]["revised_note"]["text"] = prior_text
+    document["revision_record_sha256"] = hashlib.sha256(
+        _canonical_bytes(document["revision_record"])
+    ).hexdigest()
+    revision_path.write_bytes(_canonical_document_bytes(document))
+
+    verified = verify_chromium_research_working_set_note_revision(revision_path)
+    assert verified.revised_note_text == prior_text
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetNoteRevisionRelinkError,
+        match="actual revision",
+    ):
+        load_chromium_research_working_set_note_revision(
+            (bare, paragraph_note, bare),
+            working_set_path,
+            prior_note_path,
+            revision_path,
+        )
+
+
+def test_49f_load_v2_revision_does_not_reread_member_sidecars(
+    tmp_path: Path,
+) -> None:
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        _,
+        working_set_path,
+        _,
+        prior_note_path,
+        _,
+        _,
+        revision_path,
+        _,
+    ) = _durable_revision_v2(tmp_path)
+
+    paragraph_note.verification.path.unlink()
+    bare_path.unlink()
+
+    loaded = load_chromium_research_working_set_note_revision(
+        (bare, paragraph_note, bare),
+        working_set_path,
+        prior_note_path,
+        revision_path,
+    )
+
+    assert loaded.revision.prior_note is loaded.prior_note.note
+    assert not paragraph_note.verification.path.exists()
+    assert not bare.verification.path.exists()

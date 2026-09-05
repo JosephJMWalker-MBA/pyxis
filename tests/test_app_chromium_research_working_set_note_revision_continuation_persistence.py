@@ -10,8 +10,14 @@ import pytest
 from test_app_chromium_research_working_set_note_revision_continuation import (
     _loaded_revision,
 )
+from test_app_chromium_research_working_set_note_revision_load import (
+    _durable_revision_v2,
+)
 from pyxis.app.chromium_research_working_set_note_revision import (
     create_chromium_research_working_set_note_revision,
+)
+from pyxis.app.chromium_research_working_set_note_revision_load import (
+    load_chromium_research_working_set_note_revision,
 )
 from pyxis.app.chromium_research_working_set_note_revision_continuation import (
     create_chromium_research_working_set_note_revision_continuation,
@@ -507,3 +513,46 @@ def test_revision_continuation_persistence_module_is_publicly_importable(
     assert verified.revised_note_text == (
         "A durable explicit second human change of wording."
     )
+
+
+def test_49f_continuation_v1_persistence_rejects_revision_v2_predecessor(
+    tmp_path: Path,
+) -> None:
+    (
+        paragraph_note,
+        bare,
+        _,
+        _,
+        working_set_path,
+        _,
+        prior_note_path,
+        _,
+        _,
+        revision_path,
+        _,
+    ) = _durable_revision_v2(tmp_path)
+    loaded = load_chromium_research_working_set_note_revision(
+        (bare, paragraph_note, bare),
+        working_set_path,
+        prior_note_path,
+        revision_path,
+    )
+    continuation = create_chromium_research_working_set_note_revision_continuation(
+        loaded,
+        revised_note_text="A second v2-line human revision needs its own continuation version.",
+    )
+    destination = tmp_path / "continuation-v1-must-not-write.json"
+
+    with pytest.raises(
+        ValueError,
+        match="durable predecessor revision format is unsupported",
+    ):
+        persist_chromium_research_working_set_note_revision_continuation(
+            continuation,
+            working_set_path,
+            prior_note_path,
+            revision_path,
+            destination,
+        )
+
+    assert not destination.exists()
