@@ -21,8 +21,15 @@ from .chromium_research_working_set_note_persistence import (
 
 
 _WORKING_SET_NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
+_WORKING_SET_NOTE_FORMAT_V2 = "pyxis.chromium.research_working_set_note.v2"
 _WORKING_SET_FORMAT = "pyxis.chromium.research_working_set.v1"
+_WORKING_SET_FORMAT_V2 = "pyxis.chromium.research_working_set.v2"
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
+
+_NOTE_PARENT_FORMATS = {
+    _WORKING_SET_NOTE_FORMAT: _WORKING_SET_FORMAT,
+    _WORKING_SET_NOTE_FORMAT_V2: _WORKING_SET_FORMAT_V2,
+}
 
 
 class ChromiumResearchWorkingSetNoteParentMismatchError(ValueError):
@@ -55,7 +62,7 @@ def load_chromium_research_working_set_note(
     working_set_source: Path,
     note_source: Path,
 ) -> ChromiumPageResearchLoadedWorkingSetNoteRecord:
-    """Relink one durable 21B human note to one explicit durable 20B parent.
+    """Relink one durable v1/v2 human note to one explicit durable working-set parent.
 
     The caller supplies the complete ordered already-loaded member sequence, one
     20B working-set path, and one 21B working-set-note path. Pyxis performs no
@@ -76,11 +83,12 @@ def load_chromium_research_working_set_note(
         raise TypeError("items must be an iterable of relinked research records.") from exc
 
     verification = verify_chromium_research_working_set_note(note_source)
-    if verification.note_format != _WORKING_SET_NOTE_FORMAT:
+    expected_parent_format = _NOTE_PARENT_FORMATS.get(verification.note_format)
+    if expected_parent_format is None:
         raise ChromiumResearchWorkingSetNoteParentMismatchError(
             "Verified working-set-note sidecar uses an unsupported note format."
         )
-    if verification.working_set_format != _WORKING_SET_FORMAT:
+    if verification.working_set_format != expected_parent_format:
         raise ChromiumResearchWorkingSetNoteParentMismatchError(
             "Verified working-set-note sidecar references an unsupported parent format."
         )
