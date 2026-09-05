@@ -23,7 +23,15 @@ from .chromium_research_working_set_note_revision_load import (
 _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
 )
+_CONTINUATION_FORMAT_V2 = (
+    "pyxis.chromium.research_working_set_note_revision_continuation.v2"
+)
 _REVISION_FORMAT = "pyxis.chromium.research_working_set_note_revision.v1"
+_REVISION_FORMAT_V2 = "pyxis.chromium.research_working_set_note_revision.v2"
+_CONTINUATION_REVISION_FORMATS = {
+    _CONTINUATION_FORMAT: _REVISION_FORMAT,
+    _CONTINUATION_FORMAT_V2: _REVISION_FORMAT_V2,
+}
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 _CONTINUATION_MODE = (
@@ -32,19 +40,19 @@ _CONTINUATION_MODE = (
 
 
 class ChromiumResearchWorkingSetNoteRevisionContinuationRelinkError(ValueError):
-    """Raised when one verified 23B continuation cannot relink to its predecessor."""
+    """Raised when one verified continuation cannot relink to its predecessor."""
 
 
 @dataclass(frozen=True, slots=True)
 class ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord:
-    """One verified 23B continuation relinked to one explicit durable 22B revision.
+    """One verified continuation relinked to one explicit durable revision.
 
-    `verification` is fresh 23B file-local verification evidence. `prior_revision`
-    is the fresh 22C loaded predecessor produced from the caller-supplied 20B/21B/
-    22B sidecars and complete ordered loaded-member sequence. `continuation` is a
-    newly reconstructed 23A human continuation whose prior revision is exactly
-    `prior_revision` and whose new human wording is the verbatim text retained by
-    the verified 23B sidecar.
+    `verification` is fresh file-local continuation verification evidence.
+    `prior_revision` is the fresh 22C loaded predecessor produced from the explicit
+    durable ancestors and complete ordered loaded-member sequence. `continuation`
+    is a newly reconstructed 23A human continuation whose prior revision is exactly
+    `prior_revision` and whose new wording is the verbatim text retained by the
+    verified sidecar.
 
     Successful relinking proves only durable predecessor identity coherence and
     re-establishment of an actual exact-text continuation relative to that explicit
@@ -64,19 +72,20 @@ def load_chromium_research_working_set_note_revision_continuation(
     prior_revision_source: Path,
     continuation_source: Path,
 ) -> ChromiumPageResearchLoadedWorkingSetNoteRevisionContinuationRecord:
-    """Relink one durable 23B continuation to one explicit durable 22B predecessor.
+    """Relink one v1/v2 continuation to one explicit durable predecessor revision.
 
     The caller supplies the complete ordered already-loaded member sequence plus
-    explicit 20B, 21B, 22B, and 23B sidecar paths. Pyxis performs no predecessor
-    discovery, digest search, directory scan, path-history lookup, recursive chain
-    traversal, revision numbering, timestamp inference, or semantic comparison.
+    explicit working-set, note, revision, and continuation sidecar paths. Pyxis
+    performs no predecessor discovery, digest search, directory scan, path-history
+    lookup, recursive chain traversal, revision numbering, timestamp inference, or
+    semantic comparison.
 
-    The 23B sidecar is freshly verified. The predecessor 22B revision is then
-    freshly relinked through public 22C. The predecessor revision identity persisted
-    by 23B must match the fresh 22B verification retained by 22C. Only then is the
-    23A continuation reconstructed over that exact loaded predecessor. Public 23A,
-    via public 22A, therefore re-establishes that the persisted v3 wording is an
-    actual exact-text revision rather than an exact no-op relative to v2.
+    The continuation sidecar is freshly verified. Its format determines the exact
+    required predecessor revision family. The predecessor is freshly relinked
+    through public version-aware 22C. The persisted predecessor revision identity
+    must match that fresh 22C evidence. Only then is public 23A reconstructed over
+    the exact loaded predecessor, re-establishing exact textual inequality through
+    public 22A.
     """
 
     try:
@@ -87,11 +96,14 @@ def load_chromium_research_working_set_note_revision_continuation(
     verification = verify_chromium_research_working_set_note_revision_continuation(
         continuation_source
     )
-    if verification.continuation_format != _CONTINUATION_FORMAT:
+    expected_revision_format = _CONTINUATION_REVISION_FORMATS.get(
+        verification.continuation_format
+    )
+    if expected_revision_format is None:
         raise ChromiumResearchWorkingSetNoteRevisionContinuationRelinkError(
             "Verified revision continuation uses an unsupported continuation format."
         )
-    if verification.prior_revision_format != _REVISION_FORMAT:
+    if verification.prior_revision_format != expected_revision_format:
         raise ChromiumResearchWorkingSetNoteRevisionContinuationRelinkError(
             "Verified revision continuation references an unsupported predecessor format."
         )
