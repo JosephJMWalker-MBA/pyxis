@@ -6,6 +6,9 @@ import hmac
 from pathlib import Path
 from typing import Any
 
+from .chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from .chromium_research_paragraph_text_selection_comparison_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord,
 )
@@ -31,6 +34,8 @@ _WORKING_SET_MODE = "caller_explicit_ordered_relinked_research_working_set"
 
 _PARAGRAPH_NOTE_KIND = "paragraph_note"
 _PARAGRAPH_NOTE_FORMAT = "pyxis.chromium.research_paragraph_note.v1"
+_EXACT_RANGE_SELECTION_KIND = "exact_range_selection"
+_EXACT_RANGE_SELECTION_FORMAT = "pyxis.chromium.research_paragraph_text_selection.v1"
 _EXACT_RANGE_NOTE_KIND = "exact_range_note"
 _EXACT_RANGE_NOTE_FORMAT = "pyxis.chromium.research_paragraph_text_selection_note.v1"
 _COMPARISON_NOTE_KIND = "comparison_note"
@@ -77,7 +82,7 @@ def load_chromium_research_working_set(
 
     Individual member sidecars are not reread. Therefore already-loaded members may
     be relinked into the working set even if those member files have moved or become
-    unavailable after their earlier successful 17D/18D/19D relinking.
+    unavailable after their earlier successful 17D/18D/19D/49B relinking.
     """
 
     try:
@@ -123,6 +128,14 @@ def _loaded_member_reference(
             expected_format=_PARAGRAPH_NOTE_FORMAT,
             member_format=item.verification.note_format,
             member_record_sha256=item.verification.note_record_sha256,
+            index=index,
+        )
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        return _reference_from_verification(
+            member_kind=_EXACT_RANGE_SELECTION_KIND,
+            expected_format=_EXACT_RANGE_SELECTION_FORMAT,
+            member_format=item.verification.selection_format,
+            member_record_sha256=item.verification.selection_record_sha256,
             index=index,
         )
     if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord):
