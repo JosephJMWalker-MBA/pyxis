@@ -24,6 +24,13 @@ from pyxis.app.chromium_research_capture_load import ChromiumPageResearchLoadedC
 from pyxis.app.chromium_research_paragraph_text_selection import (
     select_chromium_research_paragraph_text,
 )
+from pyxis.app.chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+    load_chromium_research_paragraph_text_selection,
+)
+from pyxis.app.chromium_research_paragraph_text_selection_persistence import (
+    persist_chromium_research_paragraph_text_selection,
+)
 from pyxis.app.chromium_research_paragraph_text_selection_comparison import (
     create_chromium_research_paragraph_text_selection_comparison,
 )
@@ -192,6 +199,42 @@ def _loaded_capture(
         verification=verification,
         bundle=bundle,
     )
+
+
+def _loaded_bare_selection(
+    tmp_path: Path,
+    *,
+    digest_character: str = "c",
+    paragraph_text: str = "Gamma evidence paragraph",
+    start_offset: int = 0,
+    end_offset: int = 5,
+):
+    source = _loaded_capture(
+        path=tmp_path / "source-bare.json",
+        target_id="page-bare",
+        url="https://example.test/bare",
+        digest_character=digest_character,
+        paragraph_text=paragraph_text,
+    )
+    paragraph_selection = select_chromium_research_capture_paragraph(
+        source,
+        paragraph_ordinal=1,
+    )
+    selection = select_chromium_research_paragraph_text(
+        paragraph_selection,
+        start_offset=start_offset,
+        end_offset=end_offset,
+    )
+    selection_path = tmp_path / "bare-selection.json"
+    persist_chromium_research_paragraph_text_selection(
+        selection,
+        selection_path,
+    )
+    loaded = load_chromium_research_paragraph_text_selection(
+        source,
+        selection_path,
+    )
+    return loaded, selection_path
 
 
 def _loaded_records(tmp_path: Path):
@@ -383,3 +426,83 @@ def test_public_app_exports_research_working_set(tmp_path: Path) -> None:
     assert working_set.items[0] is paragraph_note
     assert working_set.items[1] is exact_note
     assert working_set.items[2] is comparison_note
+
+
+def test_49c_working_set_accepts_bare_relinked_selection_and_mixed_order(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    paragraph_note, exact_note, comparison_note = _loaded_records(tmp_path)
+
+    working_set = create_chromium_research_working_set(
+        (bare, exact_note, paragraph_note, bare, comparison_note)
+    )
+
+    assert isinstance(bare, ChromiumPageResearchLoadedParagraphTextSelectionRecord)
+    assert working_set.items[0] is bare
+    assert working_set.items[1] is exact_note
+    assert working_set.items[2] is paragraph_note
+    assert working_set.items[3] is bare
+    assert working_set.items[4] is comparison_note
+    assert working_set.items[0].selection.selected_text == "Gamma"
+
+
+def test_49c_bare_selection_membership_does_not_reread_49a_sidecar(
+    tmp_path: Path,
+) -> None:
+    bare, selection_path = _loaded_bare_selection(tmp_path)
+    selection_path.unlink()
+
+    working_set = create_chromium_research_working_set((bare, bare))
+
+    assert working_set.items == (bare, bare)
+    assert not selection_path.exists()
+
+
+def test_49c_rejects_bare_selection_verification_source_mismatch(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    forged = replace(
+        bare,
+        verification=replace(
+            bare.verification,
+            source_bundle_sha256="f" * 64,
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"items\[0\] bare exact-range-selection verification is incoherent",
+    ):
+        create_chromium_research_working_set((forged,))
+
+
+def test_49c_rejects_bare_selection_verification_coordinate_mismatch(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    forged = replace(
+        bare,
+        verification=replace(
+            bare.verification,
+            end_offset=bare.verification.end_offset + 1,
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"items\[0\] bare exact-range-selection verification is incoherent",
+    ):
+        create_chromium_research_working_set((forged,))
+
+
+def test_49c_raw_18a_selection_remains_unsupported_without_49b_relink(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+
+    with pytest.raises(TypeError, match=r"items\[0\] must be a supported relinked"):
+        create_chromium_research_working_set(
+            (bare.selection,)  # type: ignore[arg-type]
+        )
