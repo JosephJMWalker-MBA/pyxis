@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from test_app_chromium_research_working_set import _loaded_records
+from test_app_chromium_research_working_set import (
+    _loaded_bare_selection,
+    _loaded_records,
+)
 from pyxis.app.chromium_research_working_set import create_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_load import (
     ChromiumResearchWorkingSetMemberMismatchError,
@@ -23,6 +26,7 @@ from pyxis.app.chromium_research_working_set_note_persistence import (
 )
 from pyxis.app.chromium_research_working_set_persistence import (
     persist_chromium_research_working_set,
+    persist_chromium_research_working_set_v2,
     verify_chromium_research_working_set,
 )
 
@@ -299,3 +303,32 @@ def test_working_set_note_persistence_module_is_publicly_importable(
 
     assert persisted.note is note
     assert verified.note_text == "Human rationale only."
+
+
+def test_49d_working_set_note_v1_parent_contract_rejects_v2_working_set(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    working_set = create_chromium_research_working_set((bare,))
+    working_set_path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(
+        working_set,
+        working_set_path,
+    )
+    note = create_chromium_research_working_set_note(
+        working_set,
+        note_text="Overall rationale is a later durable boundary.",
+    )
+    destination = tmp_path / "working-set-note-must-not-write.json"
+
+    with pytest.raises(
+        ValueError,
+        match="working-set format is unsupported for note persistence",
+    ):
+        persist_chromium_research_working_set_note(
+            note,
+            working_set_path,
+            destination,
+        )
+
+    assert not destination.exists()
