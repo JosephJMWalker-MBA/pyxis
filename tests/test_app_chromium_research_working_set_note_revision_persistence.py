@@ -83,12 +83,14 @@ def _durable_prior_v2(
     *,
     note_text: str = "Initial v2 rationale.",
 ):
-    paragraph_note, _, _ = _loaded_records(tmp_path)
-    bare, bare_path = _loaded_bare_selection(tmp_path)
+    fixture_path = tmp_path / "v2-prior"
+    fixture_path.mkdir(exist_ok=True)
+    paragraph_note, _, _ = _loaded_records(fixture_path)
+    bare, bare_path = _loaded_bare_selection(fixture_path)
     working_set = create_chromium_research_working_set(
         (bare, paragraph_note, bare)
     )
-    working_set_path = tmp_path / "working-set-v2.json"
+    working_set_path = fixture_path / "working-set-v2.json"
     persist_chromium_research_working_set_v2(
         working_set,
         working_set_path,
@@ -97,7 +99,7 @@ def _durable_prior_v2(
         working_set,
         note_text=note_text,
     )
-    prior_note_path = tmp_path / "prior-note-v2.json"
+    prior_note_path = fixture_path / "prior-note-v2.json"
     prior_persisted = persist_chromium_research_working_set_note_v2(
         prior_note,
         working_set_path,
