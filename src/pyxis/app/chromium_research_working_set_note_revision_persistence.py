@@ -17,7 +17,9 @@ from .chromium_research_working_set_note_revision import (
 
 
 _REVISION_FORMAT = "pyxis.chromium.research_working_set_note_revision.v1"
+_REVISION_FORMAT_V2 = "pyxis.chromium.research_working_set_note_revision.v2"
 _NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
+_NOTE_FORMAT_V2 = "pyxis.chromium.research_working_set_note.v2"
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 
@@ -72,20 +74,45 @@ def persist_chromium_research_working_set_note_revision(
     prior_note_source: Path,
     destination: Path,
 ) -> ChromiumPageResearchWorkingSetNoteRevisionPersistenceEvidence:
-    """Persist one 22A revision against one explicit durable predecessor note.
+    """Persist one 22A revision through the frozen revision-v1/note-v1 contract."""
 
-    The live 22A revision is first re-established through public 22A. The
-    caller-supplied predecessor note and working-set paths are then freshly
-    relinked through public 21C using the exact loaded-member sequence retained
-    by `revision.prior_note`. The relinked durable predecessor must match the
-    exact prior human note represented by the 22A revision before any file is
-    created.
+    return _persist_chromium_research_working_set_note_revision(
+        revision,
+        working_set_source,
+        prior_note_source,
+        destination,
+        revision_format=document["format"],
+        expected_note_format=_NOTE_FORMAT,
+    )
 
-    The resulting sidecar records only predecessor note content identity plus
-    the revision mode and revised note mode/text. It does not duplicate prior
-    wording, working-set membership, source evidence, browser state, or paths.
-    """
 
+def persist_chromium_research_working_set_note_revision_v2(
+    revision: ChromiumPageResearchWorkingSetNoteRevisionRecord,
+    working_set_source: Path,
+    prior_note_source: Path,
+    destination: Path,
+) -> ChromiumPageResearchWorkingSetNoteRevisionPersistenceEvidence:
+    """Persist one 22A revision through the explicit revision-v2/note-v2 contract."""
+
+    return _persist_chromium_research_working_set_note_revision(
+        revision,
+        working_set_source,
+        prior_note_source,
+        destination,
+        revision_format=_REVISION_FORMAT_V2,
+        expected_note_format=_NOTE_FORMAT_V2,
+    )
+
+
+def _persist_chromium_research_working_set_note_revision(
+    revision: ChromiumPageResearchWorkingSetNoteRevisionRecord,
+    working_set_source: Path,
+    prior_note_source: Path,
+    destination: Path,
+    *,
+    revision_format: str,
+    expected_note_format: str,
+) -> ChromiumPageResearchWorkingSetNoteRevisionPersistenceEvidence:
     if not isinstance(revision, ChromiumPageResearchWorkingSetNoteRevisionRecord):
         raise TypeError(
             "revision must be ChromiumPageResearchWorkingSetNoteRevisionRecord."
@@ -111,7 +138,7 @@ def persist_chromium_research_working_set_note_revision(
         working_set_source,
         prior_note_source,
     )
-    if loaded_prior.verification.note_format != _NOTE_FORMAT:
+    if loaded_prior.verification.note_format != expected_note_format:
         raise ValueError("durable predecessor note format is unsupported.")
     if loaded_prior.note.note_mode != revision.prior_note.note_mode:
         raise ValueError("durable predecessor note mode does not match revision.prior_note.")
@@ -150,7 +177,7 @@ def persist_chromium_research_working_set_note_revision(
     revision_record_bytes = _canonical_json_bytes(revision_record)
     revision_record_sha256 = hashlib.sha256(revision_record_bytes).hexdigest()
     document = {
-        "format": _REVISION_FORMAT,
+        "format": revision_format,
         "revision_record": revision_record,
         "revision_record_sha256": revision_record_sha256,
     }
@@ -161,12 +188,11 @@ def persist_chromium_research_working_set_note_revision(
 
     return ChromiumPageResearchWorkingSetNoteRevisionPersistenceEvidence(
         path=path,
-        revision_format=_REVISION_FORMAT,
+        revision_format=revision_format,
         revision_record_sha256=revision_record_sha256,
         byte_count=len(document_bytes),
         revision=revision,
     )
-
 
 def verify_chromium_research_working_set_note_revision(
     source: Path,
@@ -235,7 +261,8 @@ def _validate_persisted_document(document: Any) -> tuple[dict[str, Any], str]:
         raise ChromiumResearchWorkingSetNoteRevisionIntegrityError(
             "Research working-set-note-revision document has an invalid top-level shape."
         )
-    if document["format"] != _REVISION_FORMAT:
+    revision_format = document["format"]
+    if revision_format not in {_REVISION_FORMAT, _REVISION_FORMAT_V2}:
         raise ChromiumResearchWorkingSetNoteRevisionIntegrityError(
             "Research working-set-note-revision format is unsupported."
         )
@@ -263,7 +290,12 @@ def _validate_persisted_document(document: Any) -> tuple[dict[str, Any], str]:
         raise ChromiumResearchWorkingSetNoteRevisionIntegrityError(
             "Research working-set-note-revision predecessor reference has an invalid shape."
         )
-    if prior_reference["format"] != _NOTE_FORMAT:
+    expected_note_format = (
+        _NOTE_FORMAT
+        if revision_format == _REVISION_FORMAT
+        else _NOTE_FORMAT_V2
+    )
+    if prior_reference["format"] != expected_note_format:
         raise ChromiumResearchWorkingSetNoteRevisionIntegrityError(
             "Research working-set-note-revision predecessor format is unsupported."
         )
