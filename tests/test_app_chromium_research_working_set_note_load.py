@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from test_app_chromium_research_working_set import _loaded_records
+from test_app_chromium_research_working_set import (
+    _loaded_bare_selection,
+    _loaded_records,
+)
 from pyxis.app.chromium_research_working_set import create_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_load import (
     ChromiumResearchWorkingSetMemberMismatchError,
@@ -22,10 +25,12 @@ from pyxis.app.chromium_research_working_set_note_load import (
 from pyxis.app.chromium_research_working_set_note_persistence import (
     ChromiumResearchWorkingSetNoteIntegrityError,
     persist_chromium_research_working_set_note,
+    persist_chromium_research_working_set_note_v2,
     verify_chromium_research_working_set_note,
 )
 from pyxis.app.chromium_research_working_set_persistence import (
     persist_chromium_research_working_set,
+    persist_chromium_research_working_set_v2,
 )
 
 
@@ -58,6 +63,31 @@ def _persist_note(
     )
     note_path = tmp_path / "working-set-note.json"
     persist_chromium_research_working_set_note(
+        note,
+        working_set_path,
+        note_path,
+    )
+    return working_set_path, note_path
+
+
+def _persist_note_v2(
+    tmp_path: Path,
+    items: tuple[object, ...],
+    *,
+    note_text: str = "  Human rationale over the v2 working set 😀\nKeep exact.  ",
+) -> tuple[Path, Path]:
+    working_set = create_chromium_research_working_set(items)  # type: ignore[arg-type]
+    working_set_path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(
+        working_set,
+        working_set_path,
+    )
+    note = create_chromium_research_working_set_note(
+        working_set,
+        note_text=note_text,
+    )
+    note_path = tmp_path / "working-set-note-v2.json"
+    persist_chromium_research_working_set_note_v2(
         note,
         working_set_path,
         note_path,
@@ -262,3 +292,125 @@ def test_working_set_note_load_module_is_publicly_importable(tmp_path: Path) -> 
         "Human rationale restored only after explicit parent relinking."
     )
     assert loaded.note.working_set is loaded.working_set.working_set
+
+
+def test_49e_load_v2_note_relinks_exact_v2_parent_and_bare_members(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
+    items = (bare, paragraph_note, bare)
+    note_text = "  Overall human rationale for these exact passages 😀\nStill tentative.  "
+    working_set_path, note_path = _persist_note_v2(
+        tmp_path,
+        items,
+        note_text=note_text,
+    )
+
+    loaded = load_chromium_research_working_set_note(
+        items,
+        working_set_path,
+        note_path,
+    )
+
+    assert loaded.verification.note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert loaded.verification.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert loaded.working_set.verification.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert loaded.note.note_text == note_text
+    assert loaded.note.working_set is loaded.working_set.working_set
+    assert loaded.note.working_set.items[0] is bare
+    assert loaded.note.working_set.items[1] is paragraph_note
+    assert loaded.note.working_set.items[2] is bare
+
+
+def test_49e_load_v2_note_rejects_file_valid_wrong_parent_digest(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    working_set_path, note_path = _persist_note_v2(
+        tmp_path,
+        (bare,),
+    )
+
+    document = json.loads(note_path.read_text(encoding="utf-8"))
+    wrong_digest = "f" * 64
+    document["note_record"]["working_set_reference"]["working_set_record_sha256"] = (
+        wrong_digest
+    )
+    document["note_record_sha256"] = hashlib.sha256(
+        _canonical_bytes(document["note_record"])
+    ).hexdigest()
+    note_path.write_bytes(_canonical_document_bytes(document))
+
+    verified = verify_chromium_research_working_set_note(note_path)
+    assert verified.note_format == "pyxis.chromium.research_working_set_note.v2"
+    assert verified.working_set_record_sha256 == wrong_digest
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetNoteParentMismatchError,
+        match="different working-set record",
+    ):
+        load_chromium_research_working_set_note(
+            (bare,),
+            working_set_path,
+            note_path,
+        )
+
+
+def test_49e_load_v2_note_does_not_reread_member_sidecars(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, bare_path = _loaded_bare_selection(tmp_path)
+    items = (paragraph_note, bare)
+    working_set_path, note_path = _persist_note_v2(tmp_path, items)
+
+    paragraph_note.verification.path.unlink()
+    bare_path.unlink()
+
+    loaded = load_chromium_research_working_set_note(
+        items,
+        working_set_path,
+        note_path,
+    )
+
+    assert loaded.note.working_set.items[0] is paragraph_note
+    assert loaded.note.working_set.items[1] is bare
+    assert not paragraph_note.verification.path.exists()
+    assert not bare.verification.path.exists()
+
+
+def test_49e_load_note_rejects_cross_version_parent_file(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
+
+    v1_working_set_path, v1_note_path = _persist_note(
+        tmp_path,
+        (paragraph_note,),
+    )
+    v2_set = create_chromium_research_working_set((bare,))
+    v2_working_set_path = tmp_path / "other-working-set-v2.json"
+    persist_chromium_research_working_set_v2(
+        v2_set,
+        v2_working_set_path,
+    )
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetNoteParentMismatchError,
+        match="different parent format",
+    ):
+        load_chromium_research_working_set_note(
+            (bare,),
+            v2_working_set_path,
+            v1_note_path,
+        )
+
+    assert v1_working_set_path.exists()
