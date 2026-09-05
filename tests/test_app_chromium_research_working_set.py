@@ -417,15 +417,17 @@ def test_working_set_rejects_empty_and_non_relinked_records(tmp_path: Path) -> N
 
 def test_public_app_exports_research_working_set(tmp_path: Path) -> None:
     paragraph_note, exact_note, comparison_note = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
 
     working_set = pyxis_app.create_chromium_research_working_set(
-        (paragraph_note, exact_note, comparison_note)
+        (paragraph_note, bare, exact_note, comparison_note)
     )
 
     assert isinstance(working_set, pyxis_app.ChromiumPageResearchWorkingSetRecord)
     assert working_set.items[0] is paragraph_note
-    assert working_set.items[1] is exact_note
-    assert working_set.items[2] is comparison_note
+    assert working_set.items[1] is bare
+    assert working_set.items[2] is exact_note
+    assert working_set.items[3] is comparison_note
 
 
 def test_49c_working_set_accepts_bare_relinked_selection_and_mixed_order(
