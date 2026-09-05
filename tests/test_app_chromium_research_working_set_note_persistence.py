@@ -22,6 +22,7 @@ from pyxis.app.chromium_research_working_set_note_persistence import (
     ChromiumPageResearchWorkingSetNoteVerificationEvidence,
     ChromiumResearchWorkingSetNoteIntegrityError,
     persist_chromium_research_working_set_note,
+    persist_chromium_research_working_set_note_v2,
     verify_chromium_research_working_set_note,
 )
 from pyxis.app.chromium_research_working_set_persistence import (
@@ -332,3 +333,181 @@ def test_49d_working_set_note_v1_parent_contract_rejects_v2_working_set(
         )
 
     assert not destination.exists()
+
+
+def test_49e_v2_note_persists_exact_rationale_over_v2_parent(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
+    working_set = create_chromium_research_working_set(
+        (bare, paragraph_note, bare)
+    )
+    working_set_path = tmp_path / "working-set-v2.json"
+    parent = persist_chromium_research_working_set_v2(
+        working_set,
+        working_set_path,
+    )
+    note_text = "  These passages travel together before I interpret each one 😀\nKeep the uncertainty visible.  "
+    note = create_chromium_research_working_set_note(
+        working_set,
+        note_text=note_text,
+    )
+    destination = tmp_path / "working-set-note-v2.json"
+
+    persisted = persist_chromium_research_working_set_note_v2(
+        note,
+        working_set_path,
+        destination,
+    )
+    verified = verify_chromium_research_working_set_note(destination)
+    document = json.loads(destination.read_text(encoding="utf-8"))
+
+    assert persisted.note is note
+    assert persisted.note_format == "pyxis.chromium.research_working_set_note.v2"
+    assert verified.note_format == persisted.note_format
+    assert verified.working_set_format == "pyxis.chromium.research_working_set.v2"
+    assert verified.working_set_record_sha256 == parent.working_set_record_sha256
+    assert verified.note_text == note_text
+    assert document["note_record"] == {
+        "note": {
+            "mode": "caller_authored_note_on_research_working_set",
+            "text": note_text,
+        },
+        "working_set_reference": {
+            "format": "pyxis.chromium.research_working_set.v2",
+            "working_set_record_sha256": parent.working_set_record_sha256,
+        },
+    }
+
+    raw = destination.read_text(encoding="utf-8")
+    assert bare.selection.selected_text not in raw
+    assert paragraph_note.note.note_text not in raw
+    assert "member_kind" not in raw
+    assert "source_bundle_sha256" not in raw
+    assert str(bare.verification.path) not in raw
+    assert str(working_set_path.resolve()) not in raw
+
+
+def test_49e_note_writers_do_not_auto_upgrade_or_downgrade_parent_version(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
+
+    v1_set = create_chromium_research_working_set((paragraph_note,))
+    v1_path = tmp_path / "working-set-v1.json"
+    persist_chromium_research_working_set(v1_set, v1_path)
+    v1_note = create_chromium_research_working_set_note(
+        v1_set,
+        note_text="v1 parent rationale",
+    )
+
+    v2_set = create_chromium_research_working_set((bare,))
+    v2_path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(v2_set, v2_path)
+    v2_note = create_chromium_research_working_set_note(
+        v2_set,
+        note_text="v2 parent rationale",
+    )
+
+    v1_destination = tmp_path / "must-not-auto-upgrade.json"
+    with pytest.raises(
+        ValueError,
+        match="working-set format is unsupported for note persistence",
+    ):
+        persist_chromium_research_working_set_note(
+            v2_note,
+            v2_path,
+            v1_destination,
+        )
+    assert not v1_destination.exists()
+
+    v2_destination = tmp_path / "must-not-downgrade.json"
+    with pytest.raises(
+        ValueError,
+        match="working-set format is unsupported for note persistence",
+    ):
+        persist_chromium_research_working_set_note_v2(
+            v1_note,
+            v1_path,
+            v2_destination,
+        )
+    assert not v2_destination.exists()
+
+
+@pytest.mark.parametrize(
+    ("note_format", "parent_format"),
+    [
+        (
+            "pyxis.chromium.research_working_set_note.v1",
+            "pyxis.chromium.research_working_set.v2",
+        ),
+        (
+            "pyxis.chromium.research_working_set_note.v2",
+            "pyxis.chromium.research_working_set.v1",
+        ),
+    ],
+)
+def test_49e_verifier_rejects_cross_version_parent_pairing(
+    tmp_path: Path,
+    note_format: str,
+    parent_format: str,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    working_set = create_chromium_research_working_set((paragraph_note,))
+    working_set_path = tmp_path / "working-set-v1.json"
+    persist_chromium_research_working_set(working_set, working_set_path)
+    note = create_chromium_research_working_set_note(
+        working_set,
+        note_text="Original exact rationale.",
+    )
+    destination = tmp_path / "working-set-note.json"
+    persist_chromium_research_working_set_note(
+        note,
+        working_set_path,
+        destination,
+    )
+
+    document = json.loads(destination.read_text(encoding="utf-8"))
+    document["format"] = note_format
+    document["note_record"]["working_set_reference"]["format"] = parent_format
+    document["note_record_sha256"] = hashlib.sha256(
+        _canonical_bytes(document["note_record"])
+    ).hexdigest()
+    destination.write_bytes(_canonical_document_bytes(document))
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetNoteIntegrityError,
+        match="parent format is unsupported",
+    ):
+        verify_chromium_research_working_set_note(destination)
+
+
+def test_49e_v2_note_persistence_does_not_reread_member_sidecars(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, bare_path = _loaded_bare_selection(tmp_path)
+    working_set = create_chromium_research_working_set((paragraph_note, bare))
+    working_set_path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(working_set, working_set_path)
+    note = create_chromium_research_working_set_note(
+        working_set,
+        note_text="Retained application evidence is enough for parent relinking.",
+    )
+
+    paragraph_note.verification.path.unlink()
+    bare_path.unlink()
+
+    destination = tmp_path / "working-set-note-v2.json"
+    persisted = persist_chromium_research_working_set_note_v2(
+        note,
+        working_set_path,
+        destination,
+    )
+
+    assert persisted.note is note
+    assert destination.exists()
+    assert not paragraph_note.verification.path.exists()
+    assert not bare.verification.path.exists()
