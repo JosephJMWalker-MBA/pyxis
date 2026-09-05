@@ -6,13 +6,17 @@ from pathlib import Path
 
 import pytest
 
-from test_app_chromium_research_working_set import _loaded_records
+from test_app_chromium_research_working_set import (
+    _loaded_bare_selection,
+    _loaded_records,
+)
 from pyxis.app.chromium_research_working_set import create_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_note import (
     create_chromium_research_working_set_note,
 )
 from pyxis.app.chromium_research_working_set_note_persistence import (
     persist_chromium_research_working_set_note,
+    persist_chromium_research_working_set_note_v2,
 )
 from pyxis.app.chromium_research_working_set_note_revision import (
     create_chromium_research_working_set_note_revision,
@@ -26,6 +30,7 @@ from pyxis.app.chromium_research_working_set_note_revision_persistence import (
 )
 from pyxis.app.chromium_research_working_set_persistence import (
     persist_chromium_research_working_set,
+    persist_chromium_research_working_set_v2,
 )
 
 
@@ -448,3 +453,43 @@ def test_working_set_note_revision_persistence_module_is_publicly_importable(
 
     assert persisted.revision is revision
     assert verified.revised_note_text == "Durable human revision only."
+
+
+def test_49e_revision_v1_persistence_rejects_v2_note_predecessor(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    working_set = create_chromium_research_working_set((bare,))
+    working_set_path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(
+        working_set,
+        working_set_path,
+    )
+    prior_note = create_chromium_research_working_set_note(
+        working_set,
+        note_text="Durable v2 rationale predecessor.",
+    )
+    prior_note_path = tmp_path / "working-set-note-v2.json"
+    persist_chromium_research_working_set_note_v2(
+        prior_note,
+        working_set_path,
+        prior_note_path,
+    )
+    revision = create_chromium_research_working_set_note_revision(
+        prior_note,
+        revised_note_text="A later interpretation that needs its own versioned boundary.",
+    )
+    destination = tmp_path / "revision-v1-must-not-write.json"
+
+    with pytest.raises(
+        ValueError,
+        match="durable predecessor note format is unsupported",
+    ):
+        persist_chromium_research_working_set_note_revision(
+            revision,
+            working_set_path,
+            prior_note_path,
+            destination,
+        )
+
+    assert not destination.exists()
