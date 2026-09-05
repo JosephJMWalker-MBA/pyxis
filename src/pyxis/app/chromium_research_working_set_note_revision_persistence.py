@@ -81,7 +81,7 @@ def persist_chromium_research_working_set_note_revision(
         working_set_source,
         prior_note_source,
         destination,
-        revision_format=document["format"],
+        revision_format=_REVISION_FORMAT,
         expected_note_format=_NOTE_FORMAT,
     )
 
@@ -240,7 +240,7 @@ def verify_chromium_research_working_set_note_revision(
     revised_note = revision_payload["revised_note"]
     return ChromiumPageResearchWorkingSetNoteRevisionVerificationEvidence(
         path=path,
-        revision_format=_REVISION_FORMAT,
+        revision_format=document["format"],
         revision_record_sha256=recorded_sha256,
         byte_count=len(raw),
         prior_note_format=prior_reference["format"],
