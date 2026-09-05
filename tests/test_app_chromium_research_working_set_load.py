@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from test_app_chromium_research_working_set import _loaded_records
+from test_app_chromium_research_working_set import (
+    _loaded_bare_selection,
+    _loaded_records,
+)
 from pyxis.app.chromium_research_working_set import create_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_load import (
     ChromiumPageResearchLoadedWorkingSetRecord,
@@ -16,6 +19,7 @@ from pyxis.app.chromium_research_working_set_load import (
 )
 from pyxis.app.chromium_research_working_set_persistence import (
     persist_chromium_research_working_set,
+    persist_chromium_research_working_set_v2,
     verify_chromium_research_working_set,
 )
 
@@ -197,3 +201,109 @@ def test_working_set_load_module_is_publicly_importable(tmp_path: Path) -> None:
 
     assert loaded.verification.working_set_record_sha256
     assert loaded.working_set.items[0] is paragraph_note
+
+
+def test_49d_load_v2_relinks_mixed_members_and_preserves_exact_identity(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, exact_note, comparison_note = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
+    original = create_chromium_research_working_set(
+        (bare, paragraph_note, bare, exact_note, comparison_note)
+    )
+    path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(original, path)
+
+    loaded = load_chromium_research_working_set(
+        (bare, paragraph_note, bare, exact_note, comparison_note),
+        path,
+    )
+
+    assert loaded.verification.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert loaded.working_set.items[0] is bare
+    assert loaded.working_set.items[1] is paragraph_note
+    assert loaded.working_set.items[2] is bare
+    assert loaded.working_set.items[3] is exact_note
+    assert loaded.working_set.items[4] is comparison_note
+
+
+def test_49d_load_v2_does_not_reread_individual_member_sidecars(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, exact_note, comparison_note = _loaded_records(tmp_path)
+    bare, bare_path = _loaded_bare_selection(tmp_path)
+    original = create_chromium_research_working_set(
+        (paragraph_note, bare, exact_note, comparison_note)
+    )
+    path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(original, path)
+
+    paragraph_note.verification.path.unlink()
+    bare_path.unlink()
+    exact_note.verification.path.unlink()
+    comparison_note.verification.path.unlink()
+
+    loaded = load_chromium_research_working_set(
+        (paragraph_note, bare, exact_note, comparison_note),
+        path,
+    )
+
+    assert loaded.working_set.items == (
+        paragraph_note,
+        bare,
+        exact_note,
+        comparison_note,
+    )
+    assert not paragraph_note.verification.path.exists()
+    assert not bare.verification.path.exists()
+    assert not exact_note.verification.path.exists()
+    assert not comparison_note.verification.path.exists()
+
+
+def test_49d_v2_file_valid_wrong_bare_digest_fails_member_relink(
+    tmp_path: Path,
+) -> None:
+    bare, _ = _loaded_bare_selection(tmp_path)
+    original = create_chromium_research_working_set((bare,))
+    path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(original, path)
+
+    document = json.loads(path.read_text(encoding="utf-8"))
+    wrong_digest = "f" * 64
+    assert wrong_digest != bare.verification.selection_record_sha256
+    document["working_set_record"]["items"][0]["member_record_sha256"] = wrong_digest
+    document["working_set_record_sha256"] = hashlib.sha256(
+        _canonical_bytes(document["working_set_record"])
+    ).hexdigest()
+    path.write_bytes(_canonical_document_bytes(document))
+
+    verified = verify_chromium_research_working_set(path)
+    assert verified.working_set_format == "pyxis.chromium.research_working_set.v2"
+    assert verified.items[0].member_record_sha256 == wrong_digest
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetMemberMismatchError,
+        match="item 0 references a different member record",
+    ):
+        load_chromium_research_working_set((bare,), path)
+
+
+def test_49d_v2_rejects_same_members_in_different_order(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, _ = _loaded_bare_selection(tmp_path)
+    original = create_chromium_research_working_set((bare, paragraph_note))
+    path = tmp_path / "working-set-v2.json"
+    persist_chromium_research_working_set_v2(original, path)
+
+    with pytest.raises(
+        ChromiumResearchWorkingSetMemberMismatchError,
+        match="item 0 references a different member kind",
+    ):
+        load_chromium_research_working_set(
+            (paragraph_note, bare),
+            path,
+        )

@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from .chromium_research_paragraph_text_selection_comparison_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord,
 )
@@ -23,10 +26,13 @@ from .chromium_research_working_set import (
 
 
 _WORKING_SET_FORMAT = "pyxis.chromium.research_working_set.v1"
+_WORKING_SET_FORMAT_V2 = "pyxis.chromium.research_working_set.v2"
 _WORKING_SET_MODE = "caller_explicit_ordered_relinked_research_working_set"
 
 _PARAGRAPH_NOTE_KIND = "paragraph_note"
 _PARAGRAPH_NOTE_FORMAT = "pyxis.chromium.research_paragraph_note.v1"
+_EXACT_RANGE_SELECTION_KIND = "exact_range_selection"
+_EXACT_RANGE_SELECTION_FORMAT = "pyxis.chromium.research_paragraph_text_selection.v1"
 _EXACT_RANGE_NOTE_KIND = "exact_range_note"
 _EXACT_RANGE_NOTE_FORMAT = "pyxis.chromium.research_paragraph_text_selection_note.v1"
 _COMPARISON_NOTE_KIND = "comparison_note"
@@ -93,32 +99,63 @@ def persist_chromium_research_working_set(
     working_set: ChromiumPageResearchWorkingSetRecord,
     destination: Path,
 ) -> ChromiumPageResearchWorkingSetPersistenceEvidence:
-    """Persist one 20A working set as deterministic no-overwrite canonical JSON.
+    """Persist one 20A working set using the frozen 20B v1 member vocabulary.
 
-    Persistence re-establishes the existing 20A in-memory coherence boundary, then
-    records only each member's retained durable sidecar identity. It deliberately
-    does not reread any member sidecar. A member sidecar may therefore be absent
-    after successful earlier relinking while its retained verification identity is
-    still eligible for working-set persistence.
-
-    The working-set SHA-256 is self-integrity evidence only. It does not prove that
-    any member sidecar still exists, remains unchanged, can be freshly relinked, or
-    is semantically related to any other member.
+    This established writer remains deliberately v1-only. A 49C working set that
+    contains a bare 49B exact-range selection still rejects here rather than being
+    silently promoted to the v2 format.
     """
 
     _validate_live_working_set(working_set)
+    return _persist_working_set(
+        working_set,
+        destination,
+        working_set_format=_WORKING_SET_FORMAT,
+        member_reference=_member_reference,
+    )
 
+
+def persist_chromium_research_working_set_v2(
+    working_set: ChromiumPageResearchWorkingSetRecord,
+    destination: Path,
+) -> ChromiumPageResearchWorkingSetPersistenceEvidence:
+    """Persist one 49C working set through the explicit expanded v2 contract.
+
+    v2 adds only the durable exact-range-selection member family. All persistence
+    mechanics remain the established 20B canonical/no-overwrite behavior, and no
+    individual member sidecar is reread.
+    """
+
+    _validate_live_working_set_v2(working_set)
+    return _persist_working_set(
+        working_set,
+        destination,
+        working_set_format=_WORKING_SET_FORMAT_V2,
+        member_reference=_member_reference_v2,
+    )
+
+
+def _persist_working_set(
+    working_set: ChromiumPageResearchWorkingSetRecord,
+    destination: Path,
+    *,
+    working_set_format: str,
+    member_reference: Any,
+) -> ChromiumPageResearchWorkingSetPersistenceEvidence:
     path = Path(destination).expanduser().resolve()
     if not path.parent.is_dir():
         raise FileNotFoundError(
             f"Research working-set parent directory does not exist: {path.parent}"
         )
 
-    working_set_record = _working_set_record_payload(working_set)
+    working_set_record = _working_set_record_payload(
+        working_set,
+        member_reference=member_reference,
+    )
     working_set_record_bytes = _canonical_json_bytes(working_set_record)
     working_set_record_sha256 = hashlib.sha256(working_set_record_bytes).hexdigest()
     document = {
-        "format": _WORKING_SET_FORMAT,
+        "format": working_set_format,
         "working_set_record": working_set_record,
         "working_set_record_sha256": working_set_record_sha256,
     }
@@ -129,7 +166,7 @@ def persist_chromium_research_working_set(
 
     return ChromiumPageResearchWorkingSetPersistenceEvidence(
         path=path,
-        working_set_format=_WORKING_SET_FORMAT,
+        working_set_format=working_set_format,
         working_set_record_sha256=working_set_record_sha256,
         byte_count=len(document_bytes),
         working_set=working_set,
@@ -139,12 +176,12 @@ def persist_chromium_research_working_set(
 def verify_chromium_research_working_set(
     source: Path,
 ) -> ChromiumPageResearchWorkingSetVerificationEvidence:
-    """Verify canonical bytes and recorded digest for one working-set sidecar only.
+    """Verify canonical bytes for an explicit v1 or v2 working-set sidecar only.
 
     This operation reads only the working-set file. It does not search for, read,
-    verify, or relink any referenced paragraph-note, exact-range-note, comparison-
-    note, source capture, or browser state. Member re-establishment is a separate
-    authority boundary.
+    verify, or relink any referenced bare selection, note-bearing member, source
+    capture, or browser state. Member re-establishment is a separate authority
+    boundary.
     """
 
     path = Path(source).expanduser().resolve()
@@ -188,7 +225,7 @@ def verify_chromium_research_working_set(
     )
     return ChromiumPageResearchWorkingSetVerificationEvidence(
         path=path,
-        working_set_format=_WORKING_SET_FORMAT,
+        working_set_format=document["format"],
         working_set_record_sha256=recorded_sha256,
         byte_count=len(raw),
         working_set_mode=working_set_record["working_set_mode"],
@@ -213,8 +250,26 @@ def _validate_live_working_set(
         _member_reference(item, index=index)
 
 
+def _validate_live_working_set_v2(
+    working_set: ChromiumPageResearchWorkingSetRecord,
+) -> None:
+    if not isinstance(working_set, ChromiumPageResearchWorkingSetRecord):
+        raise TypeError("working_set must be ChromiumPageResearchWorkingSetRecord.")
+    if working_set.working_set_mode != _WORKING_SET_MODE:
+        raise ValueError("working-set mode is unsupported for durable v2 persistence.")
+
+    rebuilt = create_chromium_research_working_set(working_set.items)
+    if rebuilt.working_set_mode != working_set.working_set_mode:
+        raise ValueError("working-set mode is incoherent with the established 20A boundary.")
+
+    for index, item in enumerate(working_set.items):
+        _member_reference_v2(item, index=index)
+
+
 def _working_set_record_payload(
     working_set: ChromiumPageResearchWorkingSetRecord,
+    *,
+    member_reference: Any,
 ) -> dict[str, Any]:
     return {
         "items": [
@@ -224,7 +279,7 @@ def _working_set_record_payload(
                 "member_record_sha256": reference.member_record_sha256,
             }
             for index, item in enumerate(working_set.items)
-            for reference in (_member_reference(item, index=index),)
+            for reference in (member_reference(item, index=index),)
         ],
         "working_set_mode": working_set.working_set_mode,
     }
@@ -265,6 +320,22 @@ def _member_reference(
     raise TypeError(f"working_set.items[{index}] has an unsupported member family.")
 
 
+def _member_reference_v2(
+    item: object,
+    *,
+    index: int,
+) -> ChromiumPageResearchWorkingSetMemberReference:
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        return _verification_reference(
+            member_kind=_EXACT_RANGE_SELECTION_KIND,
+            expected_format=_EXACT_RANGE_SELECTION_FORMAT,
+            member_format=item.verification.selection_format,
+            member_record_sha256=item.verification.selection_record_sha256,
+            index=index,
+        )
+    return _member_reference(item, index=index)
+
+
 def _verification_reference(
     *,
     member_kind: str,
@@ -297,7 +368,8 @@ def _validate_persisted_document(document: Any) -> tuple[dict[str, Any], str]:
         raise ChromiumResearchWorkingSetIntegrityError(
             "Research working-set document has an invalid top-level shape."
         )
-    if document["format"] != _WORKING_SET_FORMAT:
+    working_set_format = document["format"]
+    if working_set_format not in {_WORKING_SET_FORMAT, _WORKING_SET_FORMAT_V2}:
         raise ChromiumResearchWorkingSetIntegrityError(
             "Research working-set format is unsupported."
         )
@@ -327,12 +399,21 @@ def _validate_persisted_document(document: Any) -> tuple[dict[str, Any], str]:
             "Research working-set items must be a non-empty ordered list."
         )
     for index, item in enumerate(items):
-        _validate_persisted_member_reference(item, index=index)
+        _validate_persisted_member_reference(
+            item,
+            index=index,
+            working_set_format=working_set_format,
+        )
 
     return working_set_record, recorded_sha256
 
 
-def _validate_persisted_member_reference(item: Any, *, index: int) -> None:
+def _validate_persisted_member_reference(
+    item: Any,
+    *,
+    index: int,
+    working_set_format: str,
+) -> None:
     if type(item) is not dict or set(item) != {
         "member_format",
         "member_kind",
@@ -348,6 +429,8 @@ def _validate_persisted_member_reference(item: Any, *, index: int) -> None:
         _EXACT_RANGE_NOTE_KIND: _EXACT_RANGE_NOTE_FORMAT,
         _COMPARISON_NOTE_KIND: _COMPARISON_NOTE_FORMAT,
     }
+    if working_set_format == _WORKING_SET_FORMAT_V2:
+        expected_formats[_EXACT_RANGE_SELECTION_KIND] = _EXACT_RANGE_SELECTION_FORMAT
     if type(member_kind) is not str or member_kind not in expected_formats:
         raise ChromiumResearchWorkingSetIntegrityError(
             f"Research working-set item {index} has an unsupported member kind."
