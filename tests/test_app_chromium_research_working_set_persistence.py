@@ -376,3 +376,27 @@ def test_49d_generic_verifier_preserves_v1_and_v2_format_identity(
         verify_chromium_research_working_set(v2_path).working_set_format
         == "pyxis.chromium.research_working_set.v2"
     )
+
+
+def test_49d_v2_persistence_does_not_reread_member_sidecars(
+    tmp_path: Path,
+) -> None:
+    paragraph_note, _, _ = _loaded_records(tmp_path)
+    bare, bare_path = _loaded_bare_selection(tmp_path)
+    working_set = create_chromium_research_working_set(
+        (paragraph_note, bare)
+    )
+
+    paragraph_note.verification.path.unlink()
+    bare_path.unlink()
+
+    destination = tmp_path / "working-set-v2.json"
+    persisted = persist_chromium_research_working_set_v2(
+        working_set,
+        destination,
+    )
+
+    assert persisted.working_set is working_set
+    assert destination.exists()
+    assert not paragraph_note.verification.path.exists()
+    assert not bare.verification.path.exists()
