@@ -21,8 +21,15 @@ from .chromium_research_working_set_note_revision_persistence import (
 
 
 _REVISION_FORMAT = "pyxis.chromium.research_working_set_note_revision.v1"
+_REVISION_FORMAT_V2 = "pyxis.chromium.research_working_set_note_revision.v2"
 _NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
+_NOTE_FORMAT_V2 = "pyxis.chromium.research_working_set_note.v2"
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
+
+_REVISION_PREDECESSOR_FORMATS = {
+    _REVISION_FORMAT: _NOTE_FORMAT,
+    _REVISION_FORMAT_V2: _NOTE_FORMAT_V2,
+}
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 
 
@@ -58,7 +65,7 @@ def load_chromium_research_working_set_note_revision(
     prior_note_source: Path,
     revision_source: Path,
 ) -> ChromiumPageResearchLoadedWorkingSetNoteRevisionRecord:
-    """Relink one durable 22B revision to one explicit durable 21B predecessor.
+    """Relink one durable v1/v2 revision to one explicit durable note predecessor.
 
     The caller supplies the complete ordered already-loaded member sequence, one
     20B working-set sidecar path, one 21B predecessor-note sidecar path, and one
@@ -79,11 +86,14 @@ def load_chromium_research_working_set_note_revision(
         raise TypeError("items must be an iterable of relinked research records.") from exc
 
     verification = verify_chromium_research_working_set_note_revision(revision_source)
-    if verification.revision_format != _REVISION_FORMAT:
+    expected_note_format = _REVISION_PREDECESSOR_FORMATS.get(
+        verification.revision_format
+    )
+    if expected_note_format is None:
         raise ChromiumResearchWorkingSetNoteRevisionRelinkError(
             "Verified working-set-note revision uses an unsupported revision format."
         )
-    if verification.prior_note_format != _NOTE_FORMAT:
+    if verification.prior_note_format != expected_note_format:
         raise ChromiumResearchWorkingSetNoteRevisionRelinkError(
             "Verified working-set-note revision references an unsupported predecessor format."
         )
