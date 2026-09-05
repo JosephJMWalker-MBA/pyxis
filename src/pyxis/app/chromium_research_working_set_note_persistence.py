@@ -15,7 +15,9 @@ from .chromium_research_working_set_note import (
 
 
 _WORKING_SET_NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
+_WORKING_SET_NOTE_FORMAT_V2 = "pyxis.chromium.research_working_set_note.v2"
 _WORKING_SET_FORMAT = "pyxis.chromium.research_working_set.v1"
+_WORKING_SET_FORMAT_V2 = "pyxis.chromium.research_working_set.v2"
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 
 
@@ -65,18 +67,46 @@ def persist_chromium_research_working_set_note(
     working_set_source: Path,
     destination: Path,
 ) -> ChromiumPageResearchWorkingSetNotePersistenceEvidence:
-    """Persist one 21A note against one explicitly supplied durable 20B parent.
+    """Persist one 21A note through the frozen v1 note/parent contract.
 
-    The live note is first re-established through 21A. The caller-supplied 20B
-    working-set path is then freshly verified and relinked through public 20C using
-    the exact member sequence retained by the note's working set. This earns only
-    the durable parent identity needed by the 21B sidecar.
-
-    Persistence does not reread individual member sidecars, discover a working set,
-    search by digest, copy member/source evidence, or infer note semantics. The
-    recorded SHA-256 is self-integrity evidence only.
+    This established writer remains explicitly paired with
+    pyxis.chromium.research_working_set.v1. It never auto-upgrades when the supplied
+    durable parent is v2.
     """
 
+    return _persist_chromium_research_working_set_note(
+        note,
+        working_set_source,
+        destination,
+        note_format=_WORKING_SET_NOTE_FORMAT,
+        expected_parent_format=_WORKING_SET_FORMAT,
+    )
+
+
+def persist_chromium_research_working_set_note_v2(
+    note: ChromiumPageResearchWorkingSetNoteRecord,
+    working_set_source: Path,
+    destination: Path,
+) -> ChromiumPageResearchWorkingSetNotePersistenceEvidence:
+    """Persist one 21A note through the explicit v2 note/parent contract."""
+
+    return _persist_chromium_research_working_set_note(
+        note,
+        working_set_source,
+        destination,
+        note_format=_WORKING_SET_NOTE_FORMAT_V2,
+        expected_parent_format=_WORKING_SET_FORMAT_V2,
+    )
+
+
+def _persist_chromium_research_working_set_note(
+    note: ChromiumPageResearchWorkingSetNoteRecord,
+    working_set_source: Path,
+    destination: Path,
+    *,
+    note_format: str,
+    expected_parent_format: str,
+) -> ChromiumPageResearchWorkingSetNotePersistenceEvidence:
     if not isinstance(note, ChromiumPageResearchWorkingSetNoteRecord):
         raise TypeError("note must be ChromiumPageResearchWorkingSetNoteRecord.")
 
@@ -91,7 +121,7 @@ def persist_chromium_research_working_set_note(
         note.working_set.items,
         working_set_source,
     )
-    if loaded_parent.verification.working_set_format != _WORKING_SET_FORMAT:
+    if loaded_parent.verification.working_set_format != expected_parent_format:
         raise ValueError("working-set format is unsupported for note persistence.")
 
     if len(loaded_parent.working_set.items) != len(note.working_set.items):
@@ -125,7 +155,7 @@ def persist_chromium_research_working_set_note(
     note_record_bytes = _canonical_json_bytes(note_record)
     note_record_sha256 = hashlib.sha256(note_record_bytes).hexdigest()
     document = {
-        "format": _WORKING_SET_NOTE_FORMAT,
+        "format": note_format,
         "note_record": note_record,
         "note_record_sha256": note_record_sha256,
     }
@@ -136,12 +166,11 @@ def persist_chromium_research_working_set_note(
 
     return ChromiumPageResearchWorkingSetNotePersistenceEvidence(
         path=path,
-        note_format=_WORKING_SET_NOTE_FORMAT,
+        note_format=note_format,
         note_record_sha256=note_record_sha256,
         byte_count=len(document_bytes),
         note=note,
     )
-
 
 def verify_chromium_research_working_set_note(
     source: Path,
@@ -186,7 +215,7 @@ def verify_chromium_research_working_set_note(
     note_payload = note_record["note"]
     return ChromiumPageResearchWorkingSetNoteVerificationEvidence(
         path=path,
-        note_format=_WORKING_SET_NOTE_FORMAT,
+        note_format=document["format"],
         note_record_sha256=recorded_sha256,
         byte_count=len(raw),
         working_set_format=working_set_reference["format"],
@@ -208,7 +237,11 @@ def _validate_persisted_document(document: Any) -> tuple[dict[str, Any], str]:
         raise ChromiumResearchWorkingSetNoteIntegrityError(
             "Research working-set-note document has an invalid top-level shape."
         )
-    if document["format"] != _WORKING_SET_NOTE_FORMAT:
+    note_format = document["format"]
+    if note_format not in {
+        _WORKING_SET_NOTE_FORMAT,
+        _WORKING_SET_NOTE_FORMAT_V2,
+    }:
         raise ChromiumResearchWorkingSetNoteIntegrityError(
             "Research working-set-note format is unsupported."
         )
@@ -236,7 +269,12 @@ def _validate_persisted_document(document: Any) -> tuple[dict[str, Any], str]:
         raise ChromiumResearchWorkingSetNoteIntegrityError(
             "Research working-set-note parent reference has an invalid shape."
         )
-    if working_set_reference["format"] != _WORKING_SET_FORMAT:
+    expected_parent_format = (
+        _WORKING_SET_FORMAT
+        if note_format == _WORKING_SET_NOTE_FORMAT
+        else _WORKING_SET_FORMAT_V2
+    )
+    if working_set_reference["format"] != expected_parent_format:
         raise ChromiumResearchWorkingSetNoteIntegrityError(
             "Research working-set-note parent format is unsupported."
         )
