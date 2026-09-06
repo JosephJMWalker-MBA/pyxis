@@ -168,6 +168,7 @@ def _wait_for_bundle(
             if (
                 evidence.url == expected_url
                 and evidence.page.title == "Pyxis research bundle"
+                and evidence.page.content.text_prefix.startswith("Evidence")
                 and evidence.links.link_count == 1
                 and evidence.headings.heading_count == 1
                 and evidence.metadata.document_language == "en"
