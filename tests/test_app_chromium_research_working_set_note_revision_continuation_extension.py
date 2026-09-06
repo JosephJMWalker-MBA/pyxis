@@ -385,3 +385,14 @@ def test_49h_edge_v1_persistence_remains_closed_to_v2_continuation(
         )
 
     assert not destination.exists()
+
+
+def test_49h_continuation_extension_v2_rejects_exact_noop(tmp_path: Path) -> None:
+    *_, loaded = _loaded_continuation_v2(tmp_path)
+    current_text = loaded.continuation.revision.revised_note.note_text
+
+    with pytest.raises(ValueError, match="must differ exactly"):
+        create_chromium_research_working_set_note_revision_continuation_extension(
+            loaded,
+            revised_note_text=current_text,
+        )
