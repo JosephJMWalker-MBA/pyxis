@@ -278,6 +278,55 @@ Through 49B, Pyxis still does not infer or claim:
 - changed-document equivalence through fuzzy matching;
 - automatic promotion from a saved selection into a working set or rationale.
 
+
+## Executed continuation of the 49 line through 49G
+
+The post-49B review did authorize the working-set path, but only through concrete versioned boundaries.
+
+49C / D248 allowed one explicitly relinked bare exact-range selection to participate directly in the in-memory 20A working set as a fourth member family. It did not change durable working-set v1.
+
+49D / D249 added explicit `research_working_set.v2` persistence and 20C relinking for that expanded member family while leaving the original v1 writer and reader expectations frozen.
+
+49E / D250 added explicit `research_working_set_note.v2` persistence and 21C relinking for one overall human rationale over a v2 working set.
+
+49F / D251 added explicit `research_working_set_note_revision.v2` persistence and 22C relinking for one append-only human change of a note-v2 rationale. Executable evidence also demonstrated that 23A itself is an in-memory human-action boundary rather than a durable-format boundary, so 23A now accepts exactly the supported revision-v1/note-v1 and revision-v2/note-v2 predecessor families while durable continuation v1 remains frozen.
+
+49G / D252 then added explicit `research_working_set_note_revision_continuation.v2` persistence and 23C relinking for the next append-only human wording change over an exact revision-v2 predecessor. The original continuation-v1 writer still requires revision v1; the v2 writer must be chosen explicitly; generic verification and 23C relinking accept only the exact v1→v1 and v2→v2 pairings.
+
+The complete demonstrated v2 reasoning path is now:
+
+```text
+relinked bare exact-range selection
+→ 20A working set
+→ research_working_set.v2
+→ research_working_set_note.v2
+→ research_working_set_note_revision.v2
+→ research_working_set_note_revision_continuation.v2
+→ explicit 23C relinking
+```
+
+Each durable layer stores only the minimum predecessor identity plus the new human action owned by that layer. Earlier wording, source evidence, member payloads, paths, timestamps, revision numbers, semantic-difference claims, authorship, and trusted time remain outside the format.
+
+## Strongest compact statement through 49G
+
+> Pyxis can now carry an explicitly relinked bare exact-range selection into a versioned durable working set, attach one versioned overall human rationale, preserve one append-only rationale revision and one further append-only continuation as separate immutable durable records, and explicitly relink each layer through exact predecessor content identity without source discovery, mutation of earlier wording, automatic format migration, or semantic-authority promotion.
+
+## Current frontier after 49G
+
+The next established in-memory action is 24A: one further human revision explicitly extended from one loaded 23C continuation.
+
+However, existing 24A validation and the 24B revision-edge persistence path were originally defined around continuation v1. A continuation-v2 predecessor therefore exposes a real product boundary, but not permission to widen the entire edge/history system.
+
+The next review must separate two questions:
+
+1. whether 24A should become version-aware purely as an in-memory human continuation action, analogous to the 23A correction demonstrated by 49F; and
+2. whether any durable 24B revision-edge version should be introduced for a continuation-v2 predecessor.
+
+Those questions should not be bundled merely for numerical symmetry. The first is about reconstructing one more human wording change from an exact already-loaded predecessor. The second changes durable history-format authority and may affect later edge/root/segment products.
+
+No fourth source or browser capability is implied by this frontier.
+
+
 ## Continuity rule
 
 For future development sessions:
