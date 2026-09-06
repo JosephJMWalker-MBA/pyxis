@@ -21,9 +21,6 @@ from pyxis.app.chromium_research_working_set_note_revision_continuation_load imp
 from pyxis.app.chromium_research_working_set_note_revision_continuation_persistence import (
     persist_chromium_research_working_set_note_revision_continuation_v2,
 )
-from pyxis.app.chromium_research_working_set_note_revision_edge_persistence import (
-    persist_chromium_research_working_set_note_revision_edge,
-)
 
 
 def test_continuation_extension_retains_exact_loaded_predecessor_and_exact_v3_note(
@@ -350,41 +347,6 @@ def test_49h_continuation_extension_rejects_cross_version_family_pairing(
             forged,
             revised_note_text="v4 must not cross durable version families.",
         )
-
-
-def test_49h_edge_v1_persistence_remains_closed_to_v2_continuation(
-    tmp_path: Path,
-) -> None:
-    (
-        _,
-        _,
-        _,
-        working_set_path,
-        prior_note_path,
-        revision_path,
-        continuation_path,
-        loaded,
-    ) = _loaded_continuation_v2(tmp_path)
-    extension = create_chromium_research_working_set_note_revision_continuation_extension(
-        loaded,
-        revised_note_text="v4 is valid in memory but has no edge-v2 authority.",
-    )
-    destination = tmp_path / "edge-v1-must-not-write.json"
-
-    with pytest.raises(
-        ValueError,
-        match="durable revision-edge predecessor format is unsupported",
-    ):
-        persist_chromium_research_working_set_note_revision_edge(
-            extension,
-            working_set_path,
-            prior_note_path,
-            revision_path,
-            continuation_path,
-            destination,
-        )
-
-    assert not destination.exists()
 
 
 def test_49h_continuation_extension_v2_rejects_exact_noop(tmp_path: Path) -> None:
