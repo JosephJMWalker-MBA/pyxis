@@ -8,9 +8,21 @@ import pytest
 from test_app_chromium_research_working_set_note_revision_continuation_load import (
     _loaded_continuation,
 )
+from test_app_chromium_research_working_set_note_revision_continuation_v2 import (
+    _v2_continuation,
+)
 from pyxis.app.chromium_research_working_set_note_revision_continuation_extension import (
     ChromiumPageResearchWorkingSetNoteRevisionContinuationExtensionRecord,
     create_chromium_research_working_set_note_revision_continuation_extension,
+)
+from pyxis.app.chromium_research_working_set_note_revision_continuation_load import (
+    load_chromium_research_working_set_note_revision_continuation,
+)
+from pyxis.app.chromium_research_working_set_note_revision_continuation_persistence import (
+    persist_chromium_research_working_set_note_revision_continuation_v2,
+)
+from pyxis.app.chromium_research_working_set_note_revision_edge_persistence import (
+    persist_chromium_research_working_set_note_revision_edge,
 )
 
 
@@ -209,3 +221,167 @@ def test_continuation_extension_module_is_publicly_importable(tmp_path: Path) ->
     assert extension.revision.revised_note.note_text == (
         "A third explicit human change of wording."
     )
+
+
+def _loaded_continuation_v2(tmp_path: Path):
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        working_set_path,
+        prior_note_path,
+        revision_path,
+        _,
+        _,
+        continuation,
+    ) = _v2_continuation(tmp_path)
+    continuation_path = tmp_path / "continuation-v2.json"
+    persist_chromium_research_working_set_note_revision_continuation_v2(
+        continuation,
+        working_set_path,
+        prior_note_path,
+        revision_path,
+        continuation_path,
+    )
+    loaded = load_chromium_research_working_set_note_revision_continuation(
+        (bare, paragraph_note, bare),
+        working_set_path,
+        prior_note_path,
+        revision_path,
+        continuation_path,
+    )
+    return (
+        paragraph_note,
+        bare,
+        bare_path,
+        working_set_path,
+        prior_note_path,
+        revision_path,
+        continuation_path,
+        loaded,
+    )
+
+
+def test_49h_continuation_extension_accepts_exact_loaded_v2_predecessor(
+    tmp_path: Path,
+) -> None:
+    *_, loaded = _loaded_continuation_v2(tmp_path)
+    revised_text = "  Third v2-line human change 😀\nStill human-owned.  "
+
+    extension = create_chromium_research_working_set_note_revision_continuation_extension(
+        loaded,
+        revised_note_text=revised_text,
+    )
+
+    assert extension.prior_continuation is loaded
+    assert extension.revision.prior_note is loaded.continuation.revision.revised_note
+    assert (
+        extension.revision.revised_note.working_set
+        is loaded.continuation.revision.revised_note.working_set
+    )
+    assert extension.revision.revised_note.note_text == revised_text
+
+
+def test_49h_continuation_extension_v2_performs_no_hidden_file_reread(
+    tmp_path: Path,
+) -> None:
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        working_set_path,
+        prior_note_path,
+        revision_path,
+        continuation_path,
+        loaded,
+    ) = _loaded_continuation_v2(tmp_path)
+
+    paragraph_note.verification.path.unlink(missing_ok=True)
+    bare_path.unlink(missing_ok=True)
+    working_set_path.unlink()
+    prior_note_path.unlink()
+    revision_path.unlink()
+    continuation_path.unlink()
+
+    extension = create_chromium_research_working_set_note_revision_continuation_extension(
+        loaded,
+        revised_note_text="v4 survives removal of every durable input.",
+    )
+
+    assert extension.prior_continuation is loaded
+    assert not paragraph_note.verification.path.exists()
+    assert not bare.verification.path.exists()
+    assert not working_set_path.exists()
+    assert not prior_note_path.exists()
+    assert not revision_path.exists()
+    assert not continuation_path.exists()
+
+
+@pytest.mark.parametrize(
+    ("continuation_format", "prior_revision_format"),
+    [
+        (
+            "pyxis.chromium.research_working_set_note_revision_continuation.v1",
+            "pyxis.chromium.research_working_set_note_revision.v2",
+        ),
+        (
+            "pyxis.chromium.research_working_set_note_revision_continuation.v2",
+            "pyxis.chromium.research_working_set_note_revision.v1",
+        ),
+    ],
+)
+def test_49h_continuation_extension_rejects_cross_version_family_pairing(
+    tmp_path: Path,
+    continuation_format: str,
+    prior_revision_format: str,
+) -> None:
+    *_, loaded = _loaded_continuation_v2(tmp_path)
+    forged = replace(
+        loaded,
+        verification=replace(
+            loaded.verification,
+            continuation_format=continuation_format,
+            prior_revision_format=prior_revision_format,
+        ),
+    )
+
+    with pytest.raises(ValueError, match="unsupported revision format"):
+        create_chromium_research_working_set_note_revision_continuation_extension(
+            forged,
+            revised_note_text="v4 must not cross durable version families.",
+        )
+
+
+def test_49h_edge_v1_persistence_remains_closed_to_v2_continuation(
+    tmp_path: Path,
+) -> None:
+    (
+        _,
+        _,
+        _,
+        working_set_path,
+        prior_note_path,
+        revision_path,
+        continuation_path,
+        loaded,
+    ) = _loaded_continuation_v2(tmp_path)
+    extension = create_chromium_research_working_set_note_revision_continuation_extension(
+        loaded,
+        revised_note_text="v4 is valid in memory but has no edge-v2 authority.",
+    )
+    destination = tmp_path / "edge-v1-must-not-write.json"
+
+    with pytest.raises(
+        ValueError,
+        match="durable revision-edge predecessor format is unsupported",
+    ):
+        persist_chromium_research_working_set_note_revision_edge(
+            extension,
+            working_set_path,
+            prior_note_path,
+            revision_path,
+            continuation_path,
+            destination,
+        )
+
+    assert not destination.exists()
