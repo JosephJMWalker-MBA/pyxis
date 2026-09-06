@@ -327,6 +327,137 @@ Those questions should not be bundled merely for numerical symmetry. The first i
 No fourth source or browser capability is implied by this frontier.
 
 
+
+## Executed continuation through 49I
+
+49H / D253 answered the first post-49G question narrowly.
+
+Existing 24A remains an in-memory human-action boundary. It now accepts exactly the two supported loaded-continuation families:
+
+```text
+continuation v1 → revision v1
+continuation v2 → revision v2
+```
+
+and creates one further public-22A revision over the exact predecessor endpoint note. No file read, persistence right, chronology, revision number, or semantic-difference authority is gained merely because 24A can consume continuation v2.
+
+At the 49H boundary, durable 24B edge persistence intentionally remained closed.
+
+49I / D254 then reviewed that durable boundary against the older general-edge architecture rather than assuming another numbered format was required.
+
+The decisive internal prior art was:
+
+- 24B / D156: edge v1 was deliberately introduced as a general content-addressed revision-edge representation whose predecessor is `format + record_sha256`;
+- 24C / D157: generic explicit local edge relinking was separated from discovery and whole-history traversal;
+- 25A–25B: once one edge is loaded, ordinary repeated human revisions reuse the same edge-v1 representation;
+- 34B / D180: a changed-basis revision root was later admitted as another explicit predecessor family of the same edge-v1 format rather than creating edge v2.
+
+Therefore 49I does **not** create `research_working_set_note_revision_edge.v2`.
+
+Instead continuation v2 becomes one more explicitly authorized predecessor family of the existing:
+
+`pyxis.chromium.research_working_set_note_revision_edge.v1`
+
+The demonstrated seam is:
+
+```text
+loaded continuation v2
+→ 24A human extension
+→ 24B edge v1
+→ 24C loaded edge v1
+→ 25A human extension
+→ 25B edge v1
+→ 24C loaded edge v1
+→ repeat
+```
+
+The first edge retains exact continuation-v2 format + continuation-record SHA-256 as predecessor identity.
+
+Generic 24C re-establishes the exact supplied loaded continuation-v2 predecessor and public-22A exact-text revision relationship.
+
+After that first edge is loaded, no version-specific 25A/25B branch exists. The v2-specific reasoning line has rejoined the already-general edge lineage.
+
+## Executable correction during 49I
+
+The first 49I Repository Zero run failed because one mature 49H test still asserted that 24B must reject continuation v2.
+
+That assertion was correct when 49H was the frontier and was intentionally superseded by D254 itself.
+
+The correction removed only that obsolete current-state assertion. It did not weaken the 49H in-memory proofs.
+
+The corrected exact 49I head then passed the complete Repository Zero suite on Python 3.11, 3.12, 3.13, and 3.14 before merge.
+
+This is an important continuity lesson:
+
+```text
+a prior milestone's deliberately closed boundary
+may be executable evidence for that milestone
+but must not become an accidental permanent prohibition
+after a later explicit decision earns the boundary
+```
+
+## Strongest compact statement through 49I
+
+> Pyxis can durably save and relink an exact caller-selected passage before interpretation, carry that passage through an explicitly versioned working-set/rationale/revision/continuation line, represent one further human revision in memory, then rejoin the existing general content-addressed edge-v1 lineage without mutating earlier wording, discovering predecessors, introducing edge v2, or promoting local revision evidence into global history authority.
+
+## 49I is a natural plateau
+
+The 49 line began because a researcher could not durably preserve one exact passage independently from interpretation.
+
+That concrete gap is now closed through the mature ordinary revision seam:
+
+```text
+exact passage
+→ durable selection
+→ explicit relink
+→ working set
+→ durable v2 working set
+→ durable v2 rationale
+→ durable v2 revision
+→ durable v2 continuation
+→ further human revision
+→ general edge-v1 lineage
+```
+
+This is a stronger stopping point than continuing milestone letters by symmetry.
+
+The architecture has reached an existing reusable subsystem rather than another missing representation.
+
+In particular, there is currently no demonstrated need to add:
+
+- edge v2;
+- another post-edge version family;
+- a second loaded-edge type;
+- a recursive history model;
+- a global current/latest/head pointer;
+- automatic predecessor discovery;
+- sequence-format widening merely because continuation v2 exists.
+
+## Sequence implication
+
+Existing 26A–26C sequence machinery remains intentionally outside 49I's new durable-format authority.
+
+A researcher who has already crossed into a loaded edge-v1 record can use the established ordinary edge lineage and its existing sequence mechanisms from that edge boundary.
+
+A different future requirement could be:
+
+> Preserve one durable sequence declaration whose explicit starting predecessor is continuation v2 itself and whose first declared member is the continuation-v2-backed edge.
+
+That is a coherent product question, but it is not required to preserve or continue the already-earned edge lineage. It should be implemented only if the researcher-facing value of declaring that larger segment is demonstrated.
+
+Do not infer a 49J merely because direct continuation-v2 sequence-start support is mechanically plausible.
+
+## Test-harness reliability note
+
+During this pass, an unrelated real-Chromium integration flake was isolated from feature work.
+
+One prior Python 3.14 run observed the correct target/URL and later bundle structure while the earliest sequential `document.body.innerText` observation was transiently empty. The unchanged feature head passed on rerun.
+
+The integration helper was corrected separately so its bounded readiness loop now waits for the fixture body text that the test already asserts, rather than returning as soon as only the later evidence families are ready.
+
+No product/browser authority changed.
+
+
 ## Continuity rule
 
 For future development sessions:
