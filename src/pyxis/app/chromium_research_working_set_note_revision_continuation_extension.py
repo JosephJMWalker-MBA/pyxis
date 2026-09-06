@@ -18,7 +18,15 @@ from .chromium_research_working_set_note_revision_continuation_load import (
 _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
 )
+_CONTINUATION_FORMAT_V2 = (
+    "pyxis.chromium.research_working_set_note_revision_continuation.v2"
+)
 _REVISION_FORMAT = "pyxis.chromium.research_working_set_note_revision.v1"
+_REVISION_FORMAT_V2 = "pyxis.chromium.research_working_set_note_revision.v2"
+_REVISION_FORMAT_BY_CONTINUATION_FORMAT = {
+    _CONTINUATION_FORMAT: _REVISION_FORMAT,
+    _CONTINUATION_FORMAT_V2: _REVISION_FORMAT_V2,
+}
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 _CONTINUATION_MODE = (
@@ -96,9 +104,12 @@ def _validate_loaded_prior_continuation(
     loaded_prior_revision = prior_continuation.prior_revision
     loaded_continuation = prior_continuation.continuation
 
-    if verification.continuation_format != _CONTINUATION_FORMAT:
+    expected_revision_format = _REVISION_FORMAT_BY_CONTINUATION_FORMAT.get(
+        verification.continuation_format
+    )
+    if expected_revision_format is None:
         raise ValueError("loaded predecessor uses an unsupported continuation format.")
-    if verification.prior_revision_format != _REVISION_FORMAT:
+    if verification.prior_revision_format != expected_revision_format:
         raise ValueError("loaded predecessor references an unsupported revision format.")
     if verification.continuation_mode != _CONTINUATION_MODE:
         raise ValueError("loaded predecessor uses an unsupported continuation mode.")
