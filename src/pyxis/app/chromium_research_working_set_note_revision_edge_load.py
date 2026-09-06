@@ -30,6 +30,15 @@ _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
 _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
 )
+_CONTINUATION_FORMAT_V2 = (
+    "pyxis.chromium.research_working_set_note_revision_continuation.v2"
+)
+_REVISION_FORMAT = "pyxis.chromium.research_working_set_note_revision.v1"
+_REVISION_FORMAT_V2 = "pyxis.chromium.research_working_set_note_revision.v2"
+_REVISION_FORMAT_BY_CONTINUATION_FORMAT = {
+    _CONTINUATION_FORMAT: _REVISION_FORMAT,
+    _CONTINUATION_FORMAT_V2: _REVISION_FORMAT_V2,
+}
 _ROOT_FORMAT = (
     "pyxis.chromium.research_session_working_set_transition_revision_root.v1"
 )
@@ -180,9 +189,16 @@ def _validate_loaded_continuation_predecessor(
     loaded_prior = predecessor.prior_revision
     continuation = predecessor.continuation
 
-    if verification.continuation_format != _CONTINUATION_FORMAT:
+    expected_revision_format = _REVISION_FORMAT_BY_CONTINUATION_FORMAT.get(
+        verification.continuation_format
+    )
+    if expected_revision_format is None:
         raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
             "Loaded continuation predecessor uses an unsupported format."
+        )
+    if verification.prior_revision_format != expected_revision_format:
+        raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(
+            "Loaded continuation predecessor references an unsupported revision format."
         )
     if verification.continuation_mode != _CONTINUATION_MODE:
         raise ChromiumResearchWorkingSetNoteRevisionEdgeRelinkError(

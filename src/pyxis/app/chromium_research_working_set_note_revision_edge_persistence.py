@@ -20,11 +20,17 @@ _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
 _CONTINUATION_FORMAT = (
     "pyxis.chromium.research_working_set_note_revision_continuation.v1"
 )
+_CONTINUATION_FORMAT_V2 = (
+    "pyxis.chromium.research_working_set_note_revision_continuation.v2"
+)
+_SUPPORTED_CONTINUATION_FORMATS = frozenset(
+    {_CONTINUATION_FORMAT, _CONTINUATION_FORMAT_V2}
+)
 _ROOT_FORMAT = (
     "pyxis.chromium.research_session_working_set_transition_revision_root.v1"
 )
 _SUPPORTED_PREDECESSOR_FORMATS = frozenset(
-    {_CONTINUATION_FORMAT, _EDGE_FORMAT, _ROOT_FORMAT}
+    {_CONTINUATION_FORMAT, _CONTINUATION_FORMAT_V2, _EDGE_FORMAT, _ROOT_FORMAT}
 )
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
@@ -89,10 +95,11 @@ def persist_chromium_research_working_set_note_revision_edge(
 ) -> ChromiumPageResearchWorkingSetNoteRevisionEdgePersistenceEvidence:
     """Persist one 24A extension as the first general durable revision edge.
 
-    The public creator currently anchors one edge to one explicit durable 23B
-    continuation. Before writing, Pyxis re-establishes the live 24A contract and
-    freshly relinks the predecessor through public 23C using the exact already-
-    loaded member sequence retained by the extension.
+    The public creator anchors one edge to one explicit durable 23B continuation
+    from either exact supported continuation family. Before writing, Pyxis
+    re-establishes the live 24A contract and freshly relinks the predecessor through
+    public 23C using the exact already-loaded member sequence retained by the
+    extension.
 
     The persisted schema is deliberately more general than this original creator:
     a predecessor reference may name a 23B continuation, a 34A cross-working-set
@@ -151,10 +158,14 @@ def persist_chromium_research_working_set_note_revision_edge(
         prior_revision_source,
         prior_continuation_source,
     )
-    if loaded_prior.verification.continuation_format != _CONTINUATION_FORMAT:
+    if (
+        loaded_prior.verification.continuation_format
+        not in _SUPPORTED_CONTINUATION_FORMATS
+    ):
         raise ValueError("durable revision-edge predecessor format is unsupported.")
-    if extension.prior_continuation.verification.continuation_format != (
-        _CONTINUATION_FORMAT
+    if (
+        extension.prior_continuation.verification.continuation_format
+        not in _SUPPORTED_CONTINUATION_FORMATS
     ):
         raise ValueError("retained revision-edge predecessor format is unsupported.")
     if loaded_prior.verification.continuation_format != (
