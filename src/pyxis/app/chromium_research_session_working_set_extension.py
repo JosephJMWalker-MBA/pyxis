@@ -4,6 +4,9 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+from .chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from .chromium_research_session_controller import ChromiumResearchSessionController
 from .chromium_research_session_presentation import (
     ChromiumPageResearchSessionPresentation,
@@ -21,6 +24,7 @@ from .chromium_research_working_set_note import (
 from .chromium_research_working_set_note_persistence import (
     ChromiumPageResearchWorkingSetNotePersistenceEvidence,
     persist_chromium_research_working_set_note,
+    persist_chromium_research_working_set_note_v2,
 )
 from .chromium_research_working_set_note_revision_edge_load import (
     ChromiumPageResearchLoadedWorkingSetNoteRevisionEdgeRecord,
@@ -28,6 +32,7 @@ from .chromium_research_working_set_note_revision_edge_load import (
 from .chromium_research_working_set_persistence import (
     ChromiumPageResearchWorkingSetPersistenceEvidence,
     persist_chromium_research_working_set,
+    persist_chromium_research_working_set_v2,
 )
 
 
@@ -76,8 +81,8 @@ def persist_chromium_research_session_working_set_extension(
     selection authority. Any unadopted successor write therefore remains unrelated
     bookkeeping for this operation.
 
-    The caller supplies a non-empty ordered iterable of already-relinked 17D/18D/19D
-    research members. Pyxis appends them after the exact current working-set member
+    The caller supplies a non-empty ordered iterable of already-relinked
+    17D/49B/18D/19D research members. Pyxis appends them after the exact current working-set member
     sequence and delegates membership coherence to public 20A. Duplicates are
     preserved because repetition is not treated as accidental.
 
@@ -87,8 +92,11 @@ def persist_chromium_research_session_working_set_extension(
     choice over a different working set, not machine-inferred inheritance.
 
     Both durable destinations are explicit, distinct, no-overwrite paths and are
-    preflighted before the first write. Persistence delegates to public 20B and 21B.
-    The operation does not read member sidecars, acquire browser evidence, infer
+    preflighted before the first write. Persistence preserves the frozen public
+    20B/21B v1 writers when the combined member vocabulary is v1-compatible and
+    selects the explicit 49D/49E v2 writers only when at least one bare exact-range
+    selection requires that vocabulary. This is a new prepared basis, not migration
+    of an earlier file. The operation does not read member sidecars, acquire browser evidence, infer
     relevance/support, create a cross-working-set revision edge, rewrite a session
     declaration, adopt the prepared basis, select a head, or claim chronology.
     """
@@ -151,15 +159,26 @@ def persist_chromium_research_session_working_set_extension(
     if working_set_path == note_path:
         raise ValueError("working_set_destination and note_destination must be distinct paths.")
 
-    working_set_persistence = persist_chromium_research_working_set(
-        working_set,
-        working_set_path,
-    )
-    note_persistence = persist_chromium_research_working_set_note(
-        note,
-        working_set_persistence.path,
-        note_path,
-    )
+    if _requires_v2_working_set(working_set.items):
+        working_set_persistence = persist_chromium_research_working_set_v2(
+            working_set,
+            working_set_path,
+        )
+        note_persistence = persist_chromium_research_working_set_note_v2(
+            note,
+            working_set_persistence.path,
+            note_path,
+        )
+    else:
+        working_set_persistence = persist_chromium_research_working_set(
+            working_set,
+            working_set_path,
+        )
+        note_persistence = persist_chromium_research_working_set_note(
+            note,
+            working_set_persistence.path,
+            note_path,
+        )
 
     return ChromiumResearchSessionWorkingSetExtensionPersistenceResult(
         prior_session=controller.presentation,
@@ -170,6 +189,15 @@ def persist_chromium_research_session_working_set_extension(
         working_set_persistence=working_set_persistence,
         note=note,
         note_persistence=note_persistence,
+    )
+
+
+def _requires_v2_working_set(
+    items: tuple[ChromiumPageResearchWorkingSetItem, ...],
+) -> bool:
+    return any(
+        isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord)
+        for item in items
     )
 
 

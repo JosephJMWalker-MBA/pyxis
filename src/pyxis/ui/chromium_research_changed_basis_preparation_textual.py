@@ -37,7 +37,10 @@ def _candidate_summary(
         lines.append(
             f"Candidate member {member.member_position}: {member.member_kind}"
         )
-        lines.append(f"Human note: {member.human_note_text}")
+        if member.human_note_text is None:
+            lines.append("Human note: none attached — saved source passage only")
+        else:
+            lines.append(f"Human note: {member.human_note_text}")
         for excerpt in member.excerpts:
             coordinate = f"paragraph {excerpt.paragraph_ordinal}"
             if excerpt.start_offset is not None and excerpt.end_offset is not None:
