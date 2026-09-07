@@ -6,6 +6,9 @@ import hmac
 from .chromium_research_session_working_set_transition_load import (
     ChromiumPageResearchLoadedWorkingSetTransitionRecord,
 )
+from .chromium_research_session_working_set_transition_persistence import (
+    _is_supported_successor_format_pair,
+)
 from .chromium_research_working_set_note import create_chromium_research_working_set_note
 from .chromium_research_working_set_note_revision import (
     ChromiumPageResearchWorkingSetNoteRevisionRecord,
@@ -16,8 +19,6 @@ from .chromium_research_working_set_note_revision import (
 _TRANSITION_FORMAT = "pyxis.chromium.research_session_working_set_transition.v1"
 _TRANSITION_MODE = "caller_explicit_transition_to_changed_research_working_set"
 _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
-_WORKING_SET_FORMAT = "pyxis.chromium.research_working_set.v1"
-_NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
 _NOTE_MODE = "caller_authored_note_on_research_working_set"
 _REVISION_MODE = "caller_authored_revision_of_research_working_set_note"
 _ROOT_MODE = (
@@ -125,13 +126,12 @@ def _validate_loaded_transition(
             "Loaded transition retained an incoherent prior endpoint identity."
         )
 
-    if successor.working_set.verification.working_set_format != _WORKING_SET_FORMAT:
+    if not _is_supported_successor_format_pair(
+        successor.working_set.verification.working_set_format,
+        successor.verification.note_format,
+    ):
         raise ChromiumResearchSessionWorkingSetTransitionRevisionRootError(
-            "Loaded transition successor working set uses an unsupported format."
-        )
-    if successor.verification.note_format != _NOTE_FORMAT:
-        raise ChromiumResearchSessionWorkingSetTransitionRevisionRootError(
-            "Loaded transition successor note uses an unsupported format."
+            "Loaded transition successor working-set/note format pair is unsupported."
         )
     if successor.note.note_mode != _NOTE_MODE:
         raise ChromiumResearchSessionWorkingSetTransitionRevisionRootError(

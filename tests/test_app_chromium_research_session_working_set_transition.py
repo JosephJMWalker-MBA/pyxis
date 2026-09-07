@@ -11,10 +11,6 @@ from pyxis.app.chromium_research_session_controller import ChromiumResearchSessi
 from pyxis.app.chromium_research_session_working_set_extension import (
     persist_chromium_research_session_working_set_extension,
 )
-from pyxis.app.chromium_research_session_working_set_transition_revision_root import (
-    ChromiumResearchSessionWorkingSetTransitionRevisionRootError,
-    create_chromium_research_session_working_set_transition_revision_root,
-)
 from pyxis.app.chromium_research_session_working_set_transition import (
     ChromiumResearchSessionWorkingSetTransitionError,
     ChromiumResearchSessionWorkingSetTransitionRecord,
@@ -611,32 +607,3 @@ def test_50c_file_valid_wrong_v2_successor_digest_fails_fresh_relink(
         )
 
 
-def test_50c_existing_34a_remains_closed_to_v2_backed_transition(
-    tmp_path: Path,
-) -> None:
-    *_, controller, prior_edge_path, prepared, transition = _prepared_v2_transition(tmp_path)
-    destination = tmp_path / "50c-transition-before-root.json"
-    persist_chromium_research_session_working_set_transition(
-        transition,
-        prior_edge_source=prior_edge_path,
-        working_set_source=prepared.working_set_persistence.path,
-        note_source=prepared.note_persistence.path,
-        destination=destination,
-    )
-    loaded = load_chromium_research_session_working_set_transition(
-        controller.declared_endpoint,
-        prepared.working_set.items,
-        prior_edge_source=prior_edge_path,
-        working_set_source=prepared.working_set_persistence.path,
-        note_source=prepared.note_persistence.path,
-        transition_source=destination,
-    )
-
-    with pytest.raises(
-        ChromiumResearchSessionWorkingSetTransitionRevisionRootError,
-        match="successor working set uses an unsupported format",
-    ):
-        create_chromium_research_session_working_set_transition_revision_root(
-            loaded,
-            revised_note_text="First revision after the v2-backed transition.",
-        )
