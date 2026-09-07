@@ -16,6 +16,7 @@ from test_app_chromium_research_session_working_set_extension import (
     _new_paragraph_member,
     _session,
 )
+from test_app_chromium_research_working_set import _loaded_bare_selection
 
 
 async def _press(shell, pilot, button_id: str) -> None:
@@ -83,6 +84,7 @@ async def test_configured_shell_renders_blank_preparation_inputs_and_persists_wi
         )
         assert "CANDIDATE APPENDED MEMBERS" in candidate_text
         assert "NOT YET WORKING SET / NOT ADOPTED" in candidate_text
+        assert "Human note: New explicit evidence member." in candidate_text
         assert shell.query_one("#research-changed-basis-rationale", TextArea).text == ""
         assert shell.query_one(
             "#research-changed-basis-working-set-destination", Input
@@ -231,3 +233,59 @@ async def test_default_shell_mounts_no_changed_basis_surface_without_explicit_ca
         assert shell.changed_basis_candidate_items is None
         assert shell.changed_basis_candidate_presentation is None
         assert shell.last_changed_basis_preparation is None
+
+
+
+@pytest.mark.asyncio
+async def test_50b_bare_candidate_renders_note_absence_and_persists_v2_pair(
+    tmp_path: Path,
+) -> None:
+    _, reentry = _session(tmp_path)
+    bare, bare_path = _loaded_bare_selection(
+        tmp_path,
+        paragraph_text="Bare candidate evidence",
+        start_offset=0,
+        end_offset=4,
+    )
+    shell = create_research_session_shell(reentry.controller)
+    presentation = shell.configure_changed_basis_candidate((bare,))
+    working_set_destination = tmp_path / "50b-ui-working-set.json"
+    note_destination = tmp_path / "50b-ui-working-set-note.json"
+
+    assert presentation.members[0].member_kind == "exact_range_selection"
+    assert presentation.members[0].human_note_text is None
+    bare_path.unlink()
+
+    async with shell.run_test(size=(160, 150)) as pilot:
+        await pilot.pause()
+        candidate_text = str(
+            shell.query_one("#research-changed-basis-candidate", Static).content
+        )
+        assert "Candidate member 1: exact_range_selection" in candidate_text
+        assert "Human note: none attached — saved source passage only" in candidate_text
+        assert "Human note: None" not in candidate_text
+        assert "Excerpt: Bare" in candidate_text
+
+        shell.query_one("#research-changed-basis-rationale", TextArea).text = (
+            "Rationale over the explicitly saved candidate passage."
+        )
+        shell.query_one(
+            "#research-changed-basis-working-set-destination", Input
+        ).value = str(working_set_destination)
+        shell.query_one("#research-changed-basis-note-destination", Input).value = str(
+            note_destination
+        )
+        await _press(shell, pilot, "persist-research-changed-basis-preparation")
+
+        result = shell.last_changed_basis_preparation
+        assert result is not None
+        assert result.appended_items == (bare,)
+        assert result.appended_items[0] is bare
+        assert result.working_set.items[-1] is bare
+        assert result.working_set_persistence.working_set_format == (
+            "pyxis.chromium.research_working_set.v2"
+        )
+        assert result.note_persistence.note_format == (
+            "pyxis.chromium.research_working_set_note.v2"
+        )
+        assert not bare.verification.path.exists()
