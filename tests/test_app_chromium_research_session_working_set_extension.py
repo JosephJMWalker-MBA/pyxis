@@ -13,15 +13,26 @@ from pyxis.app.chromium_research_selection_note_load import load_chromium_resear
 from pyxis.app.chromium_research_selection_note_persistence import (
     persist_chromium_research_paragraph_note,
 )
+from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
 from pyxis.app.chromium_research_session_reentry import reenter_chromium_research_session
 from pyxis.app.chromium_research_session_working_set_extension import (
     ChromiumResearchSessionWorkingSetExtensionPersistenceResult,
     persist_chromium_research_session_working_set_extension,
 )
+from pyxis.app.chromium_research_session_working_set_transition import (
+    create_chromium_research_session_working_set_transition,
+)
+from pyxis.app.chromium_research_session_working_set_transition_persistence import (
+    persist_chromium_research_session_working_set_transition,
+)
 from pyxis.app.chromium_research_working_set_load import load_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_note_load import (
     load_chromium_research_working_set_note,
 )
+from test_app_chromium_research_bare_selection_presentation import (
+    _declared_v2_bare_sequence,
+)
+from test_app_chromium_research_working_set import _loaded_bare_selection
 from test_app_chromium_research_session_reentry import (
     _durable_fixture,
     _persist_loaded_capture,
@@ -97,6 +108,12 @@ def test_extension_preserves_prior_members_then_appends_exact_new_member(tmp_pat
         )
     )
     assert result.working_set.items[-1] is new_member
+    assert result.working_set_persistence.working_set_format == (
+        "pyxis.chromium.research_working_set.v1"
+    )
+    assert result.note_persistence.note_format == (
+        "pyxis.chromium.research_working_set_note.v1"
+    )
 
 
 def test_multiple_appended_members_preserve_exact_order_and_duplicates(tmp_path: Path) -> None:
@@ -377,3 +394,129 @@ def test_loaded_new_member_can_extend_basis_after_its_sidecar_is_deleted(tmp_pat
     assert result.working_set.items[-1] is new_member
     assert result.working_set_persistence.path.exists()
     assert result.note_persistence.path.exists()
+
+
+
+def test_50b_prior_bare_members_select_v2_pair_and_preserve_exact_identity(
+    tmp_path: Path,
+) -> None:
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        _,
+        _,
+        _,
+        _,
+        _,
+        successor_path,
+        _,
+        _,
+        loaded,
+    ) = _declared_v2_bare_sequence(tmp_path)
+    controller = ChromiumResearchSessionController(loaded)
+    prior = controller.declared_endpoint.revision.revised_note.working_set
+    new_member, new_member_path = _new_paragraph_member(
+        tmp_path,
+        stem="50b-prior-bare",
+        paragraph_text="New evidence after a saved bare passage",
+        note_text="Explicit new note after the saved passage.",
+    )
+
+    bare_path.unlink()
+    paragraph_note.verification.path.unlink(missing_ok=True)
+    new_member_path.unlink()
+
+    result = persist_chromium_research_session_working_set_extension(
+        controller,
+        (new_member,),
+        rationale_text="Changed basis while retaining the saved passage.",
+        working_set_destination=tmp_path / "50b-v2-working-set.json",
+        note_destination=tmp_path / "50b-v2-working-set-note.json",
+    )
+
+    assert result.prior_working_set is prior
+    assert len(result.working_set.items) == len(prior.items) + 1
+    assert all(
+        result.working_set.items[index] is item
+        for index, item in enumerate(prior.items)
+    )
+    assert result.working_set.items[-1] is new_member
+    assert any(item is bare for item in result.working_set.items)
+    assert result.working_set_persistence.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert result.note_persistence.note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+
+    loaded_working_set = load_chromium_research_working_set(
+        result.working_set.items,
+        result.working_set_persistence.path,
+    )
+    loaded_note = load_chromium_research_working_set_note(
+        result.working_set.items,
+        result.working_set_persistence.path,
+        result.note_persistence.path,
+    )
+    assert loaded_working_set.verification.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert loaded_note.verification.note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert all(
+        observed is expected
+        for observed, expected in zip(
+            loaded_note.working_set.working_set.items,
+            result.working_set.items,
+        )
+    )
+
+    transition = create_chromium_research_session_working_set_transition(result)
+    transition_path = tmp_path / "50b-transition-must-remain-closed.json"
+    with pytest.raises(ValueError, match="successor working set uses an unsupported format"):
+        persist_chromium_research_session_working_set_transition(
+            transition,
+            prior_edge_source=successor_path,
+            working_set_source=result.working_set_persistence.path,
+            note_source=result.note_persistence.path,
+            destination=transition_path,
+        )
+    assert not transition_path.exists()
+
+
+def test_50b_appended_bare_member_promotes_new_basis_to_explicit_v2_pair(
+    tmp_path: Path,
+) -> None:
+    _, reentry = _session(tmp_path)
+    prior = reentry.controller.declared_endpoint.revision.revised_note.working_set
+    bare, bare_path = _loaded_bare_selection(
+        tmp_path,
+        paragraph_text="Bare candidate evidence",
+        start_offset=0,
+        end_offset=4,
+    )
+    bare_path.unlink()
+
+    result = _persist_extension(
+        tmp_path,
+        reentry,
+        (bare,),
+        rationale_text="Rationale over a newly appended saved passage.",
+        stem="50b-appended-bare",
+    )
+
+    assert result.working_set.items[: len(prior.items)] == prior.items
+    assert all(
+        result.working_set.items[index] is item
+        for index, item in enumerate(prior.items)
+    )
+    assert result.working_set.items[-1] is bare
+    assert result.working_set_persistence.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert result.note_persistence.note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert not bare.verification.path.exists()
