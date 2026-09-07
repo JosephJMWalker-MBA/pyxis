@@ -9,6 +9,9 @@ from .chromium_research_capture_load import load_chromium_page_research_capture
 from .chromium_research_paragraph_text_selection_comparison_note_load import (
     load_chromium_research_paragraph_text_selection_comparison_note,
 )
+from .chromium_research_paragraph_text_selection_load import (
+    load_chromium_research_paragraph_text_selection,
+)
 from .chromium_research_paragraph_text_selection_note_load import (
     load_chromium_research_paragraph_text_selection_note,
 )
@@ -46,6 +49,14 @@ class ChromiumResearchExactRangeNoteReentryLocator:
 
 
 @dataclass(frozen=True, slots=True)
+class ChromiumResearchExactRangeSelectionReentryLocator:
+    """Explicit locations needed to freshly relink one durable 49A bare exact range."""
+
+    capture_source: Path
+    selection_source: Path
+
+
+@dataclass(frozen=True, slots=True)
 class ChromiumResearchComparisonNoteReentryLocator:
     """Explicit ordered locations needed to freshly relink one durable 19D comparison note."""
 
@@ -57,6 +68,7 @@ class ChromiumResearchComparisonNoteReentryLocator:
 ChromiumResearchWorkingSetMemberReentryLocator: TypeAlias = (
     ChromiumResearchParagraphNoteReentryLocator
     | ChromiumResearchExactRangeNoteReentryLocator
+    | ChromiumResearchExactRangeSelectionReentryLocator
     | ChromiumResearchComparisonNoteReentryLocator
 )
 
@@ -160,7 +172,8 @@ def reenter_chromium_research_session(
     reacquisition, current/latest/head selection, or semantic interpretation.
 
     Each working-set member is reconstructed from explicitly supplied capture and
-    note-sidecar paths through the existing 16C/17D/18D/19D loaders. The 23C base is
+    durable member-sidecar paths through the existing 16C/17D/18D/19D/49B loaders.
+    The 23C base is
     then freshly reconstructed from the exact caller-ordered members plus explicit
     20B/21B/22B/23B locations. Any predecessor edges between that base and the
     declaration start are folded in the exact supplied order through public 24C.
@@ -254,6 +267,13 @@ def _load_member(
             locator.note_source,
         )
 
+    if isinstance(locator, ChromiumResearchExactRangeSelectionReentryLocator):
+        source = load_chromium_page_research_capture(locator.capture_source)
+        return load_chromium_research_paragraph_text_selection(
+            source,
+            locator.selection_source,
+        )
+
     if isinstance(locator, ChromiumResearchComparisonNoteReentryLocator):
         first_source = load_chromium_page_research_capture(locator.first_capture_source)
         second_source = load_chromium_page_research_capture(locator.second_capture_source)
@@ -304,6 +324,10 @@ def _validate_member_locator(
     if isinstance(locator, ChromiumResearchExactRangeNoteReentryLocator):
         _require_path(locator.capture_source, f"working_set_members[{index}].capture_source")
         _require_path(locator.note_source, f"working_set_members[{index}].note_source")
+        return
+    if isinstance(locator, ChromiumResearchExactRangeSelectionReentryLocator):
+        _require_path(locator.capture_source, f"working_set_members[{index}].capture_source")
+        _require_path(locator.selection_source, f"working_set_members[{index}].selection_source")
         return
     if isinstance(locator, ChromiumResearchComparisonNoteReentryLocator):
         _require_path(
