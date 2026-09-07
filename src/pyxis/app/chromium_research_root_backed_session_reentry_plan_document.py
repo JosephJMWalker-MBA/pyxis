@@ -11,6 +11,9 @@ from .chromium_research_root_backed_session_reentry import (
     create_chromium_research_root_backed_session_reentry_plan,
     reenter_chromium_research_root_backed_session,
 )
+from .chromium_research_session_reentry import (
+    ChromiumResearchExactRangeSelectionReentryLocator,
+)
 from .chromium_research_session_reentry_plan_document import (
     ChromiumResearchSessionReentryPlanDocumentError,
     _decode_member,
@@ -22,9 +25,15 @@ from .chromium_research_session_reentry_plan_document import (
 )
 
 
-_OVERLAY_FORMAT = (
+_OVERLAY_FORMAT_V1 = (
     "pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v1"
 )
+_OVERLAY_FORMAT_V2 = (
+    "pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v2"
+)
+# Historical private alias retained so existing v1-focused tests and readers do not
+# accidentally treat the addition of v2 as a mutation of the original contract.
+_OVERLAY_FORMAT = _OVERLAY_FORMAT_V1
 _ROOT_KEYS = {
     "format",
     "prior_session_plan_source",
@@ -85,8 +94,10 @@ class ChromiumResearchRootBackedSessionReentryPlanCheckpointError(ValueError):
 def load_chromium_research_root_backed_session_reentry_plan_document(
     source: Path,
 ) -> ChromiumResearchRootBackedSessionReentryPlan:
-    """Decode one strict 35C overlay into the established 35B typed plan.
+    """Decode one strict 35C overlay-v1/v2 into the established 35B typed plan.
 
+    Version 1 retains the historical three note-bearing member kinds exactly.
+    Version 2 adds only the exact-range-selection locator shape needed by 50H.
     The overlay is locator-only operational configuration. Loading it reads the
     overlay itself and the explicitly referenced ordinary 31B v1 plan document, but
     it does not read or verify the research artifacts named by either plan. It does
@@ -126,7 +137,12 @@ def load_chromium_research_root_backed_session_reentry_plan_document(
         )
     _require_exact_keys(document, _ROOT_KEYS, label="overlay document")
 
-    if document["format"] != _OVERLAY_FORMAT:
+    overlay_format = document["format"]
+    if overlay_format == _OVERLAY_FORMAT_V1:
+        member_decoder = _decode_member
+    elif overlay_format == _OVERLAY_FORMAT_V2:
+        member_decoder = _decode_overlay_v2_member
+    else:
         raise ChromiumResearchRootBackedSessionReentryPlanDocumentError(
             "Root-backed re-entry overlay document uses an unsupported format."
         )
@@ -153,7 +169,7 @@ def load_chromium_research_root_backed_session_reentry_plan_document(
         )
     try:
         appended = tuple(
-            _decode_member(member, index=index, base=base)
+            member_decoder(member, index=index, base=base)
             for index, member in enumerate(raw_members)
         )
         declared_sources = _decode_path_array(
@@ -209,7 +225,10 @@ def persist_chromium_research_root_backed_session_reentry_plan_document(
 ) -> ChromiumResearchRootBackedSessionReentryPlanCheckpointResult:
     """Freshly prove and checkpoint one earned 35B session as a 35C overlay.
 
-    The caller supplies the exact ordinary 31B plan-document location to compose and
+    Persistence keeps overlay-v1 for note-only appended-member vocabularies and
+    selects overlay-v2 only when the exact typed plan contains at least one bare
+    exact-range-selection locator. The caller supplies the exact ordinary 31B
+    plan-document location to compose and
     the destination for the new overlay. Pyxis first decodes that ordinary plan and
     requires it to equal the prior plan retained by the earned 35B result. It then
     reconstructs a candidate 35B plan using only that decoded ordinary plan plus the
@@ -321,6 +340,51 @@ def _require_fresh_session_match(
         )
 
 
+def _decode_overlay_v2_member(
+    raw: object,
+    *,
+    index: int,
+    base: Path,
+):
+    """Decode the v2-only bare-selection locator, delegating all v1 kinds unchanged."""
+
+    if isinstance(raw, dict) and raw.get("kind") == "exact_range_selection":
+        _require_exact_keys(
+            raw,
+            {"kind", "capture_source", "selection_source"},
+            label=f"appended_working_set_members[{index}]",
+        )
+        return ChromiumResearchExactRangeSelectionReentryLocator(
+            capture_source=_decode_path(
+                raw["capture_source"],
+                f"appended_working_set_members[{index}].capture_source",
+                base,
+            ),
+            selection_source=_decode_path(
+                raw["selection_source"],
+                f"appended_working_set_members[{index}].selection_source",
+                base,
+            ),
+        )
+    return _decode_member(raw, index=index, base=base)
+
+
+def _encode_overlay_v2_member(
+    member,
+    *,
+    base: Path,
+) -> dict[str, str]:
+    """Encode one v2 member while preserving the three historical v1 shapes."""
+
+    if isinstance(member, ChromiumResearchExactRangeSelectionReentryLocator):
+        return {
+            "kind": "exact_range_selection",
+            "capture_source": _encode_path(member.capture_source, base),
+            "selection_source": _encode_path(member.selection_source, base),
+        }
+    return _encode_member(member, base=base)
+
+
 def _persist_overlay_document(
     plan: ChromiumResearchRootBackedSessionReentryPlan,
     *,
@@ -328,11 +392,17 @@ def _persist_overlay_document(
     destination: Path,
 ) -> ChromiumResearchRootBackedSessionReentryPlanDocumentPersistenceResult:
     base = destination.parent
+    has_bare_selection = any(
+        isinstance(member, ChromiumResearchExactRangeSelectionReentryLocator)
+        for member in plan.appended_working_set_members
+    )
+    overlay_format = _OVERLAY_FORMAT_V2 if has_bare_selection else _OVERLAY_FORMAT_V1
+    member_encoder = _encode_overlay_v2_member if has_bare_selection else _encode_member
     document: dict[str, object] = {
-        "format": _OVERLAY_FORMAT,
+        "format": overlay_format,
         "prior_session_plan_source": _encode_path(prior_session_plan_source, base),
         "appended_working_set_members": [
-            _encode_member(member, base=base)
+            member_encoder(member, base=base)
             for member in plan.appended_working_set_members
         ],
         "changed_working_set_source": _encode_path(

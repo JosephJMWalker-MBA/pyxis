@@ -420,7 +420,7 @@ def test_50f_31b_plan_v1_refuses_bare_locator_serialization_and_decoding(
         load_chromium_research_session_reentry_plan_document(unsupported)
 
 
-def test_50f_35c_overlay_v1_refuses_bare_locator_serialization_and_decoding(
+def test_50f_35c_overlay_v1_refuses_bare_locator_decoding(
     tmp_path: Path,
 ) -> None:
     (
@@ -442,18 +442,6 @@ def test_50f_35c_overlay_v1_refuses_bare_locator_serialization_and_decoding(
         fixture.plan,
         prior_plan,
     )
-    overlay = tmp_path / "50f-must-not-be-overlay-v1.json"
-    with pytest.raises(
-        ChromiumResearchSessionReentryPlanDocumentError,
-        match="unsupported member locator",
-    ):
-        persist_chromium_research_root_backed_session_reentry_plan_document(
-            result.fresh_reentry,
-            prior_session_plan_source=prior_plan,
-            destination=overlay,
-        )
-    assert not overlay.exists()
-
     document = {
         "format": "pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v1",
         "prior_session_plan_source": str(prior_plan),
