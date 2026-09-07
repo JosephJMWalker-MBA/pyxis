@@ -33,7 +33,7 @@ class ChromiumResearchRootBackedSessionReentryPlan:
 
     `prior_session_plan` is one existing 31A locator plan that freshly reconstructs
     the exact ordinary governed session from which the evidence basis was changed.
-    `appended_working_set_members` names only the explicit additional 17D/18D/19D
+    `appended_working_set_members` names only the explicit additional 17D/18D/19D/49B
     members used by that changed basis; the prior members are recovered from the
     freshly reconstructed prior declared endpoint rather than duplicated in this
     plan.
