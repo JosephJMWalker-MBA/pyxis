@@ -26,7 +26,15 @@ _TRANSITION_FORMAT = "pyxis.chromium.research_session_working_set_transition.v1"
 _TRANSITION_MODE = "caller_explicit_transition_to_changed_research_working_set"
 _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
 _WORKING_SET_FORMAT = "pyxis.chromium.research_working_set.v1"
+_WORKING_SET_FORMAT_V2 = "pyxis.chromium.research_working_set.v2"
 _NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
+_NOTE_FORMAT_V2 = "pyxis.chromium.research_working_set_note.v2"
+_SUPPORTED_SUCCESSOR_FORMAT_PAIRS = frozenset(
+    {
+        (_WORKING_SET_FORMAT, _NOTE_FORMAT),
+        (_WORKING_SET_FORMAT_V2, _NOTE_FORMAT_V2),
+    }
+)
 
 
 class ChromiumResearchSessionWorkingSetTransitionIntegrityError(ValueError):
@@ -245,10 +253,11 @@ def _require_same_successor_basis(
     transition: ChromiumResearchSessionWorkingSetTransitionRecord,
     observed: ChromiumPageResearchLoadedWorkingSetNoteRecord,
 ) -> None:
-    if observed.working_set.verification.working_set_format != _WORKING_SET_FORMAT:
-        raise ValueError("fresh successor working set uses an unsupported format.")
-    if observed.verification.note_format != _NOTE_FORMAT:
-        raise ValueError("fresh successor note uses an unsupported format.")
+    if not _is_supported_successor_format_pair(
+        observed.working_set.verification.working_set_format,
+        observed.verification.note_format,
+    ):
+        raise ValueError("fresh successor working-set/note format pair is unsupported.")
     if observed.note.note_text != transition.successor_note.note_text:
         raise ValueError("fresh successor note has different human text.")
     if observed.note.note_mode != transition.successor_note.note_mode:
@@ -325,32 +334,56 @@ def _validate_document(document: Any) -> tuple[dict[str, Any], str]:
         expected_format=_EDGE_FORMAT,
         label="prior endpoint",
     )
-    _validate_reference(
+    _validate_reference_shape(
         record["successor_working_set_reference"],
-        expected_format=_WORKING_SET_FORMAT,
         label="successor working set",
     )
-    _validate_reference(
+    _validate_reference_shape(
         record["successor_note_reference"],
-        expected_format=_NOTE_FORMAT,
         label="successor note",
     )
+    if not _is_supported_successor_format_pair(
+        record["successor_working_set_reference"]["format"],
+        record["successor_note_reference"]["format"],
+    ):
+        raise ChromiumResearchSessionWorkingSetTransitionIntegrityError(
+            "Research working-set-transition successor format pair is unsupported."
+        )
     return record, recorded_sha256
 
 
-def _validate_reference(value: Any, *, expected_format: str, label: str) -> None:
+def _validate_reference_shape(value: Any, *, label: str) -> None:
     if type(value) is not dict or set(value) != {"format", "record_sha256"}:
         raise ChromiumResearchSessionWorkingSetTransitionIntegrityError(
             f"Research working-set-transition {label} reference has an invalid shape."
         )
-    if value["format"] != expected_format:
+    if type(value["format"]) is not str:
         raise ChromiumResearchSessionWorkingSetTransitionIntegrityError(
-            f"Research working-set-transition {label} format is unsupported."
+            f"Research working-set-transition {label} format has an invalid shape."
         )
     if not _is_sha256(value["record_sha256"]):
         raise ChromiumResearchSessionWorkingSetTransitionIntegrityError(
             f"Research working-set-transition {label} SHA-256 has an invalid shape."
         )
+
+
+def _validate_reference(value: Any, *, expected_format: str, label: str) -> None:
+    _validate_reference_shape(value, label=label)
+    if value["format"] != expected_format:
+        raise ChromiumResearchSessionWorkingSetTransitionIntegrityError(
+            f"Research working-set-transition {label} format is unsupported."
+        )
+
+
+def _is_supported_successor_format_pair(
+    working_set_format: object,
+    note_format: object,
+) -> bool:
+    return (
+        type(working_set_format) is str
+        and type(note_format) is str
+        and (working_set_format, note_format) in _SUPPORTED_SUCCESSOR_FORMAT_PAIRS
+    )
 
 
 def _is_sha256(value: Any) -> bool:
