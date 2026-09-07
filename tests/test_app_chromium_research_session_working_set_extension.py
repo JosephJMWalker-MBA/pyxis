@@ -473,7 +473,10 @@ def test_50b_prior_bare_members_select_v2_pair_and_preserve_exact_identity(
         )
     )
 
-    transition = create_chromium_research_session_working_set_transition(result)
+    transition = create_chromium_research_session_working_set_transition(
+        controller,
+        result,
+    )
     transition_path = tmp_path / "50b-transition-must-remain-closed.json"
     with pytest.raises(ValueError, match="successor working set uses an unsupported format"):
         persist_chromium_research_session_working_set_transition(
