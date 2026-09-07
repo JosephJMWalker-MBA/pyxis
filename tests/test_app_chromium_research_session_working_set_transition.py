@@ -1,11 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import fields
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
+from pyxis.app.chromium_research_session_controller import ChromiumResearchSessionController
+from pyxis.app.chromium_research_session_working_set_extension import (
+    persist_chromium_research_session_working_set_extension,
+)
+from pyxis.app.chromium_research_session_working_set_transition_revision_root import (
+    ChromiumResearchSessionWorkingSetTransitionRevisionRootError,
+    create_chromium_research_session_working_set_transition_revision_root,
+)
 from pyxis.app.chromium_research_session_working_set_transition import (
     ChromiumResearchSessionWorkingSetTransitionError,
     ChromiumResearchSessionWorkingSetTransitionRecord,
@@ -20,11 +29,77 @@ from pyxis.app.chromium_research_session_working_set_transition_persistence impo
     persist_chromium_research_session_working_set_transition,
     verify_chromium_research_session_working_set_transition,
 )
+from test_app_chromium_research_bare_selection_presentation import (
+    _declared_v2_bare_sequence,
+)
 from test_app_chromium_research_session_working_set_extension import (
     _new_paragraph_member,
     _persist_extension,
     _session,
 )
+
+
+def _canonical_bytes(payload: object) -> bytes:
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+
+
+def _write_recomputed_transition_document(path: Path, document: dict[str, object]) -> None:
+    document["transition_record_sha256"] = hashlib.sha256(
+        _canonical_bytes(document["transition_record"])
+    ).hexdigest()
+    path.write_bytes(_canonical_bytes(document) + b"\n")
+
+
+def _prepared_v2_transition(tmp_path: Path):
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        _,
+        _,
+        _,
+        _,
+        _,
+        successor_path,
+        _,
+        _,
+        loaded,
+    ) = _declared_v2_bare_sequence(tmp_path)
+    controller = ChromiumResearchSessionController(loaded)
+    new_member, new_member_path = _new_paragraph_member(
+        tmp_path,
+        stem="50c",
+        paragraph_text="Additional evidence after saved passage",
+        note_text="Additional explicit evidence note.",
+    )
+    prepared = persist_chromium_research_session_working_set_extension(
+        controller,
+        (new_member,),
+        rationale_text="Changed rationale retaining a bare saved passage.",
+        working_set_destination=tmp_path / "50c-v2-working-set.json",
+        note_destination=tmp_path / "50c-v2-working-set-note.json",
+    )
+    transition = create_chromium_research_session_working_set_transition(
+        controller,
+        prepared,
+    )
+    return (
+        paragraph_note,
+        bare,
+        bare_path,
+        new_member,
+        new_member_path,
+        controller,
+        successor_path,
+        prepared,
+        transition,
+    )
 
 
 def _prepared_transition(tmp_path: Path, *, stem: str = "bridge"):
@@ -384,3 +459,184 @@ def test_loaded_transition_remains_application_evidence_after_files_are_removed(
     assert loaded.verification.transition_record_sha256 == expected_transition_sha
     assert loaded.successor_note.note.note_text == expected_note_text
     assert loaded.prior_endpoint.revision.revised_note.note_text
+
+
+
+def test_50c_v2_successor_pair_uses_existing_transition_v1_and_freshly_relinks(
+    tmp_path: Path,
+) -> None:
+    (
+        paragraph_note,
+        bare,
+        bare_path,
+        new_member,
+        new_member_path,
+        controller,
+        prior_edge_path,
+        prepared,
+        transition,
+    ) = _prepared_v2_transition(tmp_path)
+
+    bare_path.unlink(missing_ok=True)
+    paragraph_note.verification.path.unlink(missing_ok=True)
+    new_member_path.unlink(missing_ok=True)
+
+    destination = tmp_path / "50c-transition-v1.json"
+    persistence = persist_chromium_research_session_working_set_transition(
+        transition,
+        prior_edge_source=prior_edge_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        destination=destination,
+    )
+    verification = verify_chromium_research_session_working_set_transition(destination)
+
+    assert persistence.transition_format == (
+        "pyxis.chromium.research_session_working_set_transition.v1"
+    )
+    assert verification.transition_format == persistence.transition_format
+    assert verification.successor_working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert verification.successor_note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert verification.successor_working_set_record_sha256 == (
+        prepared.working_set_persistence.working_set_record_sha256
+    )
+    assert verification.successor_note_record_sha256 == (
+        prepared.note_persistence.note_record_sha256
+    )
+
+    raw = destination.read_text(encoding="utf-8")
+    assert bare.selection.selected_text not in raw
+    assert prepared.note.note_text not in raw
+    assert str(prepared.working_set_persistence.path) not in raw
+    assert str(prepared.note_persistence.path) not in raw
+
+    loaded = load_chromium_research_session_working_set_transition(
+        controller.declared_endpoint,
+        prepared.working_set.items,
+        prior_edge_source=prior_edge_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        transition_source=destination,
+    )
+    assert loaded.verification.transition_format == persistence.transition_format
+    assert loaded.successor_note.verification.note_format == (
+        "pyxis.chromium.research_working_set_note.v2"
+    )
+    assert loaded.successor_note.working_set.verification.working_set_format == (
+        "pyxis.chromium.research_working_set.v2"
+    )
+    assert all(
+        observed is expected
+        for observed, expected in zip(
+            loaded.successor_note.working_set.working_set.items,
+            prepared.working_set.items,
+        )
+    )
+    assert loaded.successor_note.working_set.working_set.items[-1] is new_member
+    assert not bare.verification.path.exists()
+    assert not new_member.verification.path.exists()
+
+
+@pytest.mark.parametrize(
+    ("working_set_format", "note_format"),
+    (
+        (
+            "pyxis.chromium.research_working_set.v1",
+            "pyxis.chromium.research_working_set_note.v2",
+        ),
+        (
+            "pyxis.chromium.research_working_set.v2",
+            "pyxis.chromium.research_working_set_note.v1",
+        ),
+    ),
+)
+def test_50c_file_valid_cross_version_successor_pair_rejects(
+    tmp_path: Path,
+    working_set_format: str,
+    note_format: str,
+) -> None:
+    *_, controller, prior_edge_path, prepared, transition = _prepared_v2_transition(tmp_path)
+    destination = tmp_path / "50c-cross-version-transition.json"
+    persist_chromium_research_session_working_set_transition(
+        transition,
+        prior_edge_source=prior_edge_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        destination=destination,
+    )
+    document = json.loads(destination.read_text(encoding="utf-8"))
+    record = document["transition_record"]
+    record["successor_working_set_reference"]["format"] = working_set_format
+    record["successor_note_reference"]["format"] = note_format
+    _write_recomputed_transition_document(destination, document)
+
+    with pytest.raises(
+        ChromiumResearchSessionWorkingSetTransitionIntegrityError,
+        match="successor format pair is unsupported",
+    ):
+        verify_chromium_research_session_working_set_transition(destination)
+
+
+def test_50c_file_valid_wrong_v2_successor_digest_fails_fresh_relink(
+    tmp_path: Path,
+) -> None:
+    *_, controller, prior_edge_path, prepared, transition = _prepared_v2_transition(tmp_path)
+    destination = tmp_path / "50c-wrong-digest-transition.json"
+    persist_chromium_research_session_working_set_transition(
+        transition,
+        prior_edge_source=prior_edge_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        destination=destination,
+    )
+    document = json.loads(destination.read_text(encoding="utf-8"))
+    document["transition_record"]["successor_note_reference"]["record_sha256"] = "f" * 64
+    _write_recomputed_transition_document(destination, document)
+
+    verified = verify_chromium_research_session_working_set_transition(destination)
+    assert verified.successor_note_format == "pyxis.chromium.research_working_set_note.v2"
+
+    with pytest.raises(ValueError, match="different successor-note record"):
+        load_chromium_research_session_working_set_transition(
+            controller.declared_endpoint,
+            prepared.working_set.items,
+            prior_edge_source=prior_edge_path,
+            working_set_source=prepared.working_set_persistence.path,
+            note_source=prepared.note_persistence.path,
+            transition_source=destination,
+        )
+
+
+def test_50c_existing_34a_remains_closed_to_v2_backed_transition(
+    tmp_path: Path,
+) -> None:
+    *_, controller, prior_edge_path, prepared, transition = _prepared_v2_transition(tmp_path)
+    destination = tmp_path / "50c-transition-before-root.json"
+    persist_chromium_research_session_working_set_transition(
+        transition,
+        prior_edge_source=prior_edge_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        destination=destination,
+    )
+    loaded = load_chromium_research_session_working_set_transition(
+        controller.declared_endpoint,
+        prepared.working_set.items,
+        prior_edge_source=prior_edge_path,
+        working_set_source=prepared.working_set_persistence.path,
+        note_source=prepared.note_persistence.path,
+        transition_source=destination,
+    )
+
+    with pytest.raises(
+        ChromiumResearchSessionWorkingSetTransitionRevisionRootError,
+        match="successor working set uses an unsupported format",
+    ):
+        create_chromium_research_session_working_set_transition_revision_root(
+            loaded,
+            revised_note_text="First revision after the v2-backed transition.",
+        )

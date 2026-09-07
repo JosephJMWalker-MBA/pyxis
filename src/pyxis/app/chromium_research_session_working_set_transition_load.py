@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .chromium_research_session_working_set_transition_persistence import (
     ChromiumResearchSessionWorkingSetTransitionVerificationEvidence,
+    _is_supported_successor_format_pair,
     verify_chromium_research_session_working_set_transition,
 )
 from .chromium_research_working_set import ChromiumPageResearchWorkingSetItem
@@ -23,8 +24,6 @@ from .chromium_research_working_set_note_revision_edge_load import (
 _TRANSITION_FORMAT = "pyxis.chromium.research_session_working_set_transition.v1"
 _TRANSITION_MODE = "caller_explicit_transition_to_changed_research_working_set"
 _EDGE_FORMAT = "pyxis.chromium.research_working_set_note_revision_edge.v1"
-_WORKING_SET_FORMAT = "pyxis.chromium.research_working_set.v1"
-_NOTE_FORMAT = "pyxis.chromium.research_working_set_note.v1"
 
 
 class ChromiumResearchSessionWorkingSetTransitionRelinkError(ValueError):
@@ -131,13 +130,12 @@ def load_chromium_research_session_working_set_transition(
         _require_path(working_set_source, label="working_set_source"),
         _require_path(note_source, label="note_source"),
     )
-    if fresh_successor.working_set.verification.working_set_format != _WORKING_SET_FORMAT:
+    if not _is_supported_successor_format_pair(
+        fresh_successor.working_set.verification.working_set_format,
+        fresh_successor.verification.note_format,
+    ):
         raise ChromiumResearchSessionWorkingSetTransitionRelinkError(
-            "Fresh successor working set uses an unsupported format."
-        )
-    if fresh_successor.verification.note_format != _NOTE_FORMAT:
-        raise ChromiumResearchSessionWorkingSetTransitionRelinkError(
-            "Fresh successor note uses an unsupported format."
+            "Fresh successor working-set/note format pair is unsupported."
         )
     if (
         verification.successor_working_set_format
