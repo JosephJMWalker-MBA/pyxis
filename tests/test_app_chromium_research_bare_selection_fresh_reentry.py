@@ -312,7 +312,7 @@ def test_50f_wrong_capture_fails_49b_attachment_inside_fresh_reentry(
 
     with pytest.raises(
         ChromiumResearchRootBackedSessionReentryError,
-        match="appended working-set member 0",
+        match="Appended working-set member 0",
     ):
         verify_chromium_research_first_changed_basis_root_backed_reentry(
             adoption,
