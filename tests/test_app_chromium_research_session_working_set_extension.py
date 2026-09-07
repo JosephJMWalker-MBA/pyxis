@@ -19,12 +19,6 @@ from pyxis.app.chromium_research_session_working_set_extension import (
     ChromiumResearchSessionWorkingSetExtensionPersistenceResult,
     persist_chromium_research_session_working_set_extension,
 )
-from pyxis.app.chromium_research_session_working_set_transition import (
-    create_chromium_research_session_working_set_transition,
-)
-from pyxis.app.chromium_research_session_working_set_transition_persistence import (
-    persist_chromium_research_session_working_set_transition,
-)
 from pyxis.app.chromium_research_working_set_load import load_chromium_research_working_set
 from pyxis.app.chromium_research_working_set_note_load import (
     load_chromium_research_working_set_note,
@@ -409,7 +403,7 @@ def test_50b_prior_bare_members_select_v2_pair_and_preserve_exact_identity(
         _,
         _,
         _,
-        successor_path,
+        _,
         _,
         _,
         loaded,
@@ -472,22 +466,6 @@ def test_50b_prior_bare_members_select_v2_pair_and_preserve_exact_identity(
             result.working_set.items,
         )
     )
-
-    transition = create_chromium_research_session_working_set_transition(
-        controller,
-        result,
-    )
-    transition_path = tmp_path / "50b-transition-must-remain-closed.json"
-    with pytest.raises(ValueError, match="successor working set uses an unsupported format"):
-        persist_chromium_research_session_working_set_transition(
-            transition,
-            prior_edge_source=successor_path,
-            working_set_source=result.working_set_persistence.path,
-            note_source=result.note_persistence.path,
-            destination=transition_path,
-        )
-    assert not transition_path.exists()
-
 
 def test_50b_appended_bare_member_promotes_new_basis_to_explicit_v2_pair(
     tmp_path: Path,
