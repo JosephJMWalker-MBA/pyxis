@@ -15,6 +15,9 @@ from pyxis.app.chromium_research_first_changed_basis_session_adoption import (
 from pyxis.app.chromium_research_paragraph_text_selection_comparison_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord,
 )
+from pyxis.app.chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from pyxis.app.chromium_research_paragraph_text_selection_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord,
 )
@@ -39,11 +42,25 @@ def _member_kind(item: ChromiumPageResearchWorkingSetItem) -> str:
         return "exact-range note"
     if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord):
         return "comparison note"
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        return "exact-range selection"
     raise TypeError("appended item must be a supported loaded working-set record.")
 
 
-def _member_note_text(item: ChromiumPageResearchWorkingSetItem) -> str:
-    return item.note.note_text
+def _member_summary(
+    item: ChromiumPageResearchWorkingSetItem,
+    *,
+    index: int,
+    kind: str,
+) -> str:
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        return (
+            f"Appended member {index} — {kind}\n"
+            "Human note: none attached — saved source passage only\n"
+            "Selected text:\n"
+            f"{item.selection.selected_text}"
+        )
+    return f"Appended member {index} — {kind}\nNote text:\n{item.note.note_text}"
 
 
 def _summary(
@@ -125,7 +142,7 @@ class ResearchFirstChangedBasisRootBackedReentryControls(Vertical):
         for index, item in enumerate(self.appended_items):
             kind = _member_kind(item)
             yield Static(
-                f"Appended member {index} — {kind}\nNote text:\n{_member_note_text(item)}",
+                _member_summary(item, index=index, kind=kind),
                 classes="research-first-changed-basis-reentry-member-summary",
                 id=f"research-first-changed-basis-reentry-member-{index}-summary",
                 markup=False,
@@ -150,12 +167,20 @@ class ResearchFirstChangedBasisRootBackedReentryControls(Vertical):
                     classes="research-first-changed-basis-reentry-input",
                     disabled=locked,
                 )
-            yield Input(
-                placeholder="Explicit current note sidecar path",
-                id=f"research-first-changed-basis-reentry-member-{index}-note-source",
-                classes="research-first-changed-basis-reentry-input",
-                disabled=locked,
-            )
+            if kind == "exact-range selection":
+                yield Input(
+                    placeholder="Explicit current exact-range-selection sidecar path",
+                    id=f"research-first-changed-basis-reentry-member-{index}-selection-source",
+                    classes="research-first-changed-basis-reentry-input",
+                    disabled=locked,
+                )
+            else:
+                yield Input(
+                    placeholder="Explicit current note sidecar path",
+                    id=f"research-first-changed-basis-reentry-member-{index}-note-source",
+                    classes="research-first-changed-basis-reentry-input",
+                    disabled=locked,
+                )
 
         fields = (
             ("changed-working-set-source", "Explicit current changed working-set path"),
