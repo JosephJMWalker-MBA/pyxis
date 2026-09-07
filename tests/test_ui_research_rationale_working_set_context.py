@@ -22,6 +22,9 @@ from pyxis.ui.chromium_research_rationale_working_set_textual import (
 from pyxis.ui.chromium_research_revision_edge_sequence_textual import (
     ResearchRevisionEdgeSequenceDetail,
 )
+from test_app_chromium_research_bare_selection_presentation import (
+    _declared_v2_bare_sequence,
+)
 from test_app_chromium_research_working_set_note_revision_edge_sequence_presentation import (
     _loaded_declared_sequence,
 )
@@ -273,3 +276,96 @@ async def test_workspace_runtime_rerun_preserves_exact_context_presentations(
         assert shell.research_working_set_contexts == (first, second)
         details = tuple(shell.query(ResearchRationaleWorkingSetDetail))
         assert tuple(detail.presentation for detail in details) == (first, second)
+
+
+
+def _bare_research(tmp_path: Path):
+    *_, loaded = _declared_v2_bare_sequence(tmp_path)
+    segment = present_chromium_research_working_set_note_revision_edge_sequence_declaration(
+        loaded
+    )
+    context = present_chromium_research_revision_edge_working_set_context(
+        loaded,
+        declared_position=1,
+    )
+    return segment, context
+
+
+@pytest.mark.asyncio
+async def test_50a_textual_context_renders_bare_passages_without_fake_note_widgets(
+    tmp_path: Path,
+) -> None:
+    segment, context = _bare_research(tmp_path)
+    _, _, workspace = _workspace(tmp_path)
+    shell = create_workspace_shell(
+        workspace,
+        research_presentation=segment,
+        research_working_set_contexts=(context,),
+    )
+
+    async with shell.run_test(size=(150, 90)) as pilot:
+        await pilot.pause()
+        detail = shell.query_one(ResearchRationaleWorkingSetDetail)
+        static_widgets = tuple(detail.query(Static))
+        rendered = tuple(str(widget.content) for widget in static_widgets)
+
+        assert "Working-set member 1: exact_range_selection" in rendered
+        assert "Working-set member 3: exact_range_selection" in rendered
+        assert rendered.count("No human note attached — saved source passage only") == 2
+
+        note_texts = tuple(
+            str(widget.content)
+            for widget in static_widgets
+            if widget.has_class("research-working-set-note-text")
+        )
+        absence_notices = tuple(
+            str(widget.content)
+            for widget in static_widgets
+            if widget.has_class("research-working-set-note-absence")
+        )
+        source_texts = tuple(
+            str(widget.content)
+            for widget in static_widgets
+            if widget.has_class("research-source-excerpt-text")
+        )
+
+        assert note_texts == ("  Whole paragraph matters.  ",)
+        assert absence_notices == (
+            "No human note attached — saved source passage only",
+            "No human note attached — saved source passage only",
+        )
+        assert source_texts == ("Gamma", "Alpha evidence paragraph", "Gamma")
+        assert "Gamma" not in note_texts
+
+
+def test_50a_member_kind_and_note_presence_must_remain_coherent(tmp_path: Path) -> None:
+    _, context = _bare_research(tmp_path)
+    first_bare, paragraph_note, second_bare = context.members
+
+    fake_note_on_bare = replace(first_bare, human_note_text="")
+    with pytest.raises(ValueError, match="must not contain human note text"):
+        ResearchRationaleWorkingSetDetail(
+            replace(
+                context,
+                members=(fake_note_on_bare, paragraph_note, second_bare),
+            )
+        )
+
+    missing_note_on_note_member = replace(paragraph_note, human_note_text=None)
+    with pytest.raises(TypeError, match="Paragraph-note human note text must be a string"):
+        ResearchRationaleWorkingSetDetail(
+            replace(
+                context,
+                members=(first_bare, missing_note_on_note_member, second_bare),
+            )
+        )
+
+    authored_empty_note = replace(paragraph_note, human_note_text="")
+    detail = ResearchRationaleWorkingSetDetail(
+        replace(
+            context,
+            members=(first_bare, authored_empty_note, second_bare),
+        )
+    )
+    assert detail.presentation.members[0].human_note_text is None
+    assert detail.presentation.members[1].human_note_text == ""
