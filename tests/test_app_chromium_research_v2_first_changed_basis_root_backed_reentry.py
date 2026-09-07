@@ -83,6 +83,7 @@ def test_50f_fresh_process_reentry_reconstructs_bare_saved_passage(
         stem="50f",
     )
     transition = persist_chromium_research_first_changed_basis_transition(
+        ordinary_reentry.controller,
         ordinary_reentry,
         prepared,
         prior_edge_source=fixture.v6_path,
