@@ -71,14 +71,10 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
         assert "Note text:" not in member_summary
         assert "None" not in member_summary
 
-        capture_input = shell.query_one(
-            "#research-first-changed-basis-reentry-member-0-capture-source",
-            Input,
-        )
-        selection_input = shell.query_one(
-            "#research-first-changed-basis-reentry-member-0-selection-source",
-            Input,
-        )
+        capture_selector = "#research-first-changed-basis-reentry-member-0-capture-source"
+        selection_selector = "#research-first-changed-basis-reentry-member-0-selection-source"
+        capture_input = shell.query_one(capture_selector, Input)
+        selection_input = shell.query_one(selection_selector, Input)
         assert capture_input.value == ""
         assert selection_input.value == ""
         assert len(
@@ -111,7 +107,9 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
                 Input,
             ).value = str(path)
 
-        selection_input.value = str(original_locator.selection_source)
+        shell.query_one(selection_selector, Input).value = str(
+            original_locator.selection_source
+        )
         mounted_controller = shell.research_controller
         mounted_session = shell.research_session
 
@@ -132,8 +130,10 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
             Button,
         ).disabled
 
-        capture_input.value = str(original_locator.capture_source)
-        selection_input.value = ""
+        shell.query_one(capture_selector, Input).value = str(
+            original_locator.capture_source
+        )
+        shell.query_one(selection_selector, Input).value = ""
         await _press(
             shell,
             pilot,
@@ -151,7 +151,12 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
             Button,
         ).disabled
 
-        selection_input.value = str(original_locator.selection_source)
+        shell.query_one(capture_selector, Input).value = str(
+            original_locator.capture_source
+        )
+        shell.query_one(selection_selector, Input).value = str(
+            original_locator.selection_source
+        )
         await _press(
             shell,
             pilot,
@@ -170,8 +175,8 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
             typed_locator,
             ChromiumResearchExactRangeSelectionReentryLocator,
         )
-        assert typed_locator.capture_source == Path(capture_input.value)
-        assert typed_locator.selection_source == Path(selection_input.value)
+        assert typed_locator.capture_source == original_locator.capture_source
+        assert typed_locator.selection_source == original_locator.selection_source
 
         fresh_bare = result.fresh_reentry.loaded_appended_members[0]
         assert isinstance(
@@ -190,8 +195,8 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
         )
 
         assert controls.prior_result is result
-        assert capture_input.disabled
-        assert selection_input.disabled
+        assert shell.query_one(capture_selector, Input).disabled
+        assert shell.query_one(selection_selector, Input).disabled
         assert shell.query_one(
             "#verify-research-first-changed-basis-root-backed-reentry",
             Button,
