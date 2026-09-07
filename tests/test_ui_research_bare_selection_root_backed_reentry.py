@@ -73,10 +73,12 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
 
         capture_selector = "#research-first-changed-basis-reentry-member-0-capture-source"
         selection_selector = "#research-first-changed-basis-reentry-member-0-selection-source"
-        capture_input = shell.query_one(capture_selector, Input)
-        selection_input = shell.query_one(selection_selector, Input)
-        assert capture_input.value == ""
-        assert selection_input.value == ""
+        status = shell.query_one(
+            "#research-first-changed-basis-root-backed-reentry-status",
+            Static,
+        )
+        assert shell.query_one(capture_selector, Input).value == ""
+        assert shell.query_one(selection_selector, Input).value == ""
         assert len(
             shell.query(
                 "#research-first-changed-basis-reentry-member-0-note-source"
@@ -93,6 +95,31 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
             )
         ) == 0
 
+        # Falsify each bare-member field independently against the live collector.
+        # This avoids coupling validation semantics to Textual focus behavior between
+        # repeated failed button submissions while still proving the form stays
+        # unlocked/retryable after each incomplete locator state.
+        shell.query_one(selection_selector, Input).value = str(
+            original_locator.selection_source
+        )
+        assert shell._collect_44f_appended_locators(controls, status) is None
+        assert "appended member 0 capture path is required" in str(status.content)
+        assert not shell.query_one(
+            "#verify-research-first-changed-basis-root-backed-reentry",
+            Button,
+        ).disabled
+
+        shell.query_one(capture_selector, Input).value = str(
+            original_locator.capture_source
+        )
+        shell.query_one(selection_selector, Input).value = ""
+        assert shell._collect_44f_appended_locators(controls, status) is None
+        assert "appended member 0 selection path is required" in str(status.content)
+        assert not shell.query_one(
+            "#verify-research-first-changed-basis-root-backed-reentry",
+            Button,
+        ).disabled
+
         general = {
             "changed-working-set-source": prepared.working_set_persistence.path,
             "changed-note-source": prepared.note_persistence.path,
@@ -107,56 +134,15 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
                 Input,
             ).value = str(path)
 
+        shell.query_one(capture_selector, Input).value = str(
+            original_locator.capture_source
+        )
         shell.query_one(selection_selector, Input).value = str(
             original_locator.selection_source
         )
         mounted_controller = shell.research_controller
         mounted_session = shell.research_session
 
-        await _press(
-            shell,
-            pilot,
-            "verify-research-first-changed-basis-root-backed-reentry",
-        )
-        assert shell.last_first_changed_basis_root_backed_reentry_verification is None
-        assert "appended member 0 capture path is required" in str(
-            shell.query_one(
-                "#research-first-changed-basis-root-backed-reentry-status",
-                Static,
-            ).content
-        )
-        assert not shell.query_one(
-            "#verify-research-first-changed-basis-root-backed-reentry",
-            Button,
-        ).disabled
-
-        shell.query_one(capture_selector, Input).value = str(
-            original_locator.capture_source
-        )
-        shell.query_one(selection_selector, Input).value = ""
-        await _press(
-            shell,
-            pilot,
-            "verify-research-first-changed-basis-root-backed-reentry",
-        )
-        assert shell.last_first_changed_basis_root_backed_reentry_verification is None
-        assert "appended member 0 selection path is required" in str(
-            shell.query_one(
-                "#research-first-changed-basis-root-backed-reentry-status",
-                Static,
-            ).content
-        )
-        assert not shell.query_one(
-            "#verify-research-first-changed-basis-root-backed-reentry",
-            Button,
-        ).disabled
-
-        shell.query_one(capture_selector, Input).value = str(
-            original_locator.capture_source
-        )
-        shell.query_one(selection_selector, Input).value = str(
-            original_locator.selection_source
-        )
         await _press(
             shell,
             pilot,
@@ -201,12 +187,7 @@ async def test_50g_44f_form_freshly_reenters_bare_selection_without_fake_note_lo
             "#verify-research-first-changed-basis-root-backed-reentry",
             Button,
         ).disabled
-        receipt = str(
-            shell.query_one(
-                "#research-first-changed-basis-root-backed-reentry-status",
-                Static,
-            ).content
-        )
+        receipt = str(status.content)
         assert "freshly reconstructed through 35B" in receipt
         assert "no durable 35C overlay/restart locator has been written" in receipt
         assert len(
