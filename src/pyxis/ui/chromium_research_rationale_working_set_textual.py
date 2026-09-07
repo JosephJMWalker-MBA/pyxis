@@ -68,15 +68,26 @@ def _require_member(
         raise TypeError("Working-set members must use the 27C presentation type.")
     if member.member_position != expected_position:
         raise ValueError("Working-set member positions must remain contiguous.")
-    if type(member.human_note_text) is not str:
-        raise TypeError("Working-set human note text must be a string.")
-
     expected: tuple[str, tuple[str, ...], tuple[str, ...]]
-    if member.member_kind == "paragraph_note":
+    if member.member_kind == "exact_range_selection":
+        if member.human_note_text is not None:
+            raise ValueError("Bare exact-range selection must not contain human note text.")
+        expected = (
+            "exact_range_selection",
+            ("selection",),
+            ("exact_returned_text_range",),
+        )
+    elif member.member_kind == "paragraph_note":
+        if type(member.human_note_text) is not str:
+            raise TypeError("Paragraph-note human note text must be a string.")
         expected = ("paragraph_note", ("paragraph",), ("returned_paragraph_prefix",))
     elif member.member_kind == "exact_range_note":
+        if type(member.human_note_text) is not str:
+            raise TypeError("Exact-range-note human note text must be a string.")
         expected = ("exact_range_note", ("selection",), ("exact_returned_text_range",))
     elif member.member_kind == "comparison_note":
+        if type(member.human_note_text) is not str:
+            raise TypeError("Comparison-note human note text must be a string.")
         expected = (
             "comparison_note",
             ("first_selection", "second_selection"),
@@ -182,6 +193,7 @@ class ResearchRationaleWorkingSetDetail(Vertical):
     .research-working-set-context-title,
     .research-working-set-member-title,
     .research-working-set-note-label,
+    .research-working-set-note-absence,
     .research-source-excerpt-title,
     .research-rationale-context-label {
         text-style: bold;
@@ -239,16 +251,23 @@ class ResearchRationaleWorkingSetDetail(Vertical):
                     classes="research-working-set-member-title",
                     markup=False,
                 )
-                yield Static(
-                    "Human note on selected source evidence — not source evidence",
-                    classes="research-working-set-note-label",
-                    markup=False,
-                )
-                yield Static(
-                    member.human_note_text,
-                    classes="research-working-set-note-text",
-                    markup=False,
-                )
+                if member.human_note_text is None:
+                    yield Static(
+                        "No human note attached — saved source passage only",
+                        classes="research-working-set-note-absence",
+                        markup=False,
+                    )
+                else:
+                    yield Static(
+                        "Human note on selected source evidence — not source evidence",
+                        classes="research-working-set-note-label",
+                        markup=False,
+                    )
+                    yield Static(
+                        member.human_note_text,
+                        classes="research-working-set-note-text",
+                        markup=False,
+                    )
                 for excerpt in member.excerpts:
                     with Vertical(classes="research-source-excerpt"):
                         if excerpt.excerpt_kind == "returned_paragraph_prefix":

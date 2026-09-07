@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from .chromium_research_paragraph_text_selection_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord,
 )
@@ -53,7 +56,7 @@ class ChromiumPageResearchWorkingSetMemberPresentation:
 
     member_position: int
     member_kind: str
-    human_note_text: str
+    human_note_text: str | None
     excerpts: tuple[ChromiumPageResearchSourceExcerptPresentation, ...]
 
 
@@ -88,7 +91,7 @@ def present_chromium_research_revision_edge_working_set_context(
     browser reads. The existing 27A presentation boundary first re-establishes the
     declaration/sequence relationship. The chosen edge's working set is then
     revalidated through the existing public 20A constructor before source excerpts
-    and human member notes are projected into small immutable presentation records.
+    and optional human member notes are projected into small immutable presentation records.
     """
 
     if not isinstance(
@@ -158,6 +161,17 @@ def _present_working_set_member(item: object, *, position: int) -> ChromiumPageR
             human_note_text=item.note.note_text,
             excerpts=(
                 _paragraph_excerpt(selection, role="paragraph"),
+            ),
+        )
+
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        selection = item.selection
+        return ChromiumPageResearchWorkingSetMemberPresentation(
+            member_position=position,
+            member_kind="exact_range_selection",
+            human_note_text=None,
+            excerpts=(
+                _range_excerpt(selection, role="selection"),
             ),
         )
 
