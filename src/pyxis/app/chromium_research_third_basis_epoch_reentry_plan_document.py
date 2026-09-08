@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .chromium_research_session_reentry import (
+    ChromiumResearchExactRangeSelectionReentryLocator,
+)
 from .chromium_research_session_reentry_plan_document import (
     ChromiumResearchSessionReentryPlanDocumentError,
     _decode_member,
@@ -21,7 +24,15 @@ from .chromium_research_third_basis_epoch_reentry import (
 )
 
 
-_OVERLAY_FORMAT = "pyxis.chromium.research_third_basis_epoch_reentry_locator_overlay.v1"
+_OVERLAY_FORMAT_V1 = (
+    "pyxis.chromium.research_third_basis_epoch_reentry_locator_overlay.v1"
+)
+_OVERLAY_FORMAT_V2 = (
+    "pyxis.chromium.research_third_basis_epoch_reentry_locator_overlay.v2"
+)
+# Historical alias retained so v1-focused tests/readers do not accidentally treat
+# the addition of v2 as a mutation of the original contract.
+_OVERLAY_FORMAT = _OVERLAY_FORMAT_V1
 _ROOT_KEYS = {
     "format",
     "prior_second_basis_epoch_continuation_overlay_source",
@@ -44,6 +55,7 @@ class ChromiumResearchThirdBasisEpochReentryPlanDocumentPersistenceResult:
     """
 
     plan: ChromiumResearchThirdBasisEpochReentryPlan
+    overlay_format: str
     path: Path
 
 
@@ -68,8 +80,10 @@ class ChromiumResearchThirdBasisEpochReentryPlanCheckpointError(ValueError):
 def load_chromium_research_third_basis_epoch_reentry_plan_document(
     source: Path,
 ) -> ChromiumResearchThirdBasisEpochReentryPlan:
-    """Decode one strict 40B overlay into the established 40A typed plan.
+    """Decode one strict 40B overlay-v1/v2 into the established 40A typed plan.
 
+    Version 1 retains the historical three note-bearing member kinds exactly.
+    Version 2 adds only the exact-range-selection locator shape needed after 50Q.
     Loading is deliberately configuration-only. It reads only this overlay document.
     It does not open the referenced prior 37C/37D continuation overlay, member sources,
     changed working-set/note records, transition, third root, declared edges, or
@@ -108,7 +122,12 @@ def load_chromium_research_third_basis_epoch_reentry_plan_document(
         )
     _require_exact_keys(document, _ROOT_KEYS, label="overlay document")
 
-    if document["format"] != _OVERLAY_FORMAT:
+    overlay_format = document["format"]
+    if overlay_format == _OVERLAY_FORMAT_V1:
+        member_decoder = _decode_member
+    elif overlay_format == _OVERLAY_FORMAT_V2:
+        member_decoder = _decode_overlay_v2_member
+    else:
         raise ChromiumResearchThirdBasisEpochReentryPlanDocumentError(
             "Third-basis-epoch re-entry overlay uses an unsupported format."
         )
@@ -122,7 +141,7 @@ def load_chromium_research_third_basis_epoch_reentry_plan_document(
 
     try:
         appended = tuple(
-            _decode_member(member, index=index, base=base)
+            member_decoder(member, index=index, base=base)
             for index, member in enumerate(raw_members)
         )
         declared_sources = _decode_path_array(
@@ -182,7 +201,10 @@ def persist_chromium_research_third_basis_epoch_reentry_plan_document(
 ) -> ChromiumResearchThirdBasisEpochReentryPlanCheckpointResult:
     """Freshly prove and checkpoint one earned 40A result as a strict 40B overlay.
 
-    The caller explicitly supplies the current location of the prior 37C/37D
+    Persistence keeps overlay-v1 for note-only appended-member vocabularies and
+    selects overlay-v2 only when the exact typed plan contains at least one bare
+    exact-range-selection locator. The caller explicitly supplies the current location
+    of the prior 37C/37D
     continuation overlay. A candidate third-epoch plan is formed from that explicit
     location plus the third-epoch locator layer retained by the earned 40A result.
     Before any bytes are written, the candidate is independently re-entered through
@@ -319,20 +341,71 @@ def _require_fresh_reentry_match(
         )
 
 
+def _decode_overlay_v2_member(
+    raw: object,
+    *,
+    index: int,
+    base: Path,
+):
+    """Decode the v2-only bare-selection locator, delegating all v1 kinds unchanged."""
+
+    if isinstance(raw, dict) and raw.get("kind") == "exact_range_selection":
+        _require_exact_keys(
+            raw,
+            {"kind", "capture_source", "selection_source"},
+            label=f"appended_working_set_members[{index}]",
+        )
+        return ChromiumResearchExactRangeSelectionReentryLocator(
+            capture_source=_decode_path(
+                raw["capture_source"],
+                f"appended_working_set_members[{index}].capture_source",
+                base,
+            ),
+            selection_source=_decode_path(
+                raw["selection_source"],
+                f"appended_working_set_members[{index}].selection_source",
+                base,
+            ),
+        )
+    return _decode_member(raw, index=index, base=base)
+
+
+def _encode_overlay_v2_member(
+    member,
+    *,
+    base: Path,
+) -> dict[str, str]:
+    """Encode one v2 member while preserving the three historical v1 shapes."""
+
+    if isinstance(member, ChromiumResearchExactRangeSelectionReentryLocator):
+        return {
+            "kind": "exact_range_selection",
+            "capture_source": _encode_path(member.capture_source, base),
+            "selection_source": _encode_path(member.selection_source, base),
+        }
+    return _encode_member(member, base=base)
+
+
 def _persist_overlay_document(
     plan: ChromiumResearchThirdBasisEpochReentryPlan,
     *,
     destination: Path,
 ) -> ChromiumResearchThirdBasisEpochReentryPlanDocumentPersistenceResult:
     base = destination.parent
+    has_bare_selection = any(
+        isinstance(member, ChromiumResearchExactRangeSelectionReentryLocator)
+        for member in plan.appended_working_set_members
+    )
+    overlay_format = _OVERLAY_FORMAT_V2 if has_bare_selection else _OVERLAY_FORMAT_V1
+    member_encoder = _encode_overlay_v2_member if has_bare_selection else _encode_member
     document: dict[str, object] = {
-        "format": _OVERLAY_FORMAT,
+        "format": overlay_format,
         "prior_second_basis_epoch_continuation_overlay_source": _encode_path(
             plan.prior_second_basis_epoch_continuation_overlay_source,
             base,
         ),
         "appended_working_set_members": [
-            _encode_member(member, base=base)
+            member_encoder(member, base=base)
             for member in plan.appended_working_set_members
         ],
         "changed_working_set_source": _encode_path(
@@ -368,6 +441,7 @@ def _persist_overlay_document(
 
     return ChromiumResearchThirdBasisEpochReentryPlanDocumentPersistenceResult(
         plan=plan,
+        overlay_format=overlay_format,
         path=destination,
     )
 
