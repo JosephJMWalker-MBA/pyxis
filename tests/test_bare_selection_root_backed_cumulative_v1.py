@@ -173,9 +173,13 @@ def test_50k_35e_keeps_direct_v2_root_anchor_and_existing_continuation_v1(
     assert current_overlay.read_bytes() == prior_overlay_bytes
     assert one_hop_declaration.read_bytes() == one_hop_bytes
     assert result.fresh_reentry is not current
+    cumulative_terminal = result.fresh_reentry.controller.presentation.sequence.members[-1]
+    one_hop_terminal = rollover.continuation_controller.presentation.sequence.members[-1]
+    assert cumulative_terminal.declared_position == 2
+    assert one_hop_terminal.declared_position == 1
     assert (
-        result.fresh_reentry.controller.presentation.sequence.members[-1]
-        == rollover.continuation_controller.presentation.sequence.members[-1]
+        result.fresh_reentry.controller.declared_endpoint.revision.revised_note.note_text
+        == rollover.continuation_controller.declared_endpoint.revision.revised_note.note_text
     )
     assert (
         result.fresh_reentry.controller.declared_endpoint.verification.edge_record_sha256
