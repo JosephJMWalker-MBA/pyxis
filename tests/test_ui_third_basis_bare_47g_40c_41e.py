@@ -234,12 +234,16 @@ async def test_50w_pathless_47g_can_checkpoint_40c_then_handoff_41e_pathlessly(
 
         assert panel.launch_provenance is launch
         assert panel.launch_provenance.launch_location_context is None
-        assert panel.current_state is not current_before
-        assert panel.current_state.state_kind == "visible one-hop continuation"
-        assert panel.current_state.state_source == (
-            "explicit rollover after in-process 41E handoff"
+        # 42A deliberately keeps cumulative-mode inspection on the last proven typed
+        # continuation until 40D succeeds. The visible one-hop controller is a chosen
+        # candidate, not promoted typed durable state.
+        assert panel.current_state is current_before
+        assert panel.current_state.state_kind == "typed third-basis-epoch continuation"
+        assert panel.current_state.state_source == "in-process 41E handoff"
+        assert panel.current_state.endpoint_sha256 == (
+            handoff.controller.declared_endpoint.verification.edge_record_sha256
         )
         assert (
-            panel.current_state.endpoint_sha256
-            == cumulative.research_controller.declared_endpoint.verification.edge_record_sha256
+            cumulative.research_controller.declared_endpoint.verification.edge_record_sha256
+            != panel.current_state.endpoint_sha256
         )
