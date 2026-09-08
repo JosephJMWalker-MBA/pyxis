@@ -79,7 +79,6 @@ async def test_50v_explicit_47g_handoff_reuses_exact_v2_checkpoint_fresh_reentry
 
         source_panel = shell.second_basis_epoch_authority_inspection
         source_launch = source_panel.launch_provenance
-        source_current_before = source_panel.current_state
         assert len(shell.query("#continue-third-changed-basis-epoch-session")) == 0
 
         prepared, transition, root, edge = await _reach_47c(
@@ -149,6 +148,10 @@ async def test_50v_explicit_47g_handoff_reuses_exact_v2_checkpoint_fresh_reentry
         mounted_session = shell.research_session
         mounted_reentry = shell.research_reentry
         retained_second_epoch = shell.second_basis_epoch_continuation_reentry
+        # 47A–47E legitimately advance the source product's visible current-state
+        # projection. The 50V invariant begins at the exact pre-47F state: persistence
+        # and the later explicit 47G exit must not mutate it further.
+        source_current_before = source_panel.current_state
 
         destination = tmp_path / "50v-third-basis.overlay.json"
         shell.query_one(
