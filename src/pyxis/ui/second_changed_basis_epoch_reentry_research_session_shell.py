@@ -7,6 +7,9 @@ from textual.widgets import Button, Input, Static
 from pyxis.app.chromium_research_paragraph_text_selection_comparison_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord,
 )
+from pyxis.app.chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from pyxis.app.chromium_research_paragraph_text_selection_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord,
 )
@@ -23,6 +26,7 @@ from pyxis.app.chromium_research_selection_note_load import (
 from pyxis.app.chromium_research_session_reentry import (
     ChromiumResearchComparisonNoteReentryLocator,
     ChromiumResearchExactRangeNoteReentryLocator,
+    ChromiumResearchExactRangeSelectionReentryLocator,
     ChromiumResearchParagraphNoteReentryLocator,
     ChromiumResearchWorkingSetMemberReentryLocator,
 )
@@ -198,10 +202,6 @@ class SecondChangedBasisEpochReentryResearchSessionShell(
     ) -> tuple[ChromiumResearchWorkingSetMemberReentryLocator, ...] | None:
         locators: list[ChromiumResearchWorkingSetMemberReentryLocator] = []
         for index, item in enumerate(controls.appended_items):
-            note = self.query_one(
-                f"#research-second-changed-basis-epoch-reentry-member-{index}-note-source",
-                Input,
-            )
             if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord):
                 first = self.query_one(
                     f"#research-second-changed-basis-epoch-reentry-member-{index}-first-capture-source",
@@ -209,6 +209,10 @@ class SecondChangedBasisEpochReentryResearchSessionShell(
                 )
                 second = self.query_one(
                     f"#research-second-changed-basis-epoch-reentry-member-{index}-second-capture-source",
+                    Input,
+                )
+                note = self.query_one(
+                    f"#research-second-changed-basis-epoch-reentry-member-{index}-note-source",
                     Input,
                 )
                 if not first.value.strip() or not second.value.strip() or not note.value.strip():
@@ -227,6 +231,28 @@ class SecondChangedBasisEpochReentryResearchSessionShell(
 
             capture = self.query_one(
                 f"#research-second-changed-basis-epoch-reentry-member-{index}-capture-source",
+                Input,
+            )
+            if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+                selection = self.query_one(
+                    f"#research-second-changed-basis-epoch-reentry-member-{index}-selection-source",
+                    Input,
+                )
+                if not capture.value.strip() or not selection.value.strip():
+                    status.update(
+                        f"Re-entry verification failed: appended bare selection member {index} requires capture and selection paths."
+                    )
+                    return None
+                locators.append(
+                    ChromiumResearchExactRangeSelectionReentryLocator(
+                        capture_source=Path(capture.value),
+                        selection_source=Path(selection.value),
+                    )
+                )
+                continue
+
+            note = self.query_one(
+                f"#research-second-changed-basis-epoch-reentry-member-{index}-note-source",
                 Input,
             )
             if not capture.value.strip() or not note.value.strip():

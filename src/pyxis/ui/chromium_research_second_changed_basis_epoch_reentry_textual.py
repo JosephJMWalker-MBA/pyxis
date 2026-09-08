@@ -9,6 +9,9 @@ from textual.widgets import Button, Input, Static
 from pyxis.app.chromium_research_paragraph_text_selection_comparison_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord,
 )
+from pyxis.app.chromium_research_paragraph_text_selection_load import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+)
 from pyxis.app.chromium_research_paragraph_text_selection_note_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord,
 )
@@ -37,6 +40,8 @@ def _member_kind(item: ChromiumPageResearchWorkingSetItem) -> str:
         return "paragraph note"
     if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionNoteRecord):
         return "exact-range note"
+    if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionRecord):
+        return "exact-range selection"
     if isinstance(item, ChromiumPageResearchLoadedParagraphTextSelectionComparisonNoteRecord):
         return "comparison note"
     raise TypeError("appended item must be a supported loaded working-set record.")
@@ -124,8 +129,18 @@ class ResearchSecondChangedBasisEpochReentryControls(Vertical):
 
         for index, item in enumerate(self.appended_items):
             kind = _member_kind(item)
+            if kind == "exact-range selection":
+                member_summary = (
+                    f"Appended member {index} — {kind}\n"
+                    "Human note: none attached — saved source passage only"
+                )
+            else:
+                member_summary = (
+                    f"Appended member {index} — {kind}\n"
+                    f"Note text:\n{item.note.note_text}"
+                )
             yield Static(
-                f"Appended member {index} — {kind}\nNote text:\n{item.note.note_text}",
+                member_summary,
                 classes="research-second-changed-basis-epoch-reentry-member-summary",
                 id=f"research-second-changed-basis-epoch-reentry-member-{index}-summary",
                 markup=False,
@@ -150,12 +165,20 @@ class ResearchSecondChangedBasisEpochReentryControls(Vertical):
                     classes="research-second-changed-basis-epoch-reentry-input",
                     disabled=locked,
                 )
-            yield Input(
-                placeholder="Explicit current note sidecar path",
-                id=f"research-second-changed-basis-epoch-reentry-member-{index}-note-source",
-                classes="research-second-changed-basis-epoch-reentry-input",
-                disabled=locked,
-            )
+            if kind == "exact-range selection":
+                yield Input(
+                    placeholder="Explicit current selection sidecar path",
+                    id=f"research-second-changed-basis-epoch-reentry-member-{index}-selection-source",
+                    classes="research-second-changed-basis-epoch-reentry-input",
+                    disabled=locked,
+                )
+            else:
+                yield Input(
+                    placeholder="Explicit current note sidecar path",
+                    id=f"research-second-changed-basis-epoch-reentry-member-{index}-note-source",
+                    classes="research-second-changed-basis-epoch-reentry-input",
+                    disabled=locked,
+                )
 
         fields = (
             ("changed-working-set-source", "Explicit current changed working-set path"),
