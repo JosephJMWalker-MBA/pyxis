@@ -321,6 +321,13 @@ def test_50t_cli_relaunches_40c_v1_above_third_basis_v2_ancestry(
         observed["lineage"] = lineage
 
     monkeypatch.setattr(cli, "build_and_run_workspace", fail_wrong_product)
+    monkeypatch.setattr(cli, "_run_research_session_shell", fail_wrong_product)
+    monkeypatch.setattr(cli, "_run_root_backed_research_session_shell", fail_wrong_product)
+    monkeypatch.setattr(
+        cli,
+        "_run_root_backed_continuation_research_session_shell",
+        fail_wrong_product,
+    )
     monkeypatch.setattr(cli, "_run_controller_only_research_session_shell", fail_wrong_product)
     monkeypatch.setattr(cli, "_run_second_basis_epoch_research_session_shell", fail_wrong_product)
     monkeypatch.setattr(
