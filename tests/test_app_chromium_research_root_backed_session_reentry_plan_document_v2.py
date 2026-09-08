@@ -78,6 +78,7 @@ def test_50h_public_44g_persists_bare_selection_as_strict_overlay_v2(
     assert result.checkpoint.plan == verification.plan
     assert result.checkpoint.persistence.path == destination.resolve()
     assert result.checkpoint.persistence.prior_session_plan_source == prior_plan
+    assert result.checkpoint.persistence.overlay_format == _OVERLAY_V2
 
     prior_document = json.loads(prior_plan.read_text(encoding="utf-8"))
     assert prior_document["format"] == _PLAN_V1
@@ -153,6 +154,7 @@ def test_50h_note_only_35c_persistence_remains_overlay_v1(tmp_path: Path) -> Non
         overlay_path
     ) == plan
     assert checkpoint.plan == plan
+    assert checkpoint.persistence.overlay_format == _OVERLAY_V1
     assert all(
         member["kind"] in {"paragraph_note", "exact_range_note", "comparison_note"}
         for member in document["appended_working_set_members"]

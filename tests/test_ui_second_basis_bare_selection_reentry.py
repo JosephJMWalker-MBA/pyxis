@@ -12,12 +12,6 @@ from pyxis.app.chromium_research_paragraph_text_selection_load import (
 from pyxis.app.chromium_research_second_changed_basis_epoch_reentry import (
     verify_chromium_research_second_changed_basis_epoch_reentry,
 )
-from pyxis.app.chromium_research_second_changed_basis_epoch_reentry_overlay import (
-    persist_chromium_research_second_changed_basis_epoch_reentry_overlay,
-)
-from pyxis.app.chromium_research_session_reentry_plan_document import (
-    ChromiumResearchSessionReentryPlanDocumentError,
-)
 from pyxis.ui.chromium_research_second_changed_basis_epoch_reentry_textual import (
     ResearchSecondChangedBasisEpochReentryControls,
 )
@@ -280,19 +274,6 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
         assert shell.research_session is adopted_session
         assert shell.root_backed_continuation_reentry is historical_first_root_continuation
         assert all(widget.disabled for widget in inputs)
-
-        stop_destination = tmp_path / "50l-37b-must-remain-closed.json"
-        with pytest.raises(
-            ChromiumResearchSessionReentryPlanDocumentError,
-            match="unsupported member locator",
-        ):
-            persist_chromium_research_second_changed_basis_epoch_reentry_overlay(
-                verification,
-                prior_root_backed_continuation_overlay_source=prior_overlay,
-                destination=stop_destination,
-            )
-        assert not stop_destination.exists()
-
 
 @pytest.mark.asyncio
 async def test_50l_historical_note_member_46e_fields_remain_unchanged(

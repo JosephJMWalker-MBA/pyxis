@@ -42,7 +42,7 @@ def first_changed_basis_root_backed_reentry_overlay_success_receipt(
     return (
         "Success — durable 35C root-backed restart overlay persisted for the exact "
         "verified historical 44E/44F session. Mounted governed session unchanged.\n"
-        "Overlay format: pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v1\n"
+        f"Overlay format: {checkpoint.persistence.overlay_format}\n"
         f"Overlay path: {checkpoint.persistence.path}\n"
         f"Referenced ordinary-plan path: {checkpoint.persistence.prior_session_plan_source}\n"
         f"Root SHA-256: {fresh.loaded_root.verification.root_record_sha256}\n"
