@@ -210,7 +210,18 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
             "verify-research-second-changed-basis-epoch-reentry",
         )
 
-        verification = shell.last_second_changed_basis_epoch_reentry_verification
+        # The 46E button schedules its async verifier with call_after_refresh.
+        # One Pilot.pause() inside _press is not sufficient to prove that callback
+        # has completed on every supported interpreter, so wait on the actual
+        # proof state rather than scheduler timing.
+        for _ in range(20):
+            verification = shell.last_second_changed_basis_epoch_reentry_verification
+            if verification is not None:
+                break
+            await pilot.pause()
+        else:
+            verification = None
+
         second_status = str(
             shell.query_one(
                 "#research-second-changed-basis-epoch-reentry-status",
