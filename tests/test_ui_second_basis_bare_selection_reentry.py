@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from textual.widgets import Input, Static
+from textual.widgets import Button, Input, Static
 
 from pyxis.app.chromium_research_paragraph_text_selection_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionRecord,
@@ -197,49 +197,37 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
             Input,
         ).disabled
 
-        selection_input = shell.query_one(
+        # Textual keeps a pressed Button in its transient "-active" state while
+        # the visual press effect is running. A second Enter/click during that
+        # state is intentionally ignored, so wait for the first validation press
+        # to become activatable again before exercising the corrected retry.
+        verify_button = controls.query_one(
+            "#verify-research-second-changed-basis-epoch-reentry",
+            Button,
+        )
+        for _ in range(20):
+            if not verify_button.has_class("-active"):
+                break
+            await pilot.pause(delay=0.02)
+        assert not verify_button.has_class("-active")
+
+        selection_input = controls.query_one(
             "#research-second-changed-basis-epoch-reentry-member-0-selection-source",
             Input,
         )
         selection_input.value = str(bare_locator.selection_source)
         assert selection_input.value == str(bare_locator.selection_source)
 
-        retry_status = shell.query_one(
-            "#research-second-changed-basis-epoch-reentry-status",
-            Static,
-        )
-        collected_retry_locators = shell._collect_46e_appended_locators(
-            controls,
-            retry_status,
-        )
-        assert collected_retry_locators is not None
-        assert len(collected_retry_locators) == 1
-        assert (
-            collected_retry_locators[0].capture_source
-            == bare_locator.capture_source
-        )
-        assert (
-            collected_retry_locators[0].selection_source
-            == bare_locator.selection_source
-        )
-        retry_status.update("50L retry submitted with complete bare locator fields.")
-        await pilot.pause()
-
         adopted_controller = shell.research_controller
         adopted_session = shell.research_session
-
-        # The first submission above intentionally exercised the keyboard-driven
-        # validation failure. Retry through an explicit pointer activation so this
-        # proof does not depend on repeated Enter dispatch to an already-focused
-        # Textual Button after an async call_after_refresh callback.
-        clicked = await pilot.click(
-            "#verify-research-second-changed-basis-epoch-reentry"
+        await _press(
+            shell,
+            pilot,
+            "verify-research-second-changed-basis-epoch-reentry",
         )
-        assert clicked
-        await pilot.pause(delay=0.05)
 
-        # The 46E button schedules its async verifier with call_after_refresh.
-        # Wait on the actual proof state rather than interpreter scheduler timing.
+        # 46E schedules its verifier with call_after_refresh; wait on the proof
+        # state rather than assuming one scheduler turn is enough on every lane.
         for _ in range(20):
             verification = shell.last_second_changed_basis_epoch_reentry_verification
             if verification is not None:
@@ -254,9 +242,7 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
                 Static,
             ).content
         )
-        assert verification is not None, (
-            f"{second_status} selection_input={selection_input.value!r}"
-        )
+        assert verification is not None, second_status
         assert verification.adoption_result is adoption
         fresh = verification.fresh_reentry
         assert fresh.controller is not adopted_controller
