@@ -9,6 +9,9 @@ from textual.widgets import Input, Static
 from pyxis.app.chromium_research_paragraph_text_selection_load import (
     ChromiumPageResearchLoadedParagraphTextSelectionRecord,
 )
+from pyxis.app.chromium_research_second_changed_basis_epoch_reentry import (
+    verify_chromium_research_second_changed_basis_epoch_reentry,
+)
 from pyxis.app.chromium_research_second_changed_basis_epoch_reentry_overlay import (
     persist_chromium_research_second_changed_basis_epoch_reentry_overlay,
 )
@@ -109,6 +112,26 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
         assert shell.research_controller is not mounted_prior_controller
         assert shell.root_backed_continuation_reentry is historical_first_root_continuation
 
+        direct = verify_chromium_research_second_changed_basis_epoch_reentry(
+            adoption,
+            prior_overlay,
+            (bare_locator,),
+            changed_working_set_source=prepared.working_set_persistence.path,
+            changed_note_source=prepared.note_persistence.path,
+            transition_source=transition.persistence.path,
+            root_source=root.persistence.path,
+            first_edge_source=edge.persistence.path,
+            declaration_source=adoption.declaration.path,
+        )
+        assert direct.fresh_reentry.controller.presentation == adoption.controller.presentation
+        direct_bare = direct.fresh_reentry.loaded_appended_members[0]
+        assert isinstance(
+            direct_bare,
+            ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+        )
+        assert direct_bare.selection.selected_text == "Bare"
+        assert not hasattr(direct_bare, "note")
+
         controls = shell.query_one(ResearchSecondChangedBasisEpochReentryControls)
         summary = str(
             shell.query_one(
@@ -188,7 +211,13 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
         )
 
         verification = shell.last_second_changed_basis_epoch_reentry_verification
-        assert verification is not None
+        second_status = str(
+            shell.query_one(
+                "#research-second-changed-basis-epoch-reentry-status",
+                Static,
+            ).content
+        )
+        assert verification is not None, second_status
         assert verification.adoption_result is adoption
         fresh = verification.fresh_reentry
         assert fresh.controller is not adopted_controller
