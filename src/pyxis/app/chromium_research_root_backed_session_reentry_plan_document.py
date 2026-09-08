@@ -63,6 +63,7 @@ class ChromiumResearchRootBackedSessionReentryPlanDocumentPersistenceResult:
 
     plan: ChromiumResearchRootBackedSessionReentryPlan
     prior_session_plan_source: Path
+    overlay_format: str
     path: Path
 
 
@@ -439,6 +440,7 @@ def _persist_overlay_document(
     return ChromiumResearchRootBackedSessionReentryPlanDocumentPersistenceResult(
         plan=plan,
         prior_session_plan_source=prior_session_plan_source,
+        overlay_format=overlay_format,
         path=destination,
     )
 
