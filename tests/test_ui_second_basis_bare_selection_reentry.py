@@ -204,21 +204,24 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
 
         adopted_controller = shell.research_controller
         adopted_session = shell.research_session
-        await _press(
-            shell,
-            pilot,
-            "verify-research-second-changed-basis-epoch-reentry",
+
+        # The first submission above intentionally exercised the keyboard-driven
+        # validation failure. Retry through an explicit pointer activation so this
+        # proof does not depend on repeated Enter dispatch to an already-focused
+        # Textual Button after an async call_after_refresh callback.
+        clicked = await pilot.click(
+            "#verify-research-second-changed-basis-epoch-reentry"
         )
+        assert clicked
+        await pilot.pause(delay=0.05)
 
         # The 46E button schedules its async verifier with call_after_refresh.
-        # One Pilot.pause() inside _press is not sufficient to prove that callback
-        # has completed on every supported interpreter, so wait on the actual
-        # proof state rather than scheduler timing.
+        # Wait on the actual proof state rather than interpreter scheduler timing.
         for _ in range(20):
             verification = shell.last_second_changed_basis_epoch_reentry_verification
             if verification is not None:
                 break
-            await pilot.pause()
+            await pilot.pause(delay=0.01)
         else:
             verification = None
 
