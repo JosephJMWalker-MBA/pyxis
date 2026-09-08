@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from textual.widgets import Input
+from textual.widgets import Input, Static
 
 from pyxis.app.chromium_research_root_backed_session_reentry_plan_document import (
     load_chromium_research_root_backed_session_reentry_plan_document,
@@ -144,4 +144,21 @@ async def test_50h_existing_44g_ui_inherits_bare_selection_overlay_v2(
                 destination
             )
             == verification.plan
+        )
+
+        receipt = str(
+            shell.query_one(
+                "#research-first-changed-basis-root-backed-reentry-overlay-status",
+                Static,
+            ).content
+        )
+        assert (
+            "Overlay format: "
+            "pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v2"
+            in receipt
+        )
+        assert (
+            "Overlay format: "
+            "pyxis.chromium.research_root_backed_session_reentry_locator_overlay.v1"
+            not in receipt
         )
