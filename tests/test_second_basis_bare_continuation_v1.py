@@ -294,9 +294,7 @@ async def test_50o_existing_first_checkpoint_product_persists_37c_v1_above_v2_la
 
         document = json.loads(continuation_overlay.read_text(encoding="utf-8"))
         assert document["format"] == _CONTINUATION_OVERLAY_V1
-        assert (
-            base := continuation_overlay.parent
-        ) / document["prior_second_basis_epoch_overlay_source"]
+        base = continuation_overlay.parent
         assert (
             base / document["prior_second_basis_epoch_overlay_source"]
         ).resolve() == second_overlay.resolve()
