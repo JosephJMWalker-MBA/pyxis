@@ -12,14 +12,8 @@ from pyxis.app.chromium_research_paragraph_text_selection_load import (
 from pyxis.app.chromium_research_second_basis_epoch_shell_lineage import (
     prove_chromium_research_second_basis_epoch_continuation_shell_lineage,
 )
-from pyxis.app.chromium_research_session_reentry_plan_document import (
-    ChromiumResearchSessionReentryPlanDocumentError,
-)
 from pyxis.app.chromium_research_third_changed_basis_epoch_reentry import (
     verify_chromium_research_third_changed_basis_epoch_reentry,
-)
-from pyxis.app.chromium_research_third_changed_basis_epoch_reentry_overlay import (
-    persist_chromium_research_third_changed_basis_epoch_reentry_overlay,
 )
 from pyxis.ui.chromium_research_third_changed_basis_epoch_reentry_textual import (
     ResearchThirdChangedBasisEpochReentryControls,
@@ -328,14 +322,6 @@ async def test_50q_47e_product_freshly_reenters_third_basis_with_bare_selection(
         assert panel.current_state is current_before
         assert all(widget.disabled for widget in inputs)
 
-        stop_destination = tmp_path / "50q-40b-must-remain-closed.json"
-        with pytest.raises(
-            ChromiumResearchSessionReentryPlanDocumentError,
-            match="unsupported member locator",
-        ):
-            persist_chromium_research_third_changed_basis_epoch_reentry_overlay(
-                verification,
-                prior_second_basis_epoch_continuation_overlay_source=prior_overlay,
-                destination=stop_destination,
-            )
-        assert not stop_destination.exists()
+        # 50Q proves only 47E / public-40A fresh reconstruction. Durable 40B
+        # persistence is exercised by the later 50R boundary rather than being
+        # invoked from this fresh-reentry product proof.

@@ -51,7 +51,7 @@ def third_changed_basis_epoch_reentry_overlay_success_receipt(
     return (
         "Success — durable 40B third-basis restart overlay persisted for the exact "
         "verified historical 47D/47E session. Mounted governed session unchanged.\n"
-        "Overlay format: pyxis.chromium.research_third_basis_epoch_reentry_locator_overlay.v1\n"
+        f"Overlay format: {checkpoint.persistence.overlay_format}\n"
         f"Overlay path: {checkpoint.persistence.path}\n"
         "Referenced prior second-epoch continuation overlay: "
         f"{checkpoint.plan.prior_second_basis_epoch_continuation_overlay_source}\n"
