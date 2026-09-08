@@ -197,10 +197,33 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
             Input,
         ).disabled
 
-        shell.query_one(
+        selection_input = shell.query_one(
             "#research-second-changed-basis-epoch-reentry-member-0-selection-source",
             Input,
-        ).value = str(bare_locator.selection_source)
+        )
+        selection_input.value = str(bare_locator.selection_source)
+        assert selection_input.value == str(bare_locator.selection_source)
+
+        retry_status = shell.query_one(
+            "#research-second-changed-basis-epoch-reentry-status",
+            Static,
+        )
+        collected_retry_locators = shell._collect_46e_appended_locators(
+            controls,
+            retry_status,
+        )
+        assert collected_retry_locators is not None
+        assert len(collected_retry_locators) == 1
+        assert (
+            collected_retry_locators[0].capture_source
+            == bare_locator.capture_source
+        )
+        assert (
+            collected_retry_locators[0].selection_source
+            == bare_locator.selection_source
+        )
+        retry_status.update("50L retry submitted with complete bare locator fields.")
+        await pilot.pause()
 
         adopted_controller = shell.research_controller
         adopted_session = shell.research_session
@@ -231,7 +254,9 @@ async def test_50l_46e_product_freshly_reenters_second_basis_with_bare_selection
                 Static,
             ).content
         )
-        assert verification is not None, second_status
+        assert verification is not None, (
+            f"{second_status} selection_input={selection_input.value!r}"
+        )
         assert verification.adoption_result is adoption
         fresh = verification.fresh_reentry
         assert fresh.controller is not adopted_controller
