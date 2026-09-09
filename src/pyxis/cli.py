@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from pyxis.app import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
     build_and_run_workspace,
     load_chromium_page_research_capture,
     load_chromium_research_paragraph_text_selection,
@@ -419,6 +420,11 @@ def _run_first_changed_basis_saved_selection_shell(
         raise TypeError(
             "saved-selection changed-basis launch requires exactly "
             "ChromiumResearchSessionReentryResult."
+        )
+    if type(candidate) is not ChromiumPageResearchLoadedParagraphTextSelectionRecord:
+        raise TypeError(
+            "saved-selection changed-basis launch requires exactly one freshly "
+            "relinked bare selection record."
         )
     runner = _load_first_changed_basis_handoff_runner()
     runner(reentry, (candidate,))
