@@ -62,7 +62,7 @@ def test_51a_cli_research_capture_delegates_exact_target_and_emits_verification_
     def persist(observed, output: Path):
         calls.append(("persist", observed, output))
         assert observed is bundle
-        assert output is destination
+        assert output == destination
         return persisted
 
     def verify(source: Path):
@@ -269,7 +269,7 @@ def test_51a_cli_research_capture_existing_destination_failure_preserves_bytes(
 
     def fail_persist(observed, output: Path):
         assert observed is bundle
-        assert output is destination
+        assert output == destination
         assert destination.read_bytes() == b"preexisting"
         raise FileExistsError("destination already exists")
 
@@ -306,7 +306,7 @@ def test_51a_cli_research_capture_missing_parent_creates_nothing(
     )
 
     def fail_persist(observed, output: Path):
-        assert output is destination
+        assert output == destination
         raise FileNotFoundError("Research capture parent directory does not exist")
 
     monkeypatch.setattr(cli, "persist_chromium_page_research_capture", fail_persist)
