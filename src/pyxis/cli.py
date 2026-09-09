@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pyxis.app import (
     ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+    ChromiumPageResearchParagraphTextSelectionEvidence,
     build_and_run_workspace,
     load_chromium_page_research_capture,
     load_chromium_research_paragraph_text_selection,
@@ -473,6 +474,17 @@ def _run_research_save_selection_command(
             selection = runner(capture)
             if selection is None:
                 return 0
+            if not isinstance(
+                selection,
+                ChromiumPageResearchParagraphTextSelectionEvidence,
+            ):
+                raise TypeError(
+                    "interactive selection UI returned an invalid selection type."
+                )
+            if selection.source.source is not capture:
+                raise ValueError(
+                    "interactive selection UI did not retain the exact loaded capture."
+                )
         else:
             paragraph = select_chromium_research_capture_paragraph(
                 capture,

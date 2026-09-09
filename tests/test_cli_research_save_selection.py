@@ -436,16 +436,6 @@ def test_51b_cli_interactive_mode_uses_loaded_capture_and_exact_ui_selection(
 ) -> None:
     capture_path = _capture_with_paragraph(tmp_path)
     destination = tmp_path / "interactive-selection.json"
-    loaded = cli.load_chromium_page_research_capture(capture_path)
-    paragraph = cli.select_chromium_research_capture_paragraph(
-        loaded,
-        paragraph_ordinal=1,
-    )
-    selection = cli.select_chromium_research_paragraph_text(
-        paragraph,
-        start_offset=6,
-        end_offset=7,
-    )
     calls: list[tuple[object, ...]] = []
 
     real_load = cli.load_chromium_page_research_capture
@@ -460,7 +450,15 @@ def test_51b_cli_interactive_mode_uses_loaded_capture_and_exact_ui_selection(
         def run_ui(source):
             calls.append(("ui", source))
             assert source.verification.path == capture_path.resolve()
-            return selection
+            interactive_paragraph = cli.select_chromium_research_capture_paragraph(
+                source,
+                paragraph_ordinal=1,
+            )
+            return cli.select_chromium_research_paragraph_text(
+                interactive_paragraph,
+                start_offset=6,
+                end_offset=7,
+            )
 
         return run_ui
 
@@ -634,3 +632,46 @@ def test_51b_cli_interactive_cancel_is_clean_noop_without_persistence(
     )
     assert not destination.exists()
     assert capsys.readouterr().out == ""
+
+
+
+def test_51b_cli_rejects_interactive_selection_from_different_loaded_capture(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    capture = _capture_with_paragraph(tmp_path, name="capture-a.json")
+    other_capture = _capture_with_paragraph(tmp_path, name="capture-b.json")
+    other_loaded = cli.load_chromium_page_research_capture(other_capture)
+    other_paragraph = cli.select_chromium_research_capture_paragraph(
+        other_loaded,
+        paragraph_ordinal=1,
+    )
+    other_selection = cli.select_chromium_research_paragraph_text(
+        other_paragraph,
+        start_offset=0,
+        end_offset=5,
+    )
+    destination = tmp_path / "must-not-persist.json"
+
+    monkeypatch.setattr(
+        cli,
+        "_load_interactive_research_selection_runner",
+        lambda: (lambda source: other_selection),
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture),
+                "--destination",
+                str(destination),
+                "--interactive",
+            ]
+        )
+
+    assert exc_info.value.code == 2
+    assert not destination.exists()
+    assert "exact loaded capture" in capsys.readouterr().err
