@@ -5,7 +5,14 @@ from collections.abc import Sequence
 import json
 from pathlib import Path
 
-from pyxis.app import build_and_run_workspace
+from pyxis.app import (
+    build_and_run_workspace,
+    load_chromium_page_research_capture,
+    persist_chromium_research_paragraph_text_selection,
+    select_chromium_research_capture_paragraph,
+    select_chromium_research_paragraph_text,
+    verify_chromium_research_paragraph_text_selection,
+)
 from pyxis.app.chromium_research_root_backed_session_authority_inspection import (
     inspect_chromium_research_root_backed_session_continuation_launch,
     inspect_chromium_research_root_backed_session_launch,
@@ -118,6 +125,47 @@ def _build_parser() -> argparse.ArgumentParser:
         "--text",
         required=True,
         help="Sample text passed to the generated Workspace runtime.",
+    )
+
+    research_save_selection_parser = subparsers.add_parser(
+        "research-save-selection",
+        help=(
+            "Save one exact paragraph text range from one explicit durable research "
+            "capture without attaching a note."
+        ),
+    )
+    research_save_selection_parser.add_argument(
+        "--capture",
+        required=True,
+        type=Path,
+        help=(
+            "Explicit pyxis.chromium.research_capture.v1 source. The path is operation "
+            "context only and is not persisted in the selection sidecar."
+        ),
+    )
+    research_save_selection_parser.add_argument(
+        "--paragraph",
+        required=True,
+        type=int,
+        help="Explicit 1-based returned paragraph ordinal.",
+    )
+    research_save_selection_parser.add_argument(
+        "--start",
+        required=True,
+        type=int,
+        help="Explicit zero-based Unicode code-point start offset.",
+    )
+    research_save_selection_parser.add_argument(
+        "--end",
+        required=True,
+        type=int,
+        help="Explicit exclusive Unicode code-point end offset.",
+    )
+    research_save_selection_parser.add_argument(
+        "--destination",
+        required=True,
+        type=Path,
+        help="Explicit no-overwrite exact-range-selection sidecar destination.",
     )
 
     research_shell_parser = subparsers.add_parser(
@@ -255,6 +303,75 @@ def _run_workspace_command(args: argparse.Namespace) -> int:
             sort_keys=True,
         )
     )
+    return 0
+
+
+def _run_research_save_selection_command(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+) -> int:
+    """Save one exact range from one explicit already-durable capture."""
+
+    try:
+        capture = load_chromium_page_research_capture(args.capture)
+        paragraph = select_chromium_research_capture_paragraph(
+            capture,
+            paragraph_ordinal=args.paragraph,
+        )
+        selection = select_chromium_research_paragraph_text(
+            paragraph,
+            start_offset=args.start,
+            end_offset=args.end,
+        )
+        persisted = persist_chromium_research_paragraph_text_selection(
+            selection,
+            args.destination,
+        )
+        verified = verify_chromium_research_paragraph_text_selection(
+            persisted.path
+        )
+
+        if verified.path != persisted.path:
+            raise ValueError(
+                "Saved exact-range selection verification path does not match persistence."
+            )
+        if verified.selection_format != persisted.selection_format:
+            raise ValueError(
+                "Saved exact-range selection verification format does not match persistence."
+            )
+        if verified.selection_record_sha256 != persisted.selection_record_sha256:
+            raise ValueError(
+                "Saved exact-range selection verification SHA-256 does not match persistence."
+            )
+        if verified.byte_count != persisted.byte_count:
+            raise ValueError(
+                "Saved exact-range selection verification byte count does not match persistence."
+            )
+
+        receipt = {
+            "byte_count": verified.byte_count,
+            "capture_input_context_only": str(capture.verification.path),
+            "end_offset": verified.end_offset,
+            "offset_unit": verified.offset_unit,
+            "paragraph_ordinal": verified.paragraph_ordinal,
+            "receipt_role": "operation_receipt_not_source_evidence",
+            "selection_format": verified.selection_format,
+            "selection_output_path": str(verified.path),
+            "selection_record_sha256": verified.selection_record_sha256,
+            "source_bundle_sha256": verified.source_bundle_sha256,
+            "source_capture_format": verified.source_capture_format,
+            "start_offset": verified.start_offset,
+        }
+        print(
+            json.dumps(
+                receipt,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+    except (OSError, TypeError, ValueError, RuntimeError) as exc:
+        parser.error(f"research-save-selection failed: {exc}")
     return 0
 
 
@@ -832,6 +949,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "run":
         return _run_workspace_command(args)
+    if args.command == "research-save-selection":
+        return _run_research_save_selection_command(parser, args)
     if args.command == "research-shell":
         return _run_research_shell_command(parser, args)
     if args.command == "research-inspect":
