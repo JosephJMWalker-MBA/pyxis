@@ -197,7 +197,8 @@ def _launch_browser_with_devtools(
             except AssertionError as exc:
                 _terminate_browser(process)
                 startup_failures.append(
-                    f"{browser} attempt {round_index + 1}: {exc}"
+                    f"{browser} attempt {round_index + 1}: {exc}; "
+                    f"browser log tail={_browser_log_tail(browser_log)!r}"
                 )
                 continue
             return process, endpoint, target_id
