@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 
 from pyxis.app import (
+    ChromiumPageResearchLoadedParagraphTextSelectionRecord,
     build_and_run_workspace,
     load_chromium_page_research_capture,
+    load_chromium_research_paragraph_text_selection,
     persist_chromium_research_paragraph_text_selection,
     select_chromium_research_capture_paragraph,
     select_chromium_research_paragraph_text,
@@ -232,6 +234,22 @@ def _build_parser() -> argparse.ArgumentParser:
             "operational configuration, not evidence or a head pointer."
         ),
     )
+    research_shell_parser.add_argument(
+        "--candidate-capture",
+        type=Path,
+        help=(
+            "Explicit durable capture used only to relink one saved bare-selection "
+            "candidate. Requires --candidate-selection and ordinary --plan entry."
+        ),
+    )
+    research_shell_parser.add_argument(
+        "--candidate-selection",
+        type=Path,
+        help=(
+            "Explicit 49A bare-selection sidecar freshly relinked against "
+            "--candidate-capture. Requires ordinary --plan entry."
+        ),
+    )
 
     research_inspect_parser = subparsers.add_parser(
         "research-inspect",
@@ -373,6 +391,43 @@ def _run_research_save_selection_command(
     except (OSError, TypeError, ValueError, RuntimeError) as exc:
         parser.error(f"research-save-selection failed: {exc}")
     return 0
+
+
+def _load_first_changed_basis_handoff_runner():
+    """Lazily import the established first changed-basis 44H product runner."""
+
+    try:
+        from pyxis.ui.first_changed_basis_root_backed_handoff_research_session_shell import (
+            run_first_changed_basis_root_backed_handoff_research_session_shell,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-shell changed-basis candidate mode requires the optional "
+                "Pyxis UI dependency; install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return run_first_changed_basis_root_backed_handoff_research_session_shell
+
+
+def _run_first_changed_basis_saved_selection_shell(
+    reentry: ChromiumResearchSessionReentryResult,
+    candidate,
+) -> None:
+    """Run the existing 44A→44H product from one exact freshly relinked candidate."""
+
+    if type(reentry) is not ChromiumResearchSessionReentryResult:
+        raise TypeError(
+            "saved-selection changed-basis launch requires exactly "
+            "ChromiumResearchSessionReentryResult."
+        )
+    if type(candidate) is not ChromiumPageResearchLoadedParagraphTextSelectionRecord:
+        raise TypeError(
+            "saved-selection changed-basis launch requires exactly one freshly "
+            "relinked bare selection record."
+        )
+    runner = _load_first_changed_basis_handoff_runner()
+    runner(reentry, (candidate,))
 
 
 def _load_research_shell_factory():
@@ -734,10 +789,39 @@ def _run_research_shell_command(
     args: argparse.Namespace,
 ) -> int:
     try:
+        candidate_capture = args.candidate_capture
+        candidate_selection = args.candidate_selection
+        candidate_requested = (
+            candidate_capture is not None or candidate_selection is not None
+        )
+        if candidate_requested and (
+            candidate_capture is None or candidate_selection is None
+        ):
+            raise ValueError(
+                "--candidate-capture and --candidate-selection must be supplied together."
+            )
+        if candidate_requested and args.plan is None:
+            raise ValueError(
+                "saved-selection candidate launch is supported only with ordinary --plan entry."
+            )
+
         if args.plan is not None:
             plan = load_chromium_research_session_reentry_plan_document(args.plan)
             result = reenter_chromium_research_session(plan)
-            _run_research_session_shell(result)
+            if candidate_requested:
+                candidate_source = load_chromium_page_research_capture(
+                    candidate_capture
+                )
+                candidate = load_chromium_research_paragraph_text_selection(
+                    candidate_source,
+                    candidate_selection,
+                )
+                _run_first_changed_basis_saved_selection_shell(
+                    result,
+                    candidate,
+                )
+            else:
+                _run_research_session_shell(result)
         elif args.root_backed_overlay is not None:
             plan = load_chromium_research_root_backed_session_reentry_plan_document(
                 args.root_backed_overlay
