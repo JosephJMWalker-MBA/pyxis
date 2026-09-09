@@ -24,7 +24,7 @@ from pyxis.browser import ChromiumReadError
 
 
 _DEVTOOLS_LISTENING_PATTERN = re.compile(
-    r"DevTools listening on ws://127\\.0\\.0\\.1:(\\d+)/"
+    r"DevTools listening on ws://127\.0\.0\.1:(\d+)/"
 )
 _BROWSER_LAUNCH_ROUNDS = 2
 _BROWSER_LOG_TAIL_LIMIT = 2000
