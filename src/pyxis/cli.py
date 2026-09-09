@@ -10,9 +10,12 @@ from pyxis.app import (
     build_and_run_workspace,
     load_chromium_page_research_capture,
     load_chromium_research_paragraph_text_selection,
+    observe_chromium_page_research_bundle,
+    persist_chromium_page_research_capture,
     persist_chromium_research_paragraph_text_selection,
     select_chromium_research_capture_paragraph,
     select_chromium_research_paragraph_text,
+    verify_chromium_page_research_capture,
     verify_chromium_research_paragraph_text_selection,
 )
 from pyxis.app.chromium_research_root_backed_session_authority_inspection import (
@@ -127,6 +130,32 @@ def _build_parser() -> argparse.ArgumentParser:
         "--text",
         required=True,
         help="Sample text passed to the generated Workspace runtime.",
+    )
+
+    research_capture_parser = subparsers.add_parser(
+        "research-capture",
+        help=(
+            "Persist one bounded read-only research capture from one caller-owned "
+            "Chromium DevTools endpoint."
+        ),
+    )
+    research_capture_parser.add_argument(
+        "--endpoint",
+        required=True,
+        help="Explicit caller-owned Chromium DevTools endpoint.",
+    )
+    research_capture_parser.add_argument(
+        "--target-id",
+        help=(
+            "Optional exact page target id. When omitted, existing observation "
+            "semantics require exactly one available page target."
+        ),
+    )
+    research_capture_parser.add_argument(
+        "--destination",
+        required=True,
+        type=Path,
+        help="Explicit no-overwrite pyxis.chromium.research_capture.v1 destination.",
     )
 
     research_save_selection_parser = subparsers.add_parser(
@@ -321,6 +350,65 @@ def _run_workspace_command(args: argparse.Namespace) -> int:
             sort_keys=True,
         )
     )
+    return 0
+
+
+def _run_research_capture_command(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+) -> int:
+    """Capture one already-open Chromium page through the established 16A/16B path."""
+
+    try:
+        bundle = observe_chromium_page_research_bundle(
+            args.endpoint,
+            target_id=args.target_id,
+        )
+        persisted = persist_chromium_page_research_capture(
+            bundle,
+            args.destination,
+        )
+        verified = verify_chromium_page_research_capture(persisted.path)
+
+        if verified.path != persisted.path:
+            raise ValueError(
+                "Research capture verification path does not match persistence."
+            )
+        if verified.capture_format != persisted.capture_format:
+            raise ValueError(
+                "Research capture verification format does not match persistence."
+            )
+        if verified.bundle_sha256 != persisted.bundle_sha256:
+            raise ValueError(
+                "Research capture verification SHA-256 does not match persistence."
+            )
+        if verified.byte_count != persisted.byte_count:
+            raise ValueError(
+                "Research capture verification byte count does not match persistence."
+            )
+
+        receipt = {
+            "acquisition_mode": verified.acquisition_mode,
+            "acquisition_order": list(verified.acquisition_order),
+            "bundle_sha256": verified.bundle_sha256,
+            "byte_count": verified.byte_count,
+            "capture_format": verified.capture_format,
+            "capture_output_path": str(verified.path),
+            "endpoint": verified.endpoint,
+            "receipt_role": "operation_receipt_not_source_authentication",
+            "target_id": verified.target_id,
+            "url": verified.url,
+        }
+        print(
+            json.dumps(
+                receipt,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+    except (OSError, TypeError, ValueError, RuntimeError) as exc:
+        parser.error(f"research-capture failed: {exc}")
     return 0
 
 
@@ -1033,6 +1121,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "run":
         return _run_workspace_command(args)
+    if args.command == "research-capture":
+        return _run_research_capture_command(parser, args)
     if args.command == "research-save-selection":
         return _run_research_save_selection_command(parser, args)
     if args.command == "research-shell":
