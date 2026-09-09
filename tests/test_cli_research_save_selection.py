@@ -411,6 +411,7 @@ def test_50y_cli_help_exposes_only_explicit_save_inputs(capsys) -> None:
         "--paragraph",
         "--start",
         "--end",
+        "--interactive",
         "--destination",
     ):
         assert option in output
@@ -425,3 +426,295 @@ def test_50y_cli_help_exposes_only_explicit_save_inputs(capsys) -> None:
         "--note",
     ):
         assert forbidden not in output
+
+
+
+def test_51b_cli_interactive_mode_uses_loaded_capture_and_exact_ui_selection(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    capture_path = _capture_with_paragraph(tmp_path)
+    destination = tmp_path / "interactive-selection.json"
+    calls: list[tuple[object, ...]] = []
+
+    real_load = cli.load_chromium_page_research_capture
+
+    def load_capture(path):
+        calls.append(("16C", path))
+        return real_load(path)
+
+    def load_runner():
+        calls.append(("load-ui",))
+
+        def run_ui(source):
+            calls.append(("ui", source))
+            assert source.verification.path == capture_path.resolve()
+            interactive_paragraph = cli.select_chromium_research_capture_paragraph(
+                source,
+                paragraph_ordinal=1,
+            )
+            return cli.select_chromium_research_paragraph_text(
+                interactive_paragraph,
+                start_offset=6,
+                end_offset=7,
+            )
+
+        return run_ui
+
+    monkeypatch.setattr(cli, "load_chromium_page_research_capture", load_capture)
+    monkeypatch.setattr(cli, "_load_interactive_research_selection_runner", load_runner)
+
+    assert (
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture_path),
+                "--destination",
+                str(destination),
+                "--interactive",
+            ]
+        )
+        == 0
+    )
+
+    assert calls[0] == ("16C", capture_path)
+    assert calls[1] == ("load-ui",)
+    assert calls[2][0] == "ui"
+    verified = verify_chromium_research_paragraph_text_selection(destination)
+    assert verified.paragraph_ordinal == 1
+    assert verified.start_offset == 6
+    assert verified.end_offset == 7
+    assert json.loads(capsys.readouterr().out)["selection_record_sha256"] == (
+        verified.selection_record_sha256
+    )
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        ["--paragraph", "1"],
+        ["--start", "0"],
+        ["--end", "1"],
+        ["--paragraph", "1", "--start", "0", "--end", "1"],
+    ],
+)
+def test_51b_cli_interactive_rejects_all_explicit_coordinate_inputs_before_loading(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+    extra: list[str],
+) -> None:
+    destination = tmp_path / "must-not-exist.json"
+
+    def fail_load(*args, **kwargs):
+        raise AssertionError("invalid input mode must fail before 16C")
+
+    monkeypatch.setattr(cli, "load_chromium_page_research_capture", fail_load)
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(tmp_path / "capture.json"),
+                "--destination",
+                str(destination),
+                "--interactive",
+                *extra,
+            ]
+        )
+
+    assert exc_info.value.code == 2
+    assert not destination.exists()
+    assert "mutually exclusive" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "coordinates",
+    [
+        [],
+        ["--paragraph", "1"],
+        ["--start", "0", "--end", "1"],
+        ["--paragraph", "1", "--end", "1"],
+    ],
+)
+def test_51b_cli_partial_coordinate_mode_fails_before_loading(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+    coordinates: list[str],
+) -> None:
+    destination = tmp_path / "must-not-exist.json"
+
+    def fail_load(*args, **kwargs):
+        raise AssertionError("partial coordinate mode must fail before 16C")
+
+    monkeypatch.setattr(cli, "load_chromium_page_research_capture", fail_load)
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(tmp_path / "capture.json"),
+                "--destination",
+                str(destination),
+                *coordinates,
+            ]
+        )
+
+    assert exc_info.value.code == 2
+    assert not destination.exists()
+    assert "requires --paragraph, --start, and --end together" in capsys.readouterr().err
+
+
+def test_51b_cli_explicit_coordinate_mode_never_loads_textual_runner(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    capture = _capture_with_paragraph(tmp_path)
+    destination = tmp_path / "explicit-still-core.json"
+
+    def fail_ui():
+        raise AssertionError("coordinate-explicit mode must not import Textual")
+
+    monkeypatch.setattr(cli, "_load_interactive_research_selection_runner", fail_ui)
+
+    assert (
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture),
+                "--paragraph",
+                "1",
+                "--start",
+                "6",
+                "--end",
+                "7",
+                "--destination",
+                str(destination),
+            ]
+        )
+        == 0
+    )
+    assert destination.is_file()
+
+
+def test_51b_cli_interactive_cancel_is_clean_noop_without_persistence(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    capture = _capture_with_paragraph(tmp_path)
+    destination = tmp_path / "cancelled.json"
+
+    monkeypatch.setattr(
+        cli,
+        "_load_interactive_research_selection_runner",
+        lambda: (lambda source: None),
+    )
+
+    assert (
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture),
+                "--destination",
+                str(destination),
+                "--interactive",
+            ]
+        )
+        == 0
+    )
+    assert not destination.exists()
+    assert capsys.readouterr().out == ""
+
+
+
+def test_51b_cli_rejects_interactive_selection_from_different_loaded_capture(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    capture = _capture_with_paragraph(tmp_path, name="capture-a.json")
+    other_capture = _capture_with_paragraph(tmp_path, name="capture-b.json")
+    other_loaded = cli.load_chromium_page_research_capture(other_capture)
+    other_paragraph = cli.select_chromium_research_capture_paragraph(
+        other_loaded,
+        paragraph_ordinal=1,
+    )
+    other_selection = cli.select_chromium_research_paragraph_text(
+        other_paragraph,
+        start_offset=0,
+        end_offset=5,
+    )
+    destination = tmp_path / "must-not-persist.json"
+
+    monkeypatch.setattr(
+        cli,
+        "_load_interactive_research_selection_runner",
+        lambda: (lambda source: other_selection),
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture),
+                "--destination",
+                str(destination),
+                "--interactive",
+            ]
+        )
+
+    assert exc_info.value.code == 2
+    assert not destination.exists()
+    assert "exact loaded capture" in capsys.readouterr().err
+
+
+
+def test_51b_cli_interactive_overwrite_preserves_existing_destination(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    capture = _capture_with_paragraph(tmp_path)
+    destination = tmp_path / "existing-interactive-selection.json"
+    destination.write_bytes(b"preserve interactive bytes\n")
+
+    def load_runner():
+        def run_ui(source):
+            paragraph = cli.select_chromium_research_capture_paragraph(
+                source,
+                paragraph_ordinal=1,
+            )
+            return cli.select_chromium_research_paragraph_text(
+                paragraph,
+                start_offset=0,
+                end_offset=5,
+            )
+
+        return run_ui
+
+    monkeypatch.setattr(cli, "_load_interactive_research_selection_runner", load_runner)
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture),
+                "--destination",
+                str(destination),
+                "--interactive",
+            ]
+        )
+
+    assert exc_info.value.code == 2
+    assert destination.read_bytes() == b"preserve interactive bytes\n"
+    assert "research-save-selection failed" in capsys.readouterr().err

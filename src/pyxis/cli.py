@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pyxis.app import (
     ChromiumPageResearchLoadedParagraphTextSelectionRecord,
+    ChromiumPageResearchParagraphTextSelectionEvidence,
     build_and_run_workspace,
     load_chromium_page_research_capture,
     load_chromium_research_paragraph_text_selection,
@@ -176,21 +177,35 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     research_save_selection_parser.add_argument(
         "--paragraph",
-        required=True,
         type=int,
-        help="Explicit 1-based returned paragraph ordinal.",
+        help=(
+            "Explicit 1-based returned paragraph ordinal. Required with --start and "
+            "--end unless --interactive is used."
+        ),
     )
     research_save_selection_parser.add_argument(
         "--start",
-        required=True,
         type=int,
-        help="Explicit zero-based Unicode code-point start offset.",
+        help=(
+            "Explicit zero-based Unicode code-point start offset. Required with "
+            "--paragraph and --end unless --interactive is used."
+        ),
     )
     research_save_selection_parser.add_argument(
         "--end",
-        required=True,
         type=int,
-        help="Explicit exclusive Unicode code-point end offset.",
+        help=(
+            "Explicit exclusive Unicode code-point end offset. Required with "
+            "--paragraph and --start unless --interactive is used."
+        ),
+    )
+    research_save_selection_parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help=(
+            "Choose one returned paragraph and exact text range in the optional "
+            "read-only Textual UI. Mutually exclusive with --paragraph/--start/--end."
+        ),
     )
     research_save_selection_parser.add_argument(
         "--destination",
@@ -412,6 +427,38 @@ def _run_research_capture_command(
     return 0
 
 
+def _load_interactive_research_selection_runner():
+    """Lazily import the optional Textual capture-selection surface."""
+
+    try:
+        from pyxis.ui.chromium_research_capture_selection_textual import (
+            run_chromium_research_capture_selection,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "textual":
+            raise RuntimeError(
+                "research-save-selection --interactive requires the optional Pyxis "
+                "UI dependency; install with: pip install 'pyxis[ui]'"
+            ) from exc
+        raise
+    return run_chromium_research_capture_selection
+
+
+def _validate_research_save_selection_input_mode(args: argparse.Namespace) -> None:
+    coordinates = (args.paragraph, args.start, args.end)
+    if args.interactive:
+        if any(value is not None for value in coordinates):
+            raise ValueError(
+                "--interactive is mutually exclusive with --paragraph, --start, and --end."
+            )
+        return
+    if any(value is None for value in coordinates):
+        raise ValueError(
+            "coordinate mode requires --paragraph, --start, and --end together, "
+            "or use --interactive."
+        )
+
+
 def _run_research_save_selection_command(
     parser: argparse.ArgumentParser,
     args: argparse.Namespace,
@@ -419,16 +466,36 @@ def _run_research_save_selection_command(
     """Save one exact range from one explicit already-durable capture."""
 
     try:
+        _validate_research_save_selection_input_mode(args)
         capture = load_chromium_page_research_capture(args.capture)
-        paragraph = select_chromium_research_capture_paragraph(
-            capture,
-            paragraph_ordinal=args.paragraph,
-        )
-        selection = select_chromium_research_paragraph_text(
-            paragraph,
-            start_offset=args.start,
-            end_offset=args.end,
-        )
+
+        if args.interactive:
+            runner = _load_interactive_research_selection_runner()
+            selection = runner(capture)
+            if selection is None:
+                return 0
+            if not isinstance(
+                selection,
+                ChromiumPageResearchParagraphTextSelectionEvidence,
+            ):
+                raise TypeError(
+                    "interactive selection UI returned an invalid selection type."
+                )
+            if selection.source.source is not capture:
+                raise ValueError(
+                    "interactive selection UI did not retain the exact loaded capture."
+                )
+        else:
+            paragraph = select_chromium_research_capture_paragraph(
+                capture,
+                paragraph_ordinal=args.paragraph,
+            )
+            selection = select_chromium_research_paragraph_text(
+                paragraph,
+                start_offset=args.start,
+                end_offset=args.end,
+            )
+
         persisted = persist_chromium_research_paragraph_text_selection(
             selection,
             args.destination,
