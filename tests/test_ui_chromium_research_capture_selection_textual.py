@@ -180,3 +180,37 @@ def test_51b_app_rejects_capture_with_no_returned_paragraph_evidence(
 
     with pytest.raises(ValueError, match="no returned paragraph evidence"):
         ResearchCapturePassageSelectionApp(source)
+
+
+
+@pytest.mark.asyncio
+async def test_51b_headless_app_selects_second_returned_paragraph_and_exits_exact_18a(
+    tmp_path: Path,
+) -> None:
+    source = _loaded_capture(
+        tmp_path,
+        ("First paragraph", "Second returned prefix"),
+    )
+    app = ResearchCapturePassageSelectionApp(source)
+
+    async with app.run_test() as pilot:
+        options = app.query_one("#research-capture-selection-options", OptionList)
+        options.highlighted = 1
+        options.action_select()
+        await pilot.pause()
+
+        assert app.paragraph_selection.paragraph is source.bundle.paragraphs.paragraphs[1]
+        text_area = app.query_one("#research-capture-selection-text", TextArea)
+        assert text_area.text == "Second returned prefix"
+        assert text_area.read_only is True
+        text_area.selection = Selection(start=(0, 7), end=(0, 15))
+        await pilot.pause()
+        await pilot.click("#research-capture-selection-confirm")
+
+    result = app.return_value
+    assert result is not None
+    assert result.source is app.paragraph_selection
+    assert result.source.source is source
+    assert result.start_offset == 7
+    assert result.end_offset == 15
+    assert result.selected_text == "returned"
