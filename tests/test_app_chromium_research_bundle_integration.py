@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import time
@@ -22,12 +23,48 @@ from pyxis.app.chromium_research_capture_load import load_chromium_page_research
 from pyxis.browser import ChromiumReadError
 
 
+_DEVTOOLS_LISTENING_PATTERN = re.compile(
+    r"DevTools listening on ws://127\\.0\\.0\\.1:(\\d+)/"
+)
+_BROWSER_LAUNCH_ROUNDS = 2
+_BROWSER_LOG_TAIL_LIMIT = 2000
+
+
+def _browser_log_tail(source: Path) -> str:
+    try:
+        text = source.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return "<browser log unavailable>"
+    if not text:
+        return "<browser log empty>"
+    return text[-_BROWSER_LOG_TAIL_LIMIT:]
+
+
+def _devtools_endpoint_from_browser_log(source: Path) -> str | None:
+    """Recover Chrome's own ephemeral DevTools endpoint announcement."""
+
+    try:
+        text = source.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    matches = _DEVTOOLS_LISTENING_PATTERN.findall(text)
+    if not matches:
+        return None
+    port = int(matches[-1])
+    if not 1 <= port <= 65535:
+        return None
+    return f"http://127.0.0.1:{port}"
+
+
 def _wait_for_devtools_endpoint(
     profile: Path,
     process: subprocess.Popen,
     *,
+    browser_log: Path,
     timeout_seconds: float = 30.0,
 ) -> str:
+    """Wait for either documented ephemeral-port bootstrap signal from Chrome."""
+
     active_port = profile / "DevToolsActivePort"
     deadline = time.monotonic() + timeout_seconds
     last_error: Exception | None = None
@@ -35,8 +72,8 @@ def _wait_for_devtools_endpoint(
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise AssertionError(
-                "Chromium exited before publishing DevToolsActivePort: "
-                f"{process.returncode}"
+                "Chromium exited before publishing a usable DevTools endpoint: "
+                f"{process.returncode}; browser log tail={_browser_log_tail(browser_log)!r}"
             )
         try:
             lines = active_port.read_text(encoding="utf-8").splitlines()
@@ -44,11 +81,16 @@ def _wait_for_devtools_endpoint(
                 return f"http://127.0.0.1:{int(lines[0])}"
         except (OSError, ValueError) as exc:
             last_error = exc
+
+        announced = _devtools_endpoint_from_browser_log(browser_log)
+        if announced is not None:
+            return announced
         time.sleep(0.1)
 
     raise AssertionError(
-        "Timed out waiting for Chromium DevToolsActivePort; "
-        f"last error={last_error!r}"
+        "Timed out waiting for Chromium DevTools endpoint bootstrap; "
+        f"DevToolsActivePort last error={last_error!r}; "
+        f"browser log tail={_browser_log_tail(browser_log)!r}"
     )
 
 
@@ -106,37 +148,63 @@ def _launch_browser_with_devtools(
     binaries: tuple[str, ...],
     tmp_path: Path,
     page_url: str,
-) -> tuple[subprocess.Popen, str]:
+) -> tuple[subprocess.Popen, str, str]:
+    """Launch a browser only after its exact fixture page target is reachable."""
+
     startup_failures: list[str] = []
-    for index, browser in enumerate(binaries):
-        profile = tmp_path / f"chromium-research-bundle-profile-{index}"
-        process = subprocess.Popen(
-            [
-                browser,
-                "--headless=new",
-                "--no-sandbox",
-                "--disable-gpu",
-                "--disable-dev-shm-usage",
-                "--no-first-run",
-                "--no-default-browser-check",
-                "--remote-debugging-port=0",
-                f"--user-data-dir={profile}",
-                page_url,
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        try:
-            endpoint = _wait_for_devtools_endpoint(profile, process)
-        except AssertionError as exc:
-            startup_failures.append(f"{browser}: {exc}")
-            _terminate_browser(process)
-            continue
-        return process, endpoint
+    for round_index in range(_BROWSER_LAUNCH_ROUNDS):
+        for browser_index, browser in enumerate(binaries):
+            profile = tmp_path / (
+                "chromium-research-bundle-profile-"
+                f"{round_index}-{browser_index}"
+            )
+            browser_log = tmp_path / (
+                "chromium-research-bundle-browser-"
+                f"{round_index}-{browser_index}.log"
+            )
+            log_handle = browser_log.open("wb")
+            try:
+                process = subprocess.Popen(
+                    [
+                        browser,
+                        "--headless=new",
+                        "--no-sandbox",
+                        "--disable-gpu",
+                        "--disable-dev-shm-usage",
+                        "--no-first-run",
+                        "--no-default-browser-check",
+                        "--remote-debugging-port=0",
+                        f"--user-data-dir={profile}",
+                        page_url,
+                    ],
+                    stdout=log_handle,
+                    stderr=subprocess.STDOUT,
+                )
+            finally:
+                log_handle.close()
+
+            try:
+                endpoint = _wait_for_devtools_endpoint(
+                    profile,
+                    process,
+                    browser_log=browser_log,
+                )
+                target_id = _wait_for_page_target(
+                    endpoint,
+                    page_url,
+                    process,
+                )
+            except AssertionError as exc:
+                _terminate_browser(process)
+                startup_failures.append(
+                    f"{browser} attempt {round_index + 1}: {exc}"
+                )
+                continue
+            return process, endpoint, target_id
 
     details = "; ".join(startup_failures) or "no launch attempts were made"
     raise AssertionError(
-        "No installed Chromium-family browser published a DevTools endpoint; "
+        "No installed Chromium-family browser published a reachable exact page target; "
         f"{details}"
     )
 
@@ -189,6 +257,55 @@ def _wait_for_bundle(
     )
 
 
+
+
+
+class _RunningProcess:
+    returncode = None
+
+    def poll(self):
+        return None
+
+
+def test_devtools_endpoint_bootstrap_accepts_browser_announcement_when_port_file_absent(
+    tmp_path: Path,
+) -> None:
+    profile = tmp_path / "profile-without-active-port"
+    profile.mkdir()
+    browser_log = tmp_path / "browser.log"
+    browser_log.write_text(
+        "noise before startup\n"
+        "DevTools listening on ws://127.0.0.1:45678/devtools/browser/example-id\n",
+        encoding="utf-8",
+    )
+
+    endpoint = _wait_for_devtools_endpoint(
+        profile,
+        _RunningProcess(),
+        browser_log=browser_log,
+        timeout_seconds=0.1,
+    )
+
+    assert endpoint == "http://127.0.0.1:45678"
+    assert not (profile / "DevToolsActivePort").exists()
+
+
+def test_devtools_endpoint_log_parser_uses_latest_valid_announcement(
+    tmp_path: Path,
+) -> None:
+    browser_log = tmp_path / "browser.log"
+    browser_log.write_text(
+        "DevTools listening on ws://127.0.0.1:12345/devtools/browser/old\n"
+        "other output\n"
+        "DevTools listening on ws://127.0.0.1:54321/devtools/browser/new\n",
+        encoding="utf-8",
+    )
+
+    assert _devtools_endpoint_from_browser_log(browser_log) == (
+        "http://127.0.0.1:54321"
+    )
+
+
 def test_research_bundle_composes_all_proven_readers_against_real_chromium(
     tmp_path: Path,
 ) -> None:
@@ -214,9 +331,12 @@ def test_research_bundle_composes_all_proven_readers_against_real_chromium(
     )
     page_url = page.as_uri()
 
-    process, endpoint = _launch_browser_with_devtools(browsers, tmp_path, page_url)
+    process, endpoint, target_id = _launch_browser_with_devtools(
+        browsers,
+        tmp_path,
+        page_url,
+    )
     try:
-        target_id = _wait_for_page_target(endpoint, page_url, process)
         evidence = _wait_for_bundle(
             endpoint,
             target_id,
