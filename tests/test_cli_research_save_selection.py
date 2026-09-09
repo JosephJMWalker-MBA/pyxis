@@ -675,3 +675,46 @@ def test_51b_cli_rejects_interactive_selection_from_different_loaded_capture(
     assert exc_info.value.code == 2
     assert not destination.exists()
     assert "exact loaded capture" in capsys.readouterr().err
+
+
+
+def test_51b_cli_interactive_overwrite_preserves_existing_destination(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    capture = _capture_with_paragraph(tmp_path)
+    destination = tmp_path / "existing-interactive-selection.json"
+    destination.write_bytes(b"preserve interactive bytes\n")
+
+    def load_runner():
+        def run_ui(source):
+            paragraph = cli.select_chromium_research_capture_paragraph(
+                source,
+                paragraph_ordinal=1,
+            )
+            return cli.select_chromium_research_paragraph_text(
+                paragraph,
+                start_offset=0,
+                end_offset=5,
+            )
+
+        return run_ui
+
+    monkeypatch.setattr(cli, "_load_interactive_research_selection_runner", load_runner)
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "research-save-selection",
+                "--capture",
+                str(capture),
+                "--destination",
+                str(destination),
+                "--interactive",
+            ]
+        )
+
+    assert exc_info.value.code == 2
+    assert destination.read_bytes() == b"preserve interactive bytes\n"
+    assert "research-save-selection failed" in capsys.readouterr().err
