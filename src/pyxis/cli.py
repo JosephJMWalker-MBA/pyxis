@@ -99,6 +99,10 @@ from pyxis.app.chromium_research_third_basis_epoch_shell_lineage import (
     prove_chromium_research_third_basis_epoch_shell_lineage,
 )
 from pyxis.authoring import create_workspace_spec
+from pyxis.cli_research_start import (
+    add_research_start_parser,
+    run_research_start_command,
+)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -213,6 +217,8 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Explicit no-overwrite exact-range-selection sidecar destination.",
     )
+
+    add_research_start_parser(subparsers)
 
     research_shell_parser = subparsers.add_parser(
         "research-shell",
@@ -990,10 +996,8 @@ def _run_research_shell_command(
             if handoff is not None:
                 _run_root_backed_continuation_handoff_research_session_shell(handoff)
         elif args.root_backed_continuation_overlay is not None:
-            plan = (
-                load_chromium_research_root_backed_session_continuation_reentry_plan_document(
-                    args.root_backed_continuation_overlay
-                )
+            plan = load_chromium_research_root_backed_session_continuation_reentry_plan_document(
+                args.root_backed_continuation_overlay
             )
             result = reenter_chromium_research_root_backed_session_continuation(plan)
             lineage = prove_chromium_research_root_backed_session_continuation_shell_lineage(
@@ -1016,17 +1020,13 @@ def _run_research_shell_command(
                     handoff
                 )
         elif args.second_basis_epoch_continuation_overlay is not None:
-            plan = (
-                load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
-                    args.second_basis_epoch_continuation_overlay
-                )
+            plan = load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
+                args.second_basis_epoch_continuation_overlay
             )
             result = reenter_chromium_research_second_basis_epoch_continuation(plan)
-            lineage = (
-                prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
-                    result,
-                    overlay_source=args.second_basis_epoch_continuation_overlay,
-                )
+            lineage = prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
+                result,
+                overlay_source=args.second_basis_epoch_continuation_overlay,
             )
             _run_second_basis_epoch_continuation_research_session_shell(lineage)
         elif args.third_basis_epoch_overlay is not None:
@@ -1044,17 +1044,13 @@ def _run_research_shell_command(
                     handoff
                 )
         elif args.third_basis_epoch_continuation_overlay is not None:
-            plan = (
-                load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
-                    args.third_basis_epoch_continuation_overlay
-                )
+            plan = load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
+                args.third_basis_epoch_continuation_overlay
             )
             result = reenter_chromium_research_third_basis_epoch_continuation(plan)
-            lineage = (
-                prove_chromium_research_third_basis_epoch_continuation_shell_lineage(
-                    result,
-                    overlay_source=args.third_basis_epoch_continuation_overlay,
-                )
+            lineage = prove_chromium_research_third_basis_epoch_continuation_shell_lineage(
+                result,
+                overlay_source=args.third_basis_epoch_continuation_overlay,
             )
             _run_third_basis_epoch_continuation_research_session_shell(lineage)
         else:
@@ -1085,10 +1081,8 @@ def _run_research_inspect_command(
                 inspection
             )
         elif args.root_backed_continuation_overlay is not None:
-            plan = (
-                load_chromium_research_root_backed_session_continuation_reentry_plan_document(
-                    args.root_backed_continuation_overlay
-                )
+            plan = load_chromium_research_root_backed_session_continuation_reentry_plan_document(
+                args.root_backed_continuation_overlay
             )
             result = reenter_chromium_research_root_backed_session_continuation(plan)
             lineage = prove_chromium_research_root_backed_session_continuation_shell_lineage(
@@ -1115,22 +1109,16 @@ def _run_research_inspect_command(
                 inspection
             )
         elif args.second_basis_epoch_continuation_overlay is not None:
-            plan = (
-                load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
-                    args.second_basis_epoch_continuation_overlay
-                )
+            plan = load_chromium_research_second_basis_epoch_continuation_reentry_plan_document(
+                args.second_basis_epoch_continuation_overlay
             )
             result = reenter_chromium_research_second_basis_epoch_continuation(plan)
-            lineage = (
-                prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
-                    result,
-                    overlay_source=args.second_basis_epoch_continuation_overlay,
-                )
+            lineage = prove_chromium_research_second_basis_epoch_continuation_shell_lineage(
+                result,
+                overlay_source=args.second_basis_epoch_continuation_overlay,
             )
-            inspection = (
-                inspect_chromium_research_second_basis_epoch_continuation_launch(
-                    lineage
-                )
+            inspection = inspect_chromium_research_second_basis_epoch_continuation_launch(
+                lineage
             )
             report = serialize_chromium_research_second_basis_epoch_authority_inspection(
                 inspection
@@ -1149,17 +1137,13 @@ def _run_research_inspect_command(
                 inspection
             )
         elif args.third_basis_epoch_continuation_overlay is not None:
-            plan = (
-                load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
-                    args.third_basis_epoch_continuation_overlay
-                )
+            plan = load_chromium_research_third_basis_epoch_continuation_reentry_plan_document(
+                args.third_basis_epoch_continuation_overlay
             )
             result = reenter_chromium_research_third_basis_epoch_continuation(plan)
-            lineage = (
-                prove_chromium_research_third_basis_epoch_continuation_shell_lineage(
-                    result,
-                    overlay_source=args.third_basis_epoch_continuation_overlay,
-                )
+            lineage = prove_chromium_research_third_basis_epoch_continuation_shell_lineage(
+                result,
+                overlay_source=args.third_basis_epoch_continuation_overlay,
             )
             inspection = inspect_chromium_research_third_basis_epoch_continuation_launch(
                 lineage
@@ -1192,6 +1176,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_research_capture_command(parser, args)
     if args.command == "research-save-selection":
         return _run_research_save_selection_command(parser, args)
+    if args.command == "research-start":
+        return run_research_start_command(parser, args)
     if args.command == "research-shell":
         return _run_research_shell_command(parser, args)
     if args.command == "research-inspect":
