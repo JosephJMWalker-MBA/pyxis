@@ -229,14 +229,15 @@ def test_51e_wrong_valid_capture_fails_closed_without_mutation(tmp_path: Path) -
         text="Alpha 😀 different source",
         rationale="Different root rationale.",
     )
-    snapshot = _snapshot(root_paths)
+    supplied = (wrong_paths[0], root_paths[1], root_paths[2], root_paths[3])
+    snapshot = _snapshot(supplied)
 
     with pytest.raises(ValueError):
         reenter_chromium_research_initial_session(
-            capture_source=wrong_paths[0],
-            selection_source=root_paths[1],
-            working_set_source=root_paths[2],
-            note_source=root_paths[3],
+            capture_source=supplied[0],
+            selection_source=supplied[1],
+            working_set_source=supplied[2],
+            note_source=supplied[3],
         )
 
     _assert_snapshot(snapshot)
@@ -247,14 +248,15 @@ def test_51e_wrong_valid_selection_fails_working_set_membership_without_mutation
 ) -> None:
     paths = _durable_root(tmp_path, stem="root")
     alternate_path = _alternate_selection(paths[0], tmp_path / "alternate-selection.json")
-    snapshot = _snapshot(paths + (alternate_path,))
+    supplied = (paths[0], alternate_path, paths[2], paths[3])
+    snapshot = _snapshot(supplied)
 
     with pytest.raises(ValueError):
         reenter_chromium_research_initial_session(
-            capture_source=paths[0],
-            selection_source=alternate_path,
-            working_set_source=paths[2],
-            note_source=paths[3],
+            capture_source=supplied[0],
+            selection_source=supplied[1],
+            working_set_source=supplied[2],
+            note_source=supplied[3],
         )
 
     _assert_snapshot(snapshot)
@@ -268,15 +270,15 @@ def test_51e_wrong_valid_working_set_fails_without_mutation(tmp_path: Path) -> N
         text="Alpha 😀 other evidence",
         rationale="Other human rationale.",
     )
-    observed = (paths[0], paths[1], wrong_paths[2], paths[3])
-    snapshot = _snapshot(observed)
+    supplied = (paths[0], paths[1], wrong_paths[2], paths[3])
+    snapshot = _snapshot(supplied)
 
     with pytest.raises(ValueError):
         reenter_chromium_research_initial_session(
-            capture_source=observed[0],
-            selection_source=observed[1],
-            working_set_source=observed[2],
-            note_source=observed[3],
+            capture_source=supplied[0],
+            selection_source=supplied[1],
+            working_set_source=supplied[2],
+            note_source=supplied[3],
         )
 
     _assert_snapshot(snapshot)
@@ -292,15 +294,15 @@ def test_51e_wrong_valid_note_fails_parent_reconciliation_without_mutation(
         text="Alpha 😀 other evidence",
         rationale="Other human rationale.",
     )
-    observed = (paths[0], paths[1], paths[2], wrong_paths[3])
-    snapshot = _snapshot(observed)
+    supplied = (paths[0], paths[1], paths[2], wrong_paths[3])
+    snapshot = _snapshot(supplied)
 
     with pytest.raises(ValueError):
         reenter_chromium_research_initial_session(
-            capture_source=observed[0],
-            selection_source=observed[1],
-            working_set_source=observed[2],
-            note_source=observed[3],
+            capture_source=supplied[0],
+            selection_source=supplied[1],
+            working_set_source=supplied[2],
+            note_source=supplied[3],
         )
 
     _assert_snapshot(snapshot)
