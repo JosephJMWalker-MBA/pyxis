@@ -99,6 +99,11 @@ from pyxis.app.chromium_research_third_basis_epoch_shell_lineage import (
     prove_chromium_research_third_basis_epoch_shell_lineage,
 )
 from pyxis.authoring import create_workspace_spec
+from pyxis.cli_research_reopen import (
+    add_research_reopen_parser,
+    run_research_reopen_command,
+)
+
 from pyxis.cli_research_start import (
     add_research_start_parser,
     run_research_start_command,
@@ -219,6 +224,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     add_research_start_parser(subparsers)
+    add_research_reopen_parser(subparsers)
 
     research_shell_parser = subparsers.add_parser(
         "research-shell",
@@ -1178,6 +1184,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_research_save_selection_command(parser, args)
     if args.command == "research-start":
         return run_research_start_command(parser, args)
+    if args.command == "research-reopen":
+        return run_research_reopen_command(parser, args)
     if args.command == "research-shell":
         return _run_research_shell_command(parser, args)
     if args.command == "research-inspect":
